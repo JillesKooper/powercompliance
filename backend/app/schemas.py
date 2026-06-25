@@ -201,6 +201,7 @@ class EmailGenereerRequest(BaseModel):
     leverancier_id: int
     taal: str = "nl"  # nl | en
     deadline: Optional[date] = None
+    wetgeving_code: Optional[str] = None  # gericht uitvragen per wetgeving
 
 
 class EmailGenereerResponse(BaseModel):
@@ -224,6 +225,28 @@ class EmailVerstuurRequest(BaseModel):
     leverancier_id: int
     onderwerp: str
     deadline: Optional[date] = None
+
+
+class WetgevingUitvraagLeverancier(BaseModel):
+    id: int
+    naam: str
+    contactpersoon: Optional[str] = None
+    email: Optional[str] = None
+    aantal_velden: int
+    aantal_producten: int
+
+
+class WetgevingUitvraagRequest(BaseModel):
+    wetgeving_code: str
+    taal: str = "nl"
+    deadline: Optional[date] = None
+    leverancier_ids: Optional[list[int]] = None  # None = alle betrokken leveranciers
+
+
+class WetgevingUitvraagResultaat(BaseModel):
+    wetgeving_code: str
+    aantal: int
+    leveranciers: list[dict] = []
 
 
 # ---------- Dashboard ----------

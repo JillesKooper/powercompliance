@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
-import { Card, ProgressBar, Badge, Loading, ErrorBox } from "../components/ui";
+import { Card, ProgressBar, Badge, Loading, ErrorBox, Button } from "../components/ui";
+import EmailModal from "../components/EmailModal.jsx";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [regels, setRegels] = useState(null);
   const [error, setError] = useState(null);
+  const [mailCode, setMailCode] = useState(null);
 
   useEffect(() => {
     setProduct(null);
@@ -29,6 +31,16 @@ export default function ProductDetail() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {mailCode && product.leverancier && (
+        <EmailModal
+          leverancierId={product.leverancier.id}
+          leverancierNaam={product.leverancier.naam}
+          wetgevingCode={mailCode}
+          wetgevingNaam={mailCode}
+          onClose={() => setMailCode(null)}
+        />
+      )}
+
       <Link to="/producten" className="text-sm text-brand-600 hover:underline">
         ← Terug naar producten
       </Link>
@@ -68,13 +80,22 @@ export default function ProductDetail() {
         </div>
       </Card>
 
-      {Object.entries(perWet).map(([code, items]) => (
+      {Object.entries(perWet).map(([code, items]) => {
+        const heeftOntbrekend = items.some((i) => !i.ingevuld);
+        return (
         <Card key={code} className="overflow-hidden">
-          <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 font-semibold text-slate-800">
-            ⚖️ {code}
-            <span className="ml-2 text-xs font-normal text-slate-400">
-              {items.filter((i) => i.ingevuld).length}/{items.length} ingevuld
-            </span>
+          <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div className="font-semibold text-slate-800">
+              ⚖️ {code}
+              <span className="ml-2 text-xs font-normal text-slate-400">
+                {items.filter((i) => i.ingevuld).length}/{items.length} ingevuld
+              </span>
+            </div>
+            {heeftOntbrekend && product.leverancier && (
+              <Button variant="ghost" onClick={() => setMailCode(code)}>
+                ✉️ Uitvragen bij leverancier
+              </Button>
+            )}
           </div>
           <div className="divide-y divide-slate-100">
             {items.map((r) => (
@@ -100,7 +121,8 @@ export default function ProductDetail() {
             ))}
           </div>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }

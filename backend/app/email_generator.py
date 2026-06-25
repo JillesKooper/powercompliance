@@ -24,16 +24,27 @@ MODEL = "claude-sonnet-4-6"
 
 
 # ---------- data verzamelen ----------
-def verzamel_ontbrekend(db: Session, leverancier: models.Leverancier):
+def verzamel_ontbrekend(
+    db: Session, leverancier: models.Leverancier, wetgeving_code: Optional[str] = None
+):
     """Geef (per_product, per_wetgeving) terug.
 
     per_product: lijst van (product, [ComplianceVeld]) met ontbrekende velden.
     per_wetgeving: dict wetgeving_code -> set van veldnamen.
+
+    Met wetgeving_code worden alleen de ontbrekende velden van die ene wetgeving
+    meegenomen (gericht uitvragen).
     """
     per_product = []
     per_wet = defaultdict(set)
     for product in leverancier.producten:
         ontbrekend = compliance.ontbrekende_velden_voor_product(db, product)
+        if wetgeving_code:
+            ontbrekend = [
+                v
+                for v in ontbrekend
+                if v.wetgeving and v.wetgeving.code == wetgeving_code
+            ]
         if ontbrekend:
             per_product.append((product, ontbrekend))
             for v in ontbrekend:
@@ -42,23 +53,50 @@ def verzamel_ontbrekend(db: Session, leverancier: models.Leverancier):
     return per_product, dict(per_wet)
 
 
+def leveranciers_met_ontbrekend_voor_wetgeving(db: Session, wetgeving_code: str):
+    """Alle leveranciers die ontbrekende data hebben voor deze wetgeving."""
+    result = []
+    leveranciers = db.query(models.Leverancier).order_by(models.Leverancier.naam).all()
+    for lev in leveranciers:
+        per_product, _ = verzamel_ontbrekend(db, lev, wetgeving_code)
+        aantal_velden = sum(len(velden) for _, velden in per_product)
+        if aantal_velden > 0:
+            result.append(
+                {
+                    "id": lev.id,
+                    "naam": lev.naam,
+                    "contactpersoon": lev.contactpersoon,
+                    "email": lev.email,
+                    "aantal_velden": aantal_velden,
+                    "aantal_producten": len(per_product),
+                }
+            )
+    return result
+
+
 def portaal_link(leverancier: models.Leverancier) -> str:
     return f"{PORTAAL_BASIS}/{leverancier.id}/aanleveren"
 
 
-def bijlage_naam(leverancier: models.Leverancier) -> str:
+def bijlage_naam(
+    leverancier: models.Leverancier, wetgeving_code: Optional[str] = None
+) -> str:
     veilig = "".join(
         c if c.isalnum() else "_" for c in leverancier.naam
-    ).strip("_")
-    return f"ontbrekende_data_{veilig or leverancier.id}.xlsx"
+    ).strip("_") or str(leverancier.id)
+    if wetgeving_code:
+        return f"ontbrekende_data_{veilig}_{wetgeving_code}.xlsx"
+    return f"ontbrekende_data_{veilig}.xlsx"
 
 
 # ---------- Excel-bijlage ----------
-def bouw_excel(db: Session, leverancier: models.Leverancier) -> io.BytesIO:
+def bouw_excel(
+    db: Session, leverancier: models.Leverancier, wetgeving_code: Optional[str] = None
+) -> io.BytesIO:
     from openpyxl import Workbook
     from openpyxl.styles import Font
 
-    per_product, _ = verzamel_ontbrekend(db, leverancier)
+    per_product, _ = verzamel_ontbrekend(db, leverancier, wetgeving_code)
     wb = Workbook()
     ws = wb.active
     ws.title = "Ontbrekende data"
@@ -98,13 +136,27 @@ def bouw_excel(db: Session, leverancier: models.Leverancier) -> io.BytesIO:
 
 
 # ---------- onderwerp ----------
-def maak_onderwerp(leverancier: models.Leverancier, per_wet: dict, taal: str) -> str:
+def maak_onderwerp(
+    leverancier: models.Leverancier,
+    per_wet: dict,
+    taal: str,
+    deadline: Optional[date] = None,
+) -> str:
+    """Onderwerp met leverancier + wetgeving + (optioneel) deadline."""
     codes = ", ".join(sorted(per_wet.keys())) if per_wet else ""
     if taal == "en":
-        basis = "Request for missing product compliance data"
-        return f"{basis} ({codes})" if codes else basis
-    basis = "Verzoek om ontbrekende productcompliance-data"
-    return f"{basis} ({codes})" if codes else basis
+        s = f"{leverancier.naam} – missing product compliance data"
+        if codes:
+            s += f" ({codes})"
+        if deadline:
+            s += f" – deadline {deadline.isoformat()}"
+        return s
+    s = f"{leverancier.naam} – ontbrekende productcompliance-data"
+    if codes:
+        s += f" ({codes})"
+    if deadline:
+        s += f" – deadline {deadline.isoformat()}"
+    return s
 
 
 # ---------- mailtekst (AI + fallback) ----------

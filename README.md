@@ -63,9 +63,11 @@ Een compliance-veld geldt voor een product als het veld géén categorie heeft
 - `GET /api/categorieen`, `/api/dataverzoeken`, `/api/notificaties`
 - `POST /api/import/producten` — CSV/Excel-import producten (multipart)
 - `POST /api/import/leveranciers` — CSV/Excel-import leveranciers (multipart)
-- `POST /api/email/genereer` — genereer dataverzoek-mail (AI, claude-sonnet-4-6)
-- `GET /api/email/bijlage/{leverancier_id}` — Excel met ontbrekende velden
+- `POST /api/email/genereer` — genereer dataverzoek-mail (AI, claude-sonnet-4-6); optioneel `wetgeving_code` om gericht per wetgeving uit te vragen
+- `GET /api/email/bijlage/{leverancier_id}?wetgeving=CODE` — Excel met ontbrekende velden (optioneel gescoped)
 - `POST /api/email/verstuur` — registreer het verstuurde dataverzoek
+- `GET /api/email/uitvraag-wetgeving/{code}/leveranciers` — leveranciers met ontbrekende data voor een wetgeving
+- `POST /api/email/uitvraag-wetgeving` — stuur in één keer een dataverzoek naar alle (of geselecteerde) leveranciers voor die wetgeving
 
 ## E-mailgeneratie (dataverzoeken)
 
@@ -82,6 +84,16 @@ modal toont:
 De mail biedt de leverancier twee aanlevermethodes: (1) reply met de data als
 platte tekst, of (2) upload via een portaallink. Knoppen: **Hergenereer met AI**,
 **Kopieer**, **Verstuur**.
+
+Er zijn drie ingangen:
+
+- **Ontbrekende data** — knop **✉️ E-mail genereren** per leverancier voor álle
+  ontbrekende data in één mail.
+- **Productdetail** — per wetgeving een knop **✉️ Uitvragen bij leverancier**, om
+  gericht alleen de ontbrekende velden van die wetgeving uit te vragen.
+- **Wetgeving** — per wetgeving een knop **✉️ Uitvragen**, die in één keer alle
+  betrokken leveranciers (met selectie) een dataverzoek stuurt. Het onderwerp
+  bevat automatisch leverancier + wetgeving + deadline.
 
 ### Anthropic API-sleutel
 

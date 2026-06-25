@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Button, Badge, Loading } from "./ui";
 
-export default function EmailModal({ leverancierId, leverancierNaam, onClose }) {
+export default function EmailModal({
+  leverancierId,
+  leverancierNaam,
+  wetgevingCode = null,
+  wetgevingNaam = null,
+  onClose,
+}) {
   const [taal, setTaal] = useState("nl");
   const [deadline, setDeadline] = useState("");
   const [data, setData] = useState(null);
@@ -22,6 +28,7 @@ export default function EmailModal({ leverancierId, leverancierNaam, onClose }) 
         leverancier_id: leverancierId,
         taal: huidigeTaal,
         deadline: huidigeDeadline || null,
+        wetgeving_code: wetgevingCode,
       });
       setData(r);
       setOnderwerp(r.onderwerp);
@@ -84,8 +91,14 @@ export default function EmailModal({ leverancierId, leverancierNaam, onClose }) 
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div>
-            <h2 className="font-semibold text-slate-800">E-mail genereren</h2>
-            <div className="text-xs text-slate-400">{leverancierNaam}</div>
+            <h2 className="font-semibold text-slate-800">
+              E-mail genereren
+              {wetgevingCode ? ` — ${wetgevingCode}` : ""}
+            </h2>
+            <div className="text-xs text-slate-400">
+              {leverancierNaam}
+              {wetgevingNaam ? ` · ${wetgevingNaam}` : ""}
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -164,7 +177,7 @@ export default function EmailModal({ leverancierId, leverancierNaam, onClose }) 
                 </Rij>
                 <Rij label="Bijlage">
                   <a
-                    href={api.bijlageUrl(leverancierId)}
+                    href={data.bijlage_url}
                     className="inline-flex items-center gap-1 text-brand-700 hover:underline"
                     download
                   >

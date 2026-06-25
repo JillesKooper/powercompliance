@@ -71,4 +71,11 @@ export const api = {
   verstuurEmail: (data) =>
     request("/email/verstuur", { method: "POST", body: JSON.stringify(data) }),
   bijlageUrl: (leverancierId) => `/api/email/bijlage/${leverancierId}`,
+  wetgevingUitvraagLeveranciers: (code) =>
+    request(`/email/uitvraag-wetgeving/${encodeURIComponent(code)}/leveranciers`),
+  uitvraagWetgeving: (data) =>
+    request("/email/uitvraag-wetgeving", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
