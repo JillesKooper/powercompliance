@@ -2,18 +2,21 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { Card, StatCard, ProgressBar, Loading, ErrorBox } from "../components/ui";
+import { useNotificaties } from "../context/notificaties";
+import NotificatieModal from "../components/NotificatieModal.jsx";
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
-  const [notificaties, setNotificaties] = useState([]);
   const [error, setError] = useState(null);
+  const { items: notificaties, ongelezen, markeerAllesGelezen } =
+    useNotificaties();
+  const [gekozenId, setGekozenId] = useState(null);
+  const gekozen = notificaties.find((n) => n.id === gekozenId) || null;
 
   useEffect(() => {
-    Promise.all([api.dashboard(), api.notificaties()])
-      .then(([s, n]) => {
-        setStats(s);
-        setNotificaties(n);
-      })
+    api
+      .dashboard()
+      .then(setStats)
       .catch((e) => setError(e.message));
   }, []);
 
@@ -22,6 +25,13 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {gekozen && (
+        <NotificatieModal
+          notificatie={gekozen}
+          onClose={() => setGekozenId(null)}
+        />
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Gemiddelde compliance"
@@ -77,21 +87,39 @@ export default function Dashboard() {
         </Card>
 
         <Card className="p-6">
-          <h2 className="font-semibold text-slate-800 mb-4">Notificaties</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-slate-800">
+              Notificaties
+              {ongelezen > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold">
+                  {ongelezen}
+                </span>
+              )}
+            </h2>
+            {ongelezen > 0 && (
+              <button
+                onClick={markeerAllesGelezen}
+                className="text-xs text-brand-600 hover:underline"
+              >
+                Alles gelezen
+              </button>
+            )}
+          </div>
           <div className="space-y-3">
             {notificaties.length === 0 && (
               <div className="text-sm text-slate-400">Geen notificaties.</div>
             )}
             {notificaties.map((n) => (
-              <div
+              <button
                 key={n.id}
-                className={`rounded-lg border p-3 text-sm ${
+                onClick={() => setGekozenId(n.id)}
+                className={`w-full text-left rounded-lg border p-3 text-sm transition-colors hover:border-brand-300 ${
                   n.gelezen
                     ? "border-slate-200 bg-slate-50"
                     : "border-brand-100 bg-brand-50"
                 }`}
               >
-                <div className="flex items-center gap-2 font-medium text-slate-800">
+                <div className="flex items-center gap-2">
                   <span>
                     {n.type === "waarschuwing"
                       ? "⚠️"
@@ -101,14 +129,28 @@ export default function Dashboard() {
                       ? "❌"
                       : "ℹ️"}
                   </span>
-                  {n.titel}
+                  <span
+                    className={`flex-1 text-slate-800 ${
+                      n.gelezen ? "font-medium" : "font-bold"
+                    }`}
+                  >
+                    {n.titel}
+                  </span>
+                  {!n.gelezen && (
+                    <span className="h-2 w-2 rounded-full bg-brand-500 shrink-0" />
+                  )}
                 </div>
+                {n.categorie && (
+                  <div className="text-[11px] text-slate-400 mt-1 ml-6">
+                    {n.categorie}
+                  </div>
+                )}
                 {n.bericht && (
-                  <div className="text-slate-500 mt-1 text-xs leading-relaxed">
+                  <div className="text-slate-500 mt-1 text-xs leading-relaxed ml-6 line-clamp-2">
                     {n.bericht}
                   </div>
                 )}
-              </div>
+              </button>
             ))}
           </div>
         </Card>

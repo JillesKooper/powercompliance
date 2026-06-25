@@ -172,7 +172,13 @@ class Notificatie(Base):
     id = Column(Integer, primary_key=True, index=True)
     titel = Column(String, nullable=False)
     bericht = Column(Text, nullable=True)
-    type = Column(String, default="info")  # info | waarschuwing | fout | succes
+    type = Column(String, default="info")  # info | waarschuwing | fout | succes (kleur/ernst)
+    # categorie = leesbaar type, bv. "Nieuwe data ontvangen", "Deadline nadert",
+    # "Twijfelachtige waarde", "Aankomende wetgeving".
+    categorie = Column(String, nullable=True)
     gelezen = Column(Boolean, default=False)
     link = Column(String, nullable=True)
+    # gerelateerde entiteit voor doorklikken: "product" | "leverancier" | "dataverzoek"
+    entiteit_type = Column(String, nullable=True)
+    entiteit_id = Column(Integer, nullable=True)
     aangemaakt_op = Column(DateTime, default=datetime.utcnow)

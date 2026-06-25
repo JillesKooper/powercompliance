@@ -62,6 +62,10 @@ export const api = {
   ontbrekendeData: () => request("/ontbrekende-data"),
   dataverzoeken: () => request("/dataverzoeken"),
   notificaties: () => request("/notificaties"),
+  markeerNotificatieGelezen: (id) =>
+    request(`/notificaties/${id}/gelezen`, { method: "POST" }),
+  markeerAllesGelezen: () =>
+    request("/notificaties/gelezen-alles", { method: "POST" }),
 
   importProducten: (file) => upload("/import/producten", file),
   importLeveranciers: (file) => upload("/import/leveranciers", file),

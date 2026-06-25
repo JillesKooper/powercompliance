@@ -226,23 +226,70 @@ def seed():
             )
         )
 
-        # notificaties
+        # notificaties (met categorie + gerelateerde entiteit voor doorklikken)
+        accu = next(p for p in prod_objs if p.naam.startswith("Lithium Accu"))
+        led = prod_objs[0]
+        volt = lev_map["Volt Electronics B.V."]
+        powercell = lev_map["PowerCell GmbH"]
         db.add_all(
             [
                 models.Notificatie(
                     titel="PPWR wordt binnenkort van kracht",
-                    bericht="De Verpakkingsverordening geldt vanaf 12 augustus 2026. Controleer uw verpakkingsdata.",
+                    bericht=(
+                        "De Verpakkingsverordening (PPWR) geldt vanaf 12 augustus 2026. "
+                        "Controleer of alle producten de vereiste verpakkingsdata hebben."
+                    ),
                     type="waarschuwing",
+                    categorie="Aankomende wetgeving",
                 ),
                 models.Notificatie(
-                    titel="3 nieuwe producten zonder compliance-data",
-                    bericht="Er zijn producten toegevoegd waarvoor nog geen data is ingevuld.",
+                    titel=f"Nieuwe data ontvangen voor {accu.naam}",
+                    bericht=(
+                        f"{powercell.naam} heeft de batterijchemie en capaciteit "
+                        f"aangeleverd voor {accu.naam}."
+                    ),
+                    type="succes",
+                    categorie="Nieuwe data ontvangen",
+                    entiteit_type="product",
+                    entiteit_id=accu.id,
+                ),
+                models.Notificatie(
+                    titel="Deadline dataverzoek nadert",
+                    bericht=(
+                        f"Het dataverzoek aan {volt.naam} voor PPWR-data verloopt binnen "
+                        "7 dagen. Er is nog geen reactie ontvangen."
+                    ),
+                    type="waarschuwing",
+                    categorie="Deadline nadert",
+                    entiteit_type="dataverzoek",
+                    entiteit_id=volt.id,
+                ),
+                models.Notificatie(
+                    titel=f"Twijfelachtige waarde bij {led.naam}",
+                    bericht=(
+                        "De opgegeven recycleerbaarheid (120%) valt buiten het geldige "
+                        "bereik (0–100%). Controleer de waarde bij de leverancier."
+                    ),
+                    type="fout",
+                    categorie="Twijfelachtige waarde",
+                    entiteit_type="product",
+                    entiteit_id=led.id,
+                ),
+                models.Notificatie(
+                    titel=f"{volt.naam} heeft openstaande dataverzoeken",
+                    bericht="Deze leverancier heeft meerdere producten met ontbrekende data.",
                     type="info",
+                    categorie="Leverancier-update",
+                    entiteit_type="leverancier",
+                    entiteit_id=volt.id,
                 ),
                 models.Notificatie(
-                    titel="Dataverzoek verstuurd naar Volt Electronics B.V.",
+                    titel=f"Dataverzoek verstuurd naar {volt.naam}",
                     bericht="Het verzoek voor PPWR-data is verzonden.",
                     type="succes",
+                    categorie="Dataverzoek verstuurd",
+                    entiteit_type="dataverzoek",
+                    entiteit_id=volt.id,
                     gelezen=True,
                 ),
             ]

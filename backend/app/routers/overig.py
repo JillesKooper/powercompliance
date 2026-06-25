@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, compliance
@@ -78,6 +78,31 @@ def lijst_notificaties(db: Session = Depends(get_db)):
         .order_by(models.Notificatie.aangemaakt_op.desc())
         .all()
     )
+
+
+@router.post(
+    "/notificaties/{notificatie_id}/gelezen",
+    response_model=schemas.NotificatieOut,
+)
+def markeer_gelezen(notificatie_id: int, db: Session = Depends(get_db)):
+    n = db.get(models.Notificatie, notificatie_id)
+    if not n:
+        raise HTTPException(status_code=404, detail="Notificatie niet gevonden")
+    n.gelezen = True
+    db.commit()
+    db.refresh(n)
+    return n
+
+
+@router.post("/notificaties/gelezen-alles")
+def markeer_alles_gelezen(db: Session = Depends(get_db)):
+    aantal = (
+        db.query(models.Notificatie)
+        .filter(models.Notificatie.gelezen.is_(False))
+        .update({models.Notificatie.gelezen: True})
+    )
+    db.commit()
+    return {"gemarkeerd": aantal}
 
 
 # ---------- Dashboard ----------

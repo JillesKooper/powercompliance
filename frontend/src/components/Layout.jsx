@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useNotificaties } from "../context/notificaties";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: "📊", end: true },
@@ -11,6 +12,7 @@ const NAV = [
 
 export default function Layout({ children }) {
   const location = useLocation();
+  const { ongelezen } = useNotificaties();
   const huidig = NAV.find((n) =>
     n.end ? location.pathname === n.to : location.pathname.startsWith(n.to)
   );
@@ -43,6 +45,11 @@ export default function Layout({ children }) {
             >
               <span className="text-base">{item.icon}</span>
               {item.label}
+              {item.to === "/" && ongelezen > 0 && (
+                <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold">
+                  {ongelezen}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

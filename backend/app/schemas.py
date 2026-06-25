@@ -157,8 +157,11 @@ class NotificatieOut(BaseModel):
     titel: str
     bericht: Optional[str] = None
     type: str
+    categorie: Optional[str] = None
     gelezen: bool
     link: Optional[str] = None
+    entiteit_type: Optional[str] = None
+    entiteit_id: Optional[int] = None
     aangemaakt_op: datetime
 
 

@@ -61,6 +61,7 @@ Een compliance-veld geldt voor een product als het veld géén categorie heeft
 - `GET /api/wetgeving` — wetgeving incl. compliance-velden
 - `GET /api/dashboard` — geaggregeerde KPI's
 - `GET /api/categorieen`, `/api/dataverzoeken`, `/api/notificaties`
+- `POST /api/notificaties/{id}/gelezen` en `POST /api/notificaties/gelezen-alles` — markeer als gelezen
 - `POST /api/import/producten` — CSV/Excel-import producten (multipart)
 - `POST /api/import/leveranciers` — CSV/Excel-import leveranciers (multipart)
 - `POST /api/email/genereer` — genereer dataverzoek-mail (AI, claude-sonnet-4-6); optioneel `wetgeving_code` om gericht per wetgeving uit te vragen
@@ -105,6 +106,16 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 Zonder sleutel werkt de functie nog steeds: de mailtekst valt dan terug op een
 nette sjabloontekst (de modal toont dat met "Sjabloon gebruikt").
+
+## Notificaties
+
+Notificaties op het **Dashboard** zijn klikbaar en openen een modal met de
+volledige inhoud, datum & tijd, het type/de categorie (bv. "Deadline nadert",
+"Nieuwe data ontvangen", "Twijfelachtige waarde") en — indien gekoppeld — de
+gerelateerde entiteit: een **product** → productdetail, **leverancier** →
+leveranciersdetail, of **dataverzoek** → ontbrekende-data-pagina. De modal heeft
+knoppen **Markeer als gelezen** en **Ga naar**. Ongelezen notificaties hebben een
+vet lettertype + bolletje, en de **sidebar toont een teller** naast Dashboard.
 
 ## Frontend-pagina's
 

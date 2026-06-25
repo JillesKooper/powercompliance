@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { NotificatiesProvider } from "./context/notificaties";
 import Layout from "./components/Layout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Producten from "./pages/Producten.jsx";
@@ -11,8 +12,9 @@ import Instellingen from "./pages/Instellingen.jsx";
 
 export default function App() {
   return (
-    <Layout>
-      <Routes>
+    <NotificatiesProvider>
+      <Layout>
+        <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/producten" element={<Producten />} />
         <Route path="/producten/:id" element={<ProductDetail />} />
@@ -21,7 +23,8 @@ export default function App() {
         <Route path="/ontbrekende-data" element={<OntbrekendeData />} />
         <Route path="/wetgeving" element={<Wetgeving />} />
         <Route path="/instellingen" element={<Instellingen />} />
-      </Routes>
-    </Layout>
+        </Routes>
+      </Layout>
+    </NotificatiesProvider>
   );
 }
