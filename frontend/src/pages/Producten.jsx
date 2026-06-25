@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 import {
   Card,
@@ -8,6 +9,7 @@ import {
   ErrorBox,
   Button,
 } from "../components/ui";
+import ImportDialog from "../components/ImportDialog.jsx";
 
 const LEEG = {
   naam: "",
@@ -25,6 +27,7 @@ export default function Producten() {
   const [zoek, setZoek] = useState("");
   const [filterLev, setFilterLev] = useState("");
   const [toonForm, setToonForm] = useState(false);
+  const [toonImport, setToonImport] = useState(false);
   const [form, setForm] = useState(LEEG);
 
   async function laad() {
@@ -94,8 +97,19 @@ export default function Producten() {
             </option>
           ))}
         </select>
+        <Button variant="ghost" onClick={() => setToonImport(true)}>
+          ⬆ Importeren
+        </Button>
         <Button onClick={() => setToonForm((v) => !v)}>+ Nieuw product</Button>
       </div>
+
+      {toonImport && (
+        <ImportDialog
+          soort="producten"
+          onClose={() => setToonImport(false)}
+          onKlaar={laad}
+        />
+      )}
 
       {toonForm && (
         <Card className="p-5">
@@ -192,7 +206,12 @@ export default function Producten() {
                   className="border-b border-slate-100 hover:bg-slate-50"
                 >
                   <td className="px-5 py-3">
-                    <div className="font-medium text-slate-800">{p.naam}</div>
+                    <Link
+                      to={`/producten/${p.id}`}
+                      className="font-medium text-brand-700 hover:underline"
+                    >
+                      {p.naam}
+                    </Link>
                     <div className="text-xs text-slate-400">
                       {p.artikelnummer || "—"}
                     </div>

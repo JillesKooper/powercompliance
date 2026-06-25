@@ -17,6 +17,21 @@ async function request(path, options = {}) {
   return res.json();
 }
 
+async function upload(path, file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  // geen Content-Type zetten: de browser bepaalt de multipart-boundary zelf
+  const res = await fetch(`${BASE}${path}`, { method: "POST", body: fd });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      detail = (await res.json()).detail || detail;
+    } catch (_) {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
 export const api = {
   dashboard: () => request("/dashboard"),
   leveranciers: () => request("/leveranciers"),
@@ -34,6 +49,8 @@ export const api = {
     ).toString();
     return request(`/producten${qs ? `?${qs}` : ""}`);
   },
+  product: (id) => request(`/producten/${id}`),
+  productCompliance: (id) => request(`/producten/${id}/compliance`),
   maakProduct: (data) =>
     request("/producten", { method: "POST", body: JSON.stringify(data) }),
   wijzigProduct: (id, data) =>
@@ -45,4 +62,7 @@ export const api = {
   ontbrekendeData: () => request("/ontbrekende-data"),
   dataverzoeken: () => request("/dataverzoeken"),
   notificaties: () => request("/notificaties"),
+
+  importProducten: (file) => upload("/import/producten", file),
+  importLeveranciers: (file) => upload("/import/leveranciers", file),
 };

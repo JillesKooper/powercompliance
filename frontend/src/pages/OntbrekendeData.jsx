@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 import { Card, Badge, Loading, ErrorBox } from "../components/ui";
 
@@ -56,9 +57,12 @@ export default function OntbrekendeData() {
             {producten.map((p) => (
               <div key={p.product_id} className="px-5 py-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-medium text-slate-800">
+                  <Link
+                    to={`/producten/${p.product_id}`}
+                    className="font-medium text-brand-700 hover:underline"
+                  >
                     {p.product_naam}
-                  </span>
+                  </Link>
                   <span className="text-xs text-slate-400">
                     {p.artikelnummer}
                   </span>

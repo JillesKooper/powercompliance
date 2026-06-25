@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine
-from .routers import leveranciers, producten, overig
+from .routers import leveranciers, producten, overig, imports
 
 Base.metadata.create_all(bind=engine)
 
@@ -23,6 +23,7 @@ app.add_middleware(
 app.include_router(leveranciers.router)
 app.include_router(producten.router)
 app.include_router(overig.router)
+app.include_router(imports.router)
 
 
 @app.get("/api/health")

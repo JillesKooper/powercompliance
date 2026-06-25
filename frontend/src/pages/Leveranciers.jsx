@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 import {
   Card,
@@ -8,6 +9,7 @@ import {
   ErrorBox,
   Button,
 } from "../components/ui";
+import ImportDialog from "../components/ImportDialog.jsx";
 
 const LEEG = { naam: "", contactpersoon: "", email: "", telefoon: "", land: "NL" };
 
@@ -15,6 +17,7 @@ export default function Leveranciers() {
   const [leveranciers, setLeveranciers] = useState(null);
   const [error, setError] = useState(null);
   const [toonForm, setToonForm] = useState(false);
+  const [toonImport, setToonImport] = useState(false);
   const [form, setForm] = useState(LEEG);
 
   async function laad() {
@@ -51,9 +54,20 @@ export default function Leveranciers() {
 
   return (
     <div className="space-y-5">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
+        <Button variant="ghost" onClick={() => setToonImport(true)}>
+          ⬆ Importeren
+        </Button>
         <Button onClick={() => setToonForm((v) => !v)}>+ Nieuwe leverancier</Button>
       </div>
+
+      {toonImport && (
+        <ImportDialog
+          soort="leveranciers"
+          onClose={() => setToonImport(false)}
+          onKlaar={laad}
+        />
+      )}
 
       {toonForm && (
         <Card className="p-5">
@@ -95,7 +109,12 @@ export default function Leveranciers() {
             <Card key={l.id} className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="font-semibold text-slate-800">{l.naam}</div>
+                  <Link
+                    to={`/leveranciers/${l.id}`}
+                    className="font-semibold text-brand-700 hover:underline"
+                  >
+                    {l.naam}
+                  </Link>
                   <div className="text-xs text-slate-400">
                     {l.contactpersoon || "—"} · {l.land}
                   </div>

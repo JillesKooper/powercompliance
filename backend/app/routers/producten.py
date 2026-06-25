@@ -50,6 +50,37 @@ def haal_product(product_id: int, db: Session = Depends(get_db)):
     return item
 
 
+@router.get(
+    "/{product_id}/compliance",
+    response_model=List[schemas.ProductComplianceRegel],
+)
+def product_compliance_detail(product_id: int, db: Session = Depends(get_db)):
+    """Alle van toepassing zijnde compliance-velden voor dit product, met of de
+    waarde is ingevuld (compliant) of ontbreekt."""
+    product = db.get(models.Product, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product niet gevonden")
+    velden = compliance.velden_voor_product(db, product)
+    waarden = {w.compliance_veld_id: w for w in product.compliance_waarden}
+    regels = []
+    for v in sorted(velden, key=lambda x: (x.wetgeving.code, x.naam)):
+        w = waarden.get(v.id)
+        regels.append(
+            schemas.ProductComplianceRegel(
+                compliance_veld_id=v.id,
+                veld_naam=v.naam,
+                sleutel=v.sleutel,
+                veld_type=v.veld_type,
+                verplicht=v.verplicht,
+                wetgeving_id=v.wetgeving_id,
+                wetgeving_code=v.wetgeving.code if v.wetgeving else "—",
+                ingevuld=bool(w and w.ingevuld),
+                waarde=(w.waarde if w else None),
+            )
+        )
+    return regels
+
+
 @router.post("", response_model=schemas.ProductOut, status_code=201)
 def maak_product(data: schemas.ProductCreate, db: Session = Depends(get_db)):
     if not db.get(models.Leverancier, data.leverancier_id):

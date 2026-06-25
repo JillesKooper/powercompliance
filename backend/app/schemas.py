@@ -162,6 +162,40 @@ class NotificatieOut(BaseModel):
     aangemaakt_op: datetime
 
 
+# ---------- Product compliance-detail ----------
+class ProductComplianceRegel(BaseModel):
+    compliance_veld_id: int
+    veld_naam: str
+    sleutel: str
+    veld_type: str
+    verplicht: bool
+    wetgeving_id: int
+    wetgeving_code: str
+    ingevuld: bool
+    waarde: Optional[str] = None
+
+
+# ---------- Import ----------
+class ImportFout(BaseModel):
+    rij: int
+    bericht: str
+
+
+class ImportSamenvatting(BaseModel):
+    type: str  # "producten" | "leveranciers"
+    bestandsnaam: str
+    aantal_rijen: int
+    aantal_geimporteerd: int
+    aantal_fouten: int
+    # alleen voor producten:
+    aantal_compliant: int = 0
+    aantal_met_ontbrekende_data: int = 0
+    aantal_velden_ingevuld: int = 0
+    herkende_kolommen: dict = {}      # originele header -> veldnaam
+    genegeerde_kolommen: List[str] = []
+    fouten: List[ImportFout] = []
+
+
 # ---------- Dashboard ----------
 class DashboardStats(BaseModel):
     aantal_leveranciers: int

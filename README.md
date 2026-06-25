@@ -56,11 +56,32 @@ Een compliance-veld geldt voor een product als het veld géén categorie heeft
 
 - `GET/POST/PUT/DELETE /api/leveranciers` — CRUD leveranciers (met stats)
 - `GET/POST/PUT/DELETE /api/producten` — CRUD producten (filters + compliance-%)
+- `GET /api/producten/{id}/compliance` — alle velden van een product met ingevuld/ontbreekt
 - `GET /api/ontbrekende-data` — producten met ontbrekende velden
 - `GET /api/wetgeving` — wetgeving incl. compliance-velden
 - `GET /api/dashboard` — geaggregeerde KPI's
 - `GET /api/categorieen`, `/api/dataverzoeken`, `/api/notificaties`
+- `POST /api/import/producten` — CSV/Excel-import producten (multipart)
+- `POST /api/import/leveranciers` — CSV/Excel-import leveranciers (multipart)
 
 ## Frontend-pagina's
 
 Dashboard · Producten · Leveranciers · Ontbrekende data · Wetgeving · Instellingen
+Detailpagina's: `/#/producten/:id` en `/#/leveranciers/:id` (klik op een naam).
+
+## Import (CSV / Excel)
+
+Op **Producten** en **Leveranciers** zit een knop **⬆ Importeren** met een
+drag-and-drop-zone én bestandskiezer. Ondersteund: `.csv` en `.xlsx`.
+
+- **Automatische kolomherkenning** — headers worden genormaliseerd en gematcht
+  op synoniemen (bv. `Company`/`Bedrijf` → naam, `SKU`/`Artikelnr` →
+  artikelnummer). Ontbrekende verplichte kolommen geven een foutmelding
+  (product: `Naam` + `Leverancier`; leverancier: `Naam`).
+- **Compliance-analyse na import** — extra kolommen die overeenkomen met een
+  compliance-veld (bv. `Verpakkingsmateriaal`) worden automatisch ingevuld.
+  Elk product wordt via zijn categorie aan de juiste wetgeving gekoppeld en er
+  wordt bepaald of het compliant is of data mist.
+- **Importoverzicht** — na afloop: aantal geïmporteerd / compliant / met
+  ontbrekende data, de herkende kolommen en overgeslagen rijen, met een knop
+  direct door naar **Ontbrekende data**.
