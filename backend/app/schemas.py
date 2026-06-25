@@ -1,0 +1,175 @@
+"""Pydantic-schemas voor request/response validatie."""
+from datetime import date, datetime
+from typing import Optional, List
+
+from pydantic import BaseModel, ConfigDict
+
+
+# ---------- Categorie ----------
+class CategorieBase(BaseModel):
+    naam: str
+    beschrijving: Optional[str] = None
+    parent_id: Optional[int] = None
+
+
+class CategorieOut(CategorieBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+
+# ---------- Leverancier ----------
+class LeverancierBase(BaseModel):
+    naam: str
+    contactpersoon: Optional[str] = None
+    email: Optional[str] = None
+    telefoon: Optional[str] = None
+    land: Optional[str] = "NL"
+    actief: bool = True
+
+
+class LeverancierCreate(LeverancierBase):
+    pass
+
+
+class LeverancierUpdate(BaseModel):
+    naam: Optional[str] = None
+    contactpersoon: Optional[str] = None
+    email: Optional[str] = None
+    telefoon: Optional[str] = None
+    land: Optional[str] = None
+    actief: Optional[bool] = None
+
+
+class LeverancierOut(LeverancierBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    aangemaakt_op: datetime
+
+
+class LeverancierMetStats(LeverancierOut):
+    aantal_producten: int = 0
+    aantal_ontbrekend: int = 0
+    compliance_percentage: float = 100.0
+
+
+# ---------- Product ----------
+class ProductBase(BaseModel):
+    naam: str
+    artikelnummer: Optional[str] = None
+    ean: Optional[str] = None
+    beschrijving: Optional[str] = None
+    leverancier_id: int
+    categorie_id: Optional[int] = None
+
+
+class ProductCreate(ProductBase):
+    pass
+
+
+class ProductUpdate(BaseModel):
+    naam: Optional[str] = None
+    artikelnummer: Optional[str] = None
+    ean: Optional[str] = None
+    beschrijving: Optional[str] = None
+    leverancier_id: Optional[int] = None
+    categorie_id: Optional[int] = None
+
+
+class ProductOut(ProductBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    aangemaakt_op: datetime
+    leverancier: Optional[LeverancierOut] = None
+    categorie: Optional[CategorieOut] = None
+
+
+class ProductMetStats(ProductOut):
+    aantal_velden: int = 0
+    aantal_ingevuld: int = 0
+    aantal_ontbrekend: int = 0
+    compliance_percentage: float = 100.0
+
+
+# ---------- Wetgeving / ComplianceVeld ----------
+class ComplianceVeldOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    naam: str
+    sleutel: str
+    beschrijving: Optional[str] = None
+    veld_type: str
+    verplicht: bool
+    wetgeving_id: int
+    categorie_id: Optional[int] = None
+
+
+class WetgevingOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: str
+    naam: str
+    beschrijving: Optional[str] = None
+    van_kracht_vanaf: Optional[date] = None
+    status: str
+    compliance_velden: List[ComplianceVeldOut] = []
+
+
+# ---------- Ontbrekende data ----------
+class OntbrekendVeld(BaseModel):
+    compliance_veld_id: int
+    veld_naam: str
+    wetgeving_code: str
+
+
+class OntbrekendProduct(BaseModel):
+    product_id: int
+    product_naam: str
+    artikelnummer: Optional[str] = None
+    leverancier_id: int
+    leverancier_naam: str
+    ontbrekende_velden: List[OntbrekendVeld] = []
+
+
+# ---------- Dataverzoek ----------
+class DataverzoekCreate(BaseModel):
+    leverancier_id: int
+    onderwerp: str
+    bericht: Optional[str] = None
+    deadline: Optional[date] = None
+
+
+class DataverzoekOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    leverancier_id: int
+    onderwerp: str
+    bericht: Optional[str] = None
+    status: str
+    deadline: Optional[date] = None
+    aangemaakt_op: datetime
+    leverancier: Optional[LeverancierOut] = None
+
+
+# ---------- Notificatie ----------
+class NotificatieOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    titel: str
+    bericht: Optional[str] = None
+    type: str
+    gelezen: bool
+    link: Optional[str] = None
+    aangemaakt_op: datetime
+
+
+# ---------- Dashboard ----------
+class DashboardStats(BaseModel):
+    aantal_leveranciers: int
+    aantal_producten: int
+    aantal_categorieen: int
+    aantal_wetgeving: int
+    aantal_ontbrekende_velden: int
+    aantal_producten_incompleet: int
+    gemiddelde_compliance: float
+    open_dataverzoeken: int
+    compliance_per_wetgeving: List[dict] = []

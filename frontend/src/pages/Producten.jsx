@@ -1,0 +1,252 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
+import {
+  Card,
+  ProgressBar,
+  Badge,
+  Loading,
+  ErrorBox,
+  Button,
+} from "../components/ui";
+
+const LEEG = {
+  naam: "",
+  artikelnummer: "",
+  ean: "",
+  leverancier_id: "",
+  categorie_id: "",
+};
+
+export default function Producten() {
+  const [producten, setProducten] = useState(null);
+  const [leveranciers, setLeveranciers] = useState([]);
+  const [categorieen, setCategorieen] = useState([]);
+  const [error, setError] = useState(null);
+  const [zoek, setZoek] = useState("");
+  const [filterLev, setFilterLev] = useState("");
+  const [toonForm, setToonForm] = useState(false);
+  const [form, setForm] = useState(LEEG);
+
+  async function laad() {
+    try {
+      const data = await api.producten({
+        zoek,
+        leverancier_id: filterLev || undefined,
+      });
+      setProducten(data);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  useEffect(() => {
+    api.leveranciers().then(setLeveranciers).catch(() => {});
+    api.categorieen().then(setCategorieen).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(laad, 250);
+    return () => clearTimeout(t);
+  }, [zoek, filterLev]);
+
+  async function opslaan(e) {
+    e.preventDefault();
+    try {
+      await api.maakProduct({
+        ...form,
+        leverancier_id: Number(form.leverancier_id),
+        categorie_id: form.categorie_id ? Number(form.categorie_id) : null,
+      });
+      setForm(LEEG);
+      setToonForm(false);
+      laad();
+    } catch (err) {
+      alert("Opslaan mislukt: " + err.message);
+    }
+  }
+
+  async function verwijder(id) {
+    if (!confirm("Dit product verwijderen?")) return;
+    await api.verwijderProduct(id);
+    laad();
+  }
+
+  if (error) return <ErrorBox message={error} />;
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          placeholder="Zoek op naam, artikelnr of EAN…"
+          value={zoek}
+          onChange={(e) => setZoek(e.target.value)}
+          className="flex-1 min-w-[220px] rounded-lg border border-slate-300 px-3 py-2 text-sm"
+        />
+        <select
+          value={filterLev}
+          onChange={(e) => setFilterLev(e.target.value)}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
+        >
+          <option value="">Alle leveranciers</option>
+          {leveranciers.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.naam}
+            </option>
+          ))}
+        </select>
+        <Button onClick={() => setToonForm((v) => !v)}>+ Nieuw product</Button>
+      </div>
+
+      {toonForm && (
+        <Card className="p-5">
+          <form onSubmit={opslaan} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Veld label="Naam *">
+              <input
+                required
+                value={form.naam}
+                onChange={(e) => setForm({ ...form, naam: e.target.value })}
+                className="input"
+              />
+            </Veld>
+            <Veld label="Artikelnummer">
+              <input
+                value={form.artikelnummer}
+                onChange={(e) =>
+                  setForm({ ...form, artikelnummer: e.target.value })
+                }
+                className="input"
+              />
+            </Veld>
+            <Veld label="EAN">
+              <input
+                value={form.ean}
+                onChange={(e) => setForm({ ...form, ean: e.target.value })}
+                className="input"
+              />
+            </Veld>
+            <Veld label="Leverancier *">
+              <select
+                required
+                value={form.leverancier_id}
+                onChange={(e) =>
+                  setForm({ ...form, leverancier_id: e.target.value })
+                }
+                className="input bg-white"
+              >
+                <option value="">Kies leverancier…</option>
+                {leveranciers.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.naam}
+                  </option>
+                ))}
+              </select>
+            </Veld>
+            <Veld label="Categorie">
+              <select
+                value={form.categorie_id}
+                onChange={(e) =>
+                  setForm({ ...form, categorie_id: e.target.value })
+                }
+                className="input bg-white"
+              >
+                <option value="">Geen categorie</option>
+                {categorieen.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.naam}
+                  </option>
+                ))}
+              </select>
+            </Veld>
+            <div className="md:col-span-2 flex gap-2">
+              <Button type="submit">Opslaan</Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setToonForm(false)}
+              >
+                Annuleren
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      <Card>
+        {!producten ? (
+          <Loading />
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-500 border-b border-slate-200">
+                <th className="px-5 py-3 font-medium">Product</th>
+                <th className="px-5 py-3 font-medium">Leverancier</th>
+                <th className="px-5 py-3 font-medium">Categorie</th>
+                <th className="px-5 py-3 font-medium w-56">Compliance</th>
+                <th className="px-5 py-3 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {producten.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-b border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="px-5 py-3">
+                    <div className="font-medium text-slate-800">{p.naam}</div>
+                    <div className="text-xs text-slate-400">
+                      {p.artikelnummer || "—"}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-slate-600">
+                    {p.leverancier?.naam || "—"}
+                  </td>
+                  <td className="px-5 py-3">
+                    {p.categorie ? (
+                      <Badge color="blue">{p.categorie.naam}</Badge>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3">
+                    <ProgressBar value={p.compliance_percentage} />
+                    {p.aantal_ontbrekend > 0 && (
+                      <div className="text-xs text-red-500 mt-1">
+                        {p.aantal_ontbrekend} veld(en) ontbreekt
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <button
+                      onClick={() => verwijder(p.id)}
+                      className="text-red-500 hover:text-red-700 text-xs"
+                    >
+                      Verwijderen
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {producten.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-5 py-10 text-center text-slate-400">
+                    Geen producten gevonden.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function Veld({ label, children }) {
+  return (
+    <label className="block">
+      <span className="block text-xs font-medium text-slate-600 mb-1">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
