@@ -1,8 +1,12 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Laad .env (o.a. ANTHROPIC_API_KEY) voordat routers/modules worden geïmporteerd.
+load_dotenv()
+
 from .database import Base, engine
-from .routers import leveranciers, producten, overig, imports
+from .routers import leveranciers, producten, overig, imports, email
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,6 +28,7 @@ app.include_router(leveranciers.router)
 app.include_router(producten.router)
 app.include_router(overig.router)
 app.include_router(imports.router)
+app.include_router(email.router)
 
 
 @app.get("/api/health")

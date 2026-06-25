@@ -65,4 +65,10 @@ export const api = {
 
   importProducten: (file) => upload("/import/producten", file),
   importLeveranciers: (file) => upload("/import/leveranciers", file),
+
+  genereerEmail: (data) =>
+    request("/email/genereer", { method: "POST", body: JSON.stringify(data) }),
+  verstuurEmail: (data) =>
+    request("/email/verstuur", { method: "POST", body: JSON.stringify(data) }),
+  bijlageUrl: (leverancierId) => `/api/email/bijlage/${leverancierId}`,
 };

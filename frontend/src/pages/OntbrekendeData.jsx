@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import { Card, Badge, Loading, ErrorBox } from "../components/ui";
+import { Card, Badge, Loading, ErrorBox, Button } from "../components/ui";
+import EmailModal from "../components/EmailModal.jsx";
 
 export default function OntbrekendeData() {
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
+  const [mailLev, setMailLev] = useState(null); // {id, naam}
 
   useEffect(() => {
     api.ontbrekendeData().then(setItems).catch((e) => setError(e.message));
@@ -14,11 +16,16 @@ export default function OntbrekendeData() {
   if (error) return <ErrorBox message={error} />;
   if (!items) return <Loading />;
 
-  // groepeer per leverancier
+  // groepeer per leverancier (op id, zodat we de mail kunnen genereren)
   const perLev = {};
   for (const p of items) {
-    (perLev[p.leverancier_naam] ??= []).push(p);
+    (perLev[p.leverancier_id] ??= {
+      id: p.leverancier_id,
+      naam: p.leverancier_naam,
+      producten: [],
+    }).producten.push(p);
   }
+  const groepen = Object.values(perLev);
   const totaalVelden = items.reduce(
     (s, p) => s + p.ontbrekende_velden.length,
     0
@@ -34,27 +41,45 @@ export default function OntbrekendeData() {
 
   return (
     <div className="space-y-6">
+      {mailLev && (
+        <EmailModal
+          leverancierId={mailLev.id}
+          leverancierNaam={mailLev.naam}
+          onClose={() => setMailLev(null)}
+        />
+      )}
+
       <Card className="p-5">
         <div className="text-sm text-slate-600">
           <span className="font-semibold text-red-600">{totaalVelden}</span>{" "}
           ontbrekende velden verspreid over{" "}
           <span className="font-semibold">{items.length}</span> producten en{" "}
-          <span className="font-semibold">{Object.keys(perLev).length}</span>{" "}
-          leveranciers.
+          <span className="font-semibold">{groepen.length}</span> leveranciers.
         </div>
       </Card>
 
-      {Object.entries(perLev).map(([lev, producten]) => (
-        <Card key={lev} className="overflow-hidden">
+      {groepen.map((groep) => (
+        <Card key={groep.id} className="overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
-            <div className="font-semibold text-slate-800">🏭 {lev}</div>
-            <Badge color="red">
-              {producten.reduce((s, p) => s + p.ontbrekende_velden.length, 0)}{" "}
-              velden
-            </Badge>
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-slate-800">🏭 {groep.naam}</span>
+              <Badge color="red">
+                {groep.producten.reduce(
+                  (s, p) => s + p.ontbrekende_velden.length,
+                  0
+                )}{" "}
+                velden
+              </Badge>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => setMailLev({ id: groep.id, naam: groep.naam })}
+            >
+              ✉️ E-mail genereren
+            </Button>
           </div>
           <div className="divide-y divide-slate-100">
-            {producten.map((p) => (
+            {groep.producten.map((p) => (
               <div key={p.product_id} className="px-5 py-3">
                 <div className="flex items-center gap-2 mb-2">
                   <Link

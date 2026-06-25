@@ -196,6 +196,36 @@ class ImportSamenvatting(BaseModel):
     fouten: List[ImportFout] = []
 
 
+# ---------- E-mailgeneratie ----------
+class EmailGenereerRequest(BaseModel):
+    leverancier_id: int
+    taal: str = "nl"  # nl | en
+    deadline: Optional[date] = None
+
+
+class EmailGenereerResponse(BaseModel):
+    leverancier_id: int
+    aan_naam: Optional[str] = None
+    aan_email: Optional[str] = None
+    cc: str
+    onderwerp: str
+    tekst: str
+    portaal_link: str
+    bestandsnaam: str
+    bijlage_url: str
+    aantal_velden: int
+    aantal_producten: int
+    taal: str
+    ai_gebruikt: bool
+    ai_fout: Optional[str] = None
+
+
+class EmailVerstuurRequest(BaseModel):
+    leverancier_id: int
+    onderwerp: str
+    deadline: Optional[date] = None
+
+
 # ---------- Dashboard ----------
 class DashboardStats(BaseModel):
     aantal_leveranciers: int

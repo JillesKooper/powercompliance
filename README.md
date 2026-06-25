@@ -63,6 +63,36 @@ Een compliance-veld geldt voor een product als het veld géén categorie heeft
 - `GET /api/categorieen`, `/api/dataverzoeken`, `/api/notificaties`
 - `POST /api/import/producten` — CSV/Excel-import producten (multipart)
 - `POST /api/import/leveranciers` — CSV/Excel-import leveranciers (multipart)
+- `POST /api/email/genereer` — genereer dataverzoek-mail (AI, claude-sonnet-4-6)
+- `GET /api/email/bijlage/{leverancier_id}` — Excel met ontbrekende velden
+- `POST /api/email/verstuur` — registreer het verstuurde dataverzoek
+
+## E-mailgeneratie (dataverzoeken)
+
+Op **Ontbrekende data** zit per leverancier een knop **✉️ E-mail genereren**. De
+modal toont:
+
+- **Aan** (contactpersoon + e-mailadres) en **CC** `compliance@uwbedrijf.nl`
+- **Onderwerp** — automatisch ingevuld (bewerkbaar)
+- **Bijlage** — automatisch gegenereerde Excel met de ontbrekende velden
+- **Mailtekst** — gegenereerd via de **Anthropic API** (`claude-sonnet-4-6`) op
+  basis van de ontbrekende velden en wetgeving van die leverancier
+- **Taalkeuze** Nederlands / Engels en een **deadline**-datumkiezer
+
+De mail biedt de leverancier twee aanlevermethodes: (1) reply met de data als
+platte tekst, of (2) upload via een portaallink. Knoppen: **Hergenereer met AI**,
+**Kopieer**, **Verstuur**.
+
+### Anthropic API-sleutel
+
+Zet je sleutel in `backend/.env` (zie `backend/.env.example`):
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Zonder sleutel werkt de functie nog steeds: de mailtekst valt dan terug op een
+nette sjabloontekst (de modal toont dat met "Sjabloon gebruikt").
 
 ## Frontend-pagina's
 

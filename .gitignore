@@ -1,3 +1,7 @@
+# Secrets
+backend/.env
+.env
+
 # Python
 backend/.venv/
 __pycache__/
