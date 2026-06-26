@@ -16,7 +16,7 @@ export default function Instellingen() {
 
   useEffect(() => {
     api.categorieen().then(setCategorieen).catch(() => {});
-    api.dataverzoeken().then(setDataverzoeken).catch(() => {});
+    api.dataverzoeken().then((d) => setDataverzoeken(d.items)).catch(() => {});
     api.wetgevingBeheer().then(setWetgeving).catch(() => {});
   }, []);
 

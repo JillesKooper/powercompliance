@@ -15,6 +15,7 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -76,11 +77,24 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     naam = Column(String, nullable=False, index=True)
     artikelnummer = Column(String, nullable=True, index=True)
-    ean = Column(String, nullable=True)
+    ean = Column(String, nullable=True, index=True)
+    merk = Column(String, nullable=True)
     beschrijving = Column(Text, nullable=True)
-    leverancier_id = Column(Integer, ForeignKey("leveranciers.id"), nullable=False)
-    categorie_id = Column(Integer, ForeignKey("categorieen.id"), nullable=True)
+    leverancier_id = Column(
+        Integer, ForeignKey("leveranciers.id"), nullable=False, index=True
+    )
+    categorie_id = Column(
+        Integer, ForeignKey("categorieen.id"), nullable=True, index=True
+    )
     aangemaakt_op = Column(DateTime, default=datetime.utcnow)
+
+    # gedenormaliseerde compliance-cache (asynchroon herberekend) voor schaal
+    compliance_percentage = Column(Float, default=100.0)
+    aantal_ontbrekend = Column(Integer, default=0)
+    compliance_status = Column(
+        String, default="onbekend", index=True
+    )  # compliant | gedeeltelijk | incompleet
+    compliance_bijgewerkt = Column(DateTime, nullable=True)
 
     leverancier = relationship("Leverancier", back_populates="producten")
     categorie = relationship("Categorie", back_populates="producten")
@@ -102,6 +116,8 @@ class Wetgeving(Base):
     status = Column(String, default="van kracht")  # van kracht | aankomend | concept
     # door beheerder aan/uit te zetten; uit = niet meegenomen in compliance
     actief = Column(Boolean, default=True)
+    info_url = Column(String, nullable=True)  # officiële bron (EUR-Lex)
+    samenvatting = Column(Text, nullable=True)  # korte NL-samenvatting
 
     compliance_velden = relationship(
         "ComplianceVeld", back_populates="wetgeving", cascade="all, delete-orphan"
@@ -140,12 +156,18 @@ class ProductComplianceWaarde(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("producten.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("producten.id"), nullable=False, index=True)
     compliance_veld_id = Column(
         Integer, ForeignKey("compliance_velden.id"), nullable=False
     )
     waarde = Column(Text, nullable=True)
+    # ingevuld=True telt mee voor compliance (handmatig of geverifieerd-automatisch)
     ingevuld = Column(Boolean, default=False)
+    # bron: handmatig | automatisch | niet_gevonden
+    bron = Column(String, default="handmatig")
+    bron_url = Column(String, nullable=True)
+    geverifieerd = Column(Boolean, default=False)
+    twijfelachtig = Column(Boolean, default=False)
     bijgewerkt_op = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     product = relationship("Product", back_populates="compliance_waarden")
@@ -156,10 +178,14 @@ class Dataverzoek(Base):
     __tablename__ = "dataverzoeken"
 
     id = Column(Integer, primary_key=True, index=True)
-    leverancier_id = Column(Integer, ForeignKey("leveranciers.id"), nullable=False)
+    leverancier_id = Column(
+        Integer, ForeignKey("leveranciers.id"), nullable=False, index=True
+    )
     onderwerp = Column(String, nullable=False)
     bericht = Column(Text, nullable=True)
-    status = Column(String, default="open")  # open | verzonden | ontvangen | afgerond
+    status = Column(
+        String, default="open", index=True
+    )  # open | verzonden | ontvangen | afgerond
     deadline = Column(Date, nullable=True)
     aangemaakt_op = Column(DateTime, default=datetime.utcnow)
 

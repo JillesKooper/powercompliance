@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, compliance
+from .. import models, schemas, compliance, compliance_service
 from ..database import get_db
 
 router = APIRouter(prefix="/api", tags=["overig"])
@@ -47,6 +47,7 @@ def wetgeving_beheer(db: Session = Depends(get_db)):
 def zet_wetgeving_actief(
     wetgeving_id: int,
     data: schemas.WetgevingActiefRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     wet = db.get(models.Wetgeving, wetgeving_id)
@@ -55,6 +56,8 @@ def zet_wetgeving_actief(
     wet.actief = data.actief
     db.commit()
     db.refresh(wet)
+    # een actief-wijziging beïnvloedt de compliance van alle producten
+    background_tasks.add_task(compliance_service.herbereken_alle_bg)
     stats = compliance.wetgeving_stats(db, wet)
     return schemas.WetgevingBeheer(
         id=wet.id,
@@ -100,12 +103,29 @@ def ontbrekende_data(db: Session = Depends(get_db)):
 
 
 # ---------- Dataverzoeken ----------
-@router.get("/dataverzoeken", response_model=List[schemas.DataverzoekOut])
-def lijst_dataverzoeken(db: Session = Depends(get_db)):
-    return (
-        db.query(models.Dataverzoek)
-        .order_by(models.Dataverzoek.aangemaakt_op.desc())
+@router.get("/dataverzoeken", response_model=schemas.DataverzoekenPagina)
+def lijst_dataverzoeken(
+    status: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=1000),
+    db: Session = Depends(get_db),
+):
+    q = db.query(models.Dataverzoek)
+    if status:
+        q = q.filter(models.Dataverzoek.status == status)
+    total = q.count()
+    items = (
+        q.order_by(models.Dataverzoek.aangemaakt_op.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
         .all()
+    )
+    return schemas.DataverzoekenPagina(
+        items=items,
+        total=total,
+        page=page,
+        per_page=per_page,
+        pages=(total + per_page - 1) // per_page if per_page else 1,
     )
 
 
@@ -115,7 +135,45 @@ def maak_dataverzoek(data: schemas.DataverzoekCreate, db: Session = Depends(get_
     db.add(verzoek)
     db.commit()
     db.refresh(verzoek)
+    compliance_service.invalideer_dashboard()
     return verzoek
+
+
+@router.post("/dataverzoeken/bulk", response_model=schemas.BulkDataverzoekResultaat)
+def bulk_dataverzoeken(data: schemas.BulkDataverzoekRequest, db: Session = Depends(get_db)):
+    """Maak in één keer dataverzoeken aan voor meerdere leveranciers."""
+    ids = []
+    geldige = (
+        db.query(models.Leverancier.id)
+        .filter(models.Leverancier.id.in_(data.leverancier_ids))
+        .all()
+    )
+    geldige_ids = {r[0] for r in geldige}
+    for lev_id in data.leverancier_ids:
+        if lev_id not in geldige_ids:
+            continue
+        verzoek = models.Dataverzoek(
+            leverancier_id=lev_id,
+            onderwerp=data.onderwerp,
+            bericht=data.bericht,
+            status="verzonden",
+            deadline=data.deadline,
+        )
+        db.add(verzoek)
+        db.flush()
+        ids.append(verzoek.id)
+    if ids:
+        db.add(
+            models.Notificatie(
+                titel=f"{len(ids)} dataverzoeken in bulk aangemaakt",
+                bericht=data.onderwerp,
+                type="succes",
+                categorie="Dataverzoek verstuurd",
+            )
+        )
+    db.commit()
+    compliance_service.invalideer_dashboard()
+    return schemas.BulkDataverzoekResultaat(aantal=len(ids), dataverzoek_ids=ids)
 
 
 # ---------- Notificaties ----------
@@ -153,50 +211,7 @@ def markeer_alles_gelezen(db: Session = Depends(get_db)):
     return {"gemarkeerd": aantal}
 
 
-# ---------- Dashboard ----------
+# ---------- Dashboard (gecachet) ----------
 @router.get("/dashboard", response_model=schemas.DashboardStats)
 def dashboard(db: Session = Depends(get_db)):
-    producten = db.query(models.Product).all()
-    pcts = []
-    totaal_ontbrekend = 0
-    incompleet = 0
-    for product in producten:
-        stats = compliance.product_compliance(db, product)
-        pcts.append(stats["compliance_percentage"])
-        totaal_ontbrekend += stats["aantal_ontbrekend"]
-        if stats["aantal_ontbrekend"] > 0:
-            incompleet += 1
-
-    # compliance per actieve wetgeving (met producten die eronder vallen)
-    per_wet = []
-    actieve_wetten = (
-        db.query(models.Wetgeving)
-        .filter(models.Wetgeving.actief.is_(True))
-        .order_by(models.Wetgeving.code)
-        .all()
-    )
-    for wet in actieve_wetten:
-        stats = compliance.wetgeving_stats(db, wet)
-        if stats["aantal_producten"] == 0:
-            continue
-        per_wet.append(
-            {
-                "code": wet.code,
-                "naam": wet.naam,
-                "percentage": stats["compliance_percentage"],
-            }
-        )
-
-    return schemas.DashboardStats(
-        aantal_leveranciers=db.query(models.Leverancier).count(),
-        aantal_producten=len(producten),
-        aantal_categorieen=db.query(models.Categorie).count(),
-        aantal_wetgeving=db.query(models.Wetgeving).count(),
-        aantal_ontbrekende_velden=totaal_ontbrekend,
-        aantal_producten_incompleet=incompleet,
-        gemiddelde_compliance=round(sum(pcts) / len(pcts), 1) if pcts else 100.0,
-        open_dataverzoeken=db.query(models.Dataverzoek)
-        .filter(models.Dataverzoek.status.in_(["open", "verzonden"]))
-        .count(),
-        compliance_per_wetgeving=per_wet,
-    )
+    return compliance_service.bouw_dashboard(db)

@@ -54,6 +54,48 @@ basis van de categorie** van het product (wetgeving↔categorie-koppeling). Alle
 **actieve** wetgeving telt mee in compliance-berekeningen en dataverzoeken. Een
 compliance-veld van een relevante, actieve wetgeving geldt voor het product.
 
+## Schaalbaarheid
+
+- **Paginering** op de lijst-endpoints (producten, leveranciers, dataverzoeken),
+  standaard 50 per pagina (`?page=&per_page=`), met een paginerings-UI.
+- **Database-indexen** op veelgebruikte velden (`leverancier_id`, `categorie_id`,
+  `ean`, `compliance_status`, dataverzoek-`status`).
+- **Asynchrone compliance-berekening** via FastAPI `BackgroundTasks`: de
+  compliance-score per product wordt gedenormaliseerd opgeslagen en op de
+  achtergrond herberekend, zodat lijsten en dashboard niet bij elke request
+  alles herberekenen.
+- **Dashboard-cache**: statistieken worden gecachet en alleen herberekend als er
+  iets wijzigt (producten, waarden, dataverzoeken, wetgeving-toggle).
+- **Bulk-dataverzoeken**: `POST /api/dataverzoeken/bulk` maakt in één keer
+  dataverzoeken aan voor meerdere geselecteerde leveranciers (knop op de
+  Leveranciers-pagina).
+
+## Automatisch scrapen van ontbrekende data
+
+Heeft een product ontbrekende velden, dan kan een scrape-taak worden gestart
+(automatisch bij aanmaken, of via de knop **🔎 Scrape ontbrekende data** op de
+productdetailpagina). De scraper doorzoekt in volgorde: **GS1 → Open Food Facts
+(voedsel) → fabrikantwebsite → DuckDuckGo**, en laat de Anthropic API
+(`claude-sonnet-4-6`) de gevonden tekst interpreteren.
+
+- Gevonden waarden krijgen bron **"automatisch"** + een twijfelachtig-vlag en
+  tellen pas mee na verificatie. Op de productdetailpagina toont elk veld of de
+  waarde **handmatig**, **automatisch gevonden**, **niet online gevonden** of nog
+  **ontbreekt**, met de bron-URL. Per automatische waarde is er een knop
+  **Verifieer**.
+- Levert het scrapen niets op, dan wordt het veld op **"niet gevonden online"**
+  gezet en wordt automatisch een dataverzoek naar de leverancier aangemaakt.
+
+> Zonder netwerk/API-sleutel falen de bronnen stil → velden worden
+> "niet gevonden online" en er wordt een dataverzoek gegenereerd (de
+> gespecificeerde degradatie).
+
+## Wetgevingsinformatie
+
+Elke wetgeving heeft een **korte NL-samenvatting** (zichtbaar op de
+wetgevingspagina zonder doorklikken) en een knop **Officiële tekst →** die de
+officiële EUR-Lex-bron in een nieuw tabblad opent.
+
 ## Wetgevingsbeheer (instellingen)
 
 Op **Instellingen** staat een beheeroverzicht van alle wetgeving met een

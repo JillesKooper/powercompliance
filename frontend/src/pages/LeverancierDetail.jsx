@@ -12,10 +12,13 @@ export default function LeverancierDetail() {
   useEffect(() => {
     setLev(null);
     setProducten(null);
-    Promise.all([api.leverancier(id), api.producten({ leverancier_id: id })])
+    Promise.all([
+      api.leverancier(id),
+      api.producten({ leverancier_id: id, per_page: 1000 }),
+    ])
       .then(([l, p]) => {
         setLev(l);
-        setProducten(p);
+        setProducten(p.items);
       })
       .catch((e) => setError(e.message));
   }, [id]);

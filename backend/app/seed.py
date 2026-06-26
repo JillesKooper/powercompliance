@@ -13,7 +13,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 
 from .database import Base, SessionLocal, engine
-from . import models
+from . import models, compliance_service
 
 
 def reset_db():
@@ -134,6 +134,19 @@ WETGEVING = [
         ["Elektronica"],
     ),
     (
+        "ESPR",
+        "Ecodesign for Sustainable Products Regulation",
+        "EU 2024/1781: ecodesign-eisen en digitaal productpaspoort voor duurzame producten.",
+        date(2024, 7, 18),
+        "aankomend",
+        [
+            ("Digitaal productpaspoort-ID", "espr_dpp", "tekst"),
+            ("Repareerbaarheidsscore", "espr_repareerbaarheid", "tekst"),
+            ("Aandeel gerecycled materiaal (%)", "espr_recyclaat", "getal"),
+        ],
+        ["Elektronica", "Textiel", "Meubels", "Bouwmaterialen"],
+    ),
+    (
         "EUDR",
         "EU-ontbossingsverordening (Deforestation Regulation)",
         "EU 2023/1115: ontbossingsvrije toeleveringsketens voor o.a. hout, "
@@ -205,6 +218,80 @@ WETGEVING = [
         ["Cosmetica"],
     ),
 ]
+
+# code -> (info_url naar officiële bron, korte NL-samenvatting)
+EURLEX = "https://eur-lex.europa.eu/legal-content/NL/TXT/?uri=CELEX:"
+WET_INFO = {
+    "PPWR": (
+        EURLEX + "32025R0040",
+        "Stelt eisen aan recycleerbaarheid, recyclaatgehalte en etikettering van "
+        "verpakkingen. Geldt voor vrijwel alle verpakte producten en wordt vanaf "
+        "augustus 2026 gefaseerd van kracht.",
+    ),
+    "BATTERIJ": (
+        EURLEX + "32023R1542",
+        "Regelt duurzaamheid, koolstofvoetafdruk, recyclaatgehalte en het digitale "
+        "batterijpaspoort. Geldt voor draagbare, industriële en EV-batterijen.",
+    ),
+    "REACH": (
+        EURLEX + "32006R1907",
+        "Verplicht registratie en beperking van chemische stoffen en correcte "
+        "etikettering (CLP). Raakt chemie, textiel, cosmetica en veel andere "
+        "productgroepen.",
+    ),
+    "CPR": (
+        EURLEX + "32011R0305",
+        "Vereist een prestatieverklaring (DoP) en CE-markering voor bouwproducten, "
+        "zodat hun prestaties vergelijkbaar zijn binnen de EU.",
+    ),
+    "GPSR": (
+        EURLEX + "32023R0988",
+        "Algemene productveiligheidsverordening: veiligheidswaarschuwingen, "
+        "traceerbaarheid en een verantwoordelijke marktdeelnemer in de EU voor "
+        "consumentenproducten.",
+    ),
+    "ERP": (
+        EURLEX + "32009L0125",
+        "Ecodesign-kaderrichtlijn met eisen aan energie-efficiëntie en energielabels "
+        "voor energiegerelateerde producten.",
+    ),
+    "ESPR": (
+        EURLEX + "32024R1781",
+        "Opvolger van de ErP-richtlijn: bredere ecodesign-eisen en een digitaal "
+        "productpaspoort voor duurzame producten. Wordt per productgroep ingevoerd.",
+    ),
+    "EUDR": (
+        EURLEX + "32023R1115",
+        "Verbiedt het op de markt brengen van producten die met ontbossing zijn "
+        "verbonden (o.a. hout, papier, soja, cacao, palmolie). Vereist due-diligence "
+        "met herkomst en geolocatie.",
+    ),
+    "CSRD": (
+        EURLEX + "32022L2464",
+        "Verplicht grote bedrijven tot uitgebreide duurzaamheidsrapportage (ESG) "
+        "volgens de ESRS-standaarden.",
+    ),
+    "TEXTIEL": (
+        EURLEX + "32011R1007",
+        "Regelt de benamingen van textielvezels en de etikettering van de "
+        "vezelsamenstelling van textielproducten.",
+    ),
+    "SPEELGOED": (
+        EURLEX + "32009L0048",
+        "Stelt veiligheidseisen aan speelgoed (CE-markering, leeftijdsclassificatie, "
+        "waarschuwingen en EN 71-tests).",
+    ),
+    "MDR": (
+        EURLEX + "32017R0745",
+        "Verordening medische hulpmiddelen: eisen aan UDI, risicoklasse, "
+        "CE-certificering en klinische evaluatie.",
+    ),
+    "COSMETICA": (
+        EURLEX + "32009R1223",
+        "Regelt de veiligheid van cosmetica: INCI-ingrediëntenlijst, "
+        "CPNP-notificatie, een verantwoordelijke persoon in de EU en een PIF.",
+    ),
+}
 
 LEVERANCIERS = [
     ("Van der Berg Elektronica B.V.", "Jan van der Berg", "j.vandenberg@vdberg-elektro.nl", "NL"),
@@ -278,9 +365,11 @@ def seed():
         wetcode_to_velden = defaultdict(list)
         wetcode_to_catnamen = {}
         for code, naam, beschr, dt, status, velden, catnamen in WETGEVING:
+            info = WET_INFO.get(code, (None, None))
             w = models.Wetgeving(
                 code=code, naam=naam, beschrijving=beschr,
                 van_kracht_vanaf=dt, status=status, actief=True,
+                info_url=info[0], samenvatting=info[1],
             )
             namen = alle_cat_namen if catnamen == ALLE else catnamen
             w.categorieen = [cat_map[n] for n in namen]
@@ -366,6 +455,11 @@ def seed():
         product_cat_namen = {cat for _, cat in prod_objs}
         for code, w in wet_map.items():
             w.actief = bool(set(wetcode_to_catnamen[code]) & product_cat_namen)
+        db.flush()
+
+        # gedenormaliseerde compliance-cache per product vullen
+        for product, _ in prod_objs:
+            compliance_service.herbereken_product(db, product)
 
         # dataverzoeken
         db.add_all(

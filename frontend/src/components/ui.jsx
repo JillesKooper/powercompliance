@@ -69,6 +69,45 @@ export function ErrorBox({ message }) {
   );
 }
 
+export function Paginatie({ pagina, onPagina }) {
+  if (!pagina || pagina.pages <= 1) {
+    return pagina ? (
+      <div className="text-xs text-slate-400 px-1 py-2">
+        {pagina.total} resultaten
+      </div>
+    ) : null;
+  }
+  const { page, pages, total, per_page } = pagina;
+  const van = (page - 1) * per_page + 1;
+  const tot = Math.min(page * per_page, total);
+  return (
+    <div className="flex items-center justify-between px-1 py-3 text-sm">
+      <span className="text-slate-500">
+        {van}–{tot} van {total}
+      </span>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onPagina(page - 1)}
+          disabled={page <= 1}
+          className="rounded-lg border border-slate-300 px-3 py-1 disabled:opacity-40 hover:bg-slate-50"
+        >
+          ← Vorige
+        </button>
+        <span className="text-slate-500">
+          {page} / {pages}
+        </span>
+        <button
+          onClick={() => onPagina(page + 1)}
+          disabled={page >= pages}
+          className="rounded-lg border border-slate-300 px-3 py-1 disabled:opacity-40 hover:bg-slate-50"
+        >
+          Volgende →
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Button({ children, variant = "primary", ...props }) {
   const variants = {
     primary: "bg-brand-600 hover:bg-brand-700 text-white",

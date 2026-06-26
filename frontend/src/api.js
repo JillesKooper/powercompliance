@@ -34,7 +34,12 @@ async function upload(path, file) {
 
 export const api = {
   dashboard: () => request("/dashboard"),
-  leveranciers: () => request("/leveranciers"),
+  leveranciers: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== "" && v != null)
+    ).toString();
+    return request(`/leveranciers${qs ? `?${qs}` : ""}`);
+  },
   leverancier: (id) => request(`/leveranciers/${id}`),
   maakLeverancier: (data) =>
     request("/leveranciers", { method: "POST", body: JSON.stringify(data) }),
@@ -51,6 +56,12 @@ export const api = {
   },
   product: (id) => request(`/producten/${id}`),
   productCompliance: (id) => request(`/producten/${id}/compliance`),
+  scrapeProduct: (id) =>
+    request(`/producten/${id}/scrape`, { method: "POST" }),
+  verifieerWaarde: (productId, veldId) =>
+    request(`/producten/${productId}/compliance/${veldId}/verifieer`, {
+      method: "POST",
+    }),
   maakProduct: (data) =>
     request("/producten", { method: "POST", body: JSON.stringify(data) }),
   wijzigProduct: (id, data) =>
@@ -66,7 +77,14 @@ export const api = {
       body: JSON.stringify({ actief }),
     }),
   ontbrekendeData: () => request("/ontbrekende-data"),
-  dataverzoeken: () => request("/dataverzoeken"),
+  dataverzoeken: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== "" && v != null)
+    ).toString();
+    return request(`/dataverzoeken${qs ? `?${qs}` : ""}`);
+  },
+  bulkDataverzoeken: (data) =>
+    request("/dataverzoeken/bulk", { method: "POST", body: JSON.stringify(data) }),
   notificaties: () => request("/notificaties"),
   markeerNotificatieGelezen: (id) =>
     request(`/notificaties/${id}/gelezen`, { method: "POST" }),

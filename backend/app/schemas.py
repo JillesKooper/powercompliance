@@ -88,6 +88,7 @@ class ProductMetStats(ProductOut):
     aantal_ingevuld: int = 0
     aantal_ontbrekend: int = 0
     compliance_percentage: float = 100.0
+    compliance_status: str = "onbekend"
 
 
 # ---------- Wetgeving / ComplianceVeld ----------
@@ -112,6 +113,8 @@ class WetgevingOut(BaseModel):
     van_kracht_vanaf: Optional[date] = None
     status: str
     actief: bool = True
+    info_url: Optional[str] = None
+    samenvatting: Optional[str] = None
     compliance_velden: List[ComplianceVeldOut] = []
 
 
@@ -129,6 +132,19 @@ class WetgevingBeheer(BaseModel):
 
 class WetgevingActiefRequest(BaseModel):
     actief: bool
+
+
+# ---------- Bulk dataverzoeken ----------
+class BulkDataverzoekRequest(BaseModel):
+    leverancier_ids: List[int]
+    onderwerp: str
+    bericht: Optional[str] = None
+    deadline: Optional[date] = None
+
+
+class BulkDataverzoekResultaat(BaseModel):
+    aantal: int
+    dataverzoek_ids: List[int] = []
 
 
 # ---------- Ontbrekende data ----------
@@ -193,6 +209,11 @@ class ProductComplianceRegel(BaseModel):
     wetgeving_code: str
     ingevuld: bool
     waarde: Optional[str] = None
+    bron: Optional[str] = None  # handmatig | automatisch | niet_gevonden
+    bron_url: Optional[str] = None
+    geverifieerd: bool = False
+    twijfelachtig: bool = False
+    status: str = "ontbreekt"  # ingevuld | automatisch | niet_gevonden_online | ontbreekt
 
 
 # ---------- Import ----------
@@ -280,3 +301,23 @@ class DashboardStats(BaseModel):
     gemiddelde_compliance: float
     open_dataverzoeken: int
     compliance_per_wetgeving: List[dict] = []
+
+
+# ---------- Paginering (na de bovenstaande modellen gedefinieerd) ----------
+class Pagina(BaseModel):
+    total: int
+    page: int
+    per_page: int
+    pages: int
+
+
+class ProductenPagina(Pagina):
+    items: List[ProductMetStats] = []
+
+
+class LeveranciersPagina(Pagina):
+    items: List[LeverancierMetStats] = []
+
+
+class DataverzoekenPagina(Pagina):
+    items: List[DataverzoekOut] = []

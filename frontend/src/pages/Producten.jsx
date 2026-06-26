@@ -8,6 +8,7 @@ import {
   Loading,
   ErrorBox,
   Button,
+  Paginatie,
 } from "../components/ui";
 import ImportDialog from "../components/ImportDialog.jsx";
 
@@ -20,37 +21,49 @@ const LEEG = {
 };
 
 export default function Producten() {
-  const [producten, setProducten] = useState(null);
+  const [pagina, setPagina] = useState(null);
   const [leveranciers, setLeveranciers] = useState([]);
   const [categorieen, setCategorieen] = useState([]);
   const [error, setError] = useState(null);
   const [zoek, setZoek] = useState("");
   const [filterLev, setFilterLev] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [page, setPage] = useState(1);
   const [toonForm, setToonForm] = useState(false);
   const [toonImport, setToonImport] = useState(false);
   const [form, setForm] = useState(LEEG);
+
+  const producten = pagina?.items ?? null;
 
   async function laad() {
     try {
       const data = await api.producten({
         zoek,
         leverancier_id: filterLev || undefined,
+        compliance_status: filterStatus || undefined,
+        page,
+        per_page: 50,
       });
-      setProducten(data);
+      setPagina(data);
     } catch (e) {
       setError(e.message);
     }
   }
 
   useEffect(() => {
-    api.leveranciers().then(setLeveranciers).catch(() => {});
+    api.leveranciers({ per_page: 1000 }).then((d) => setLeveranciers(d.items)).catch(() => {});
     api.categorieen().then(setCategorieen).catch(() => {});
   }, []);
+
+  // filterwijziging -> terug naar pagina 1
+  useEffect(() => {
+    setPage(1);
+  }, [zoek, filterLev, filterStatus]);
 
   useEffect(() => {
     const t = setTimeout(laad, 250);
     return () => clearTimeout(t);
-  }, [zoek, filterLev]);
+  }, [zoek, filterLev, filterStatus, page]);
 
   async function opslaan(e) {
     e.preventDefault();
@@ -96,6 +109,16 @@ export default function Producten() {
               {l.naam}
             </option>
           ))}
+        </select>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
+        >
+          <option value="">Alle statussen</option>
+          <option value="compliant">Compliant</option>
+          <option value="gedeeltelijk">Gedeeltelijk</option>
+          <option value="incompleet">Incompleet</option>
         </select>
         <Button variant="ghost" onClick={() => setToonImport(true)}>
           ⬆ Importeren
@@ -255,6 +278,8 @@ export default function Producten() {
           </table>
         )}
       </Card>
+
+      <Paginatie pagina={pagina} onPagina={setPage} />
     </div>
   );
 }

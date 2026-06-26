@@ -10,17 +10,47 @@ export default function ProductDetail() {
   const [regels, setRegels] = useState(null);
   const [error, setError] = useState(null);
   const [mailCode, setMailCode] = useState(null);
+  const [scrapeMelding, setScrapeMelding] = useState(null);
+
+  async function laad() {
+    try {
+      const [p, r] = await Promise.all([
+        api.product(id),
+        api.productCompliance(id),
+      ]);
+      setProduct(p);
+      setRegels(r);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
 
   useEffect(() => {
     setProduct(null);
     setRegels(null);
-    Promise.all([api.product(id), api.productCompliance(id)])
-      .then(([p, r]) => {
-        setProduct(p);
-        setRegels(r);
-      })
-      .catch((e) => setError(e.message));
+    laad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  async function startScrape() {
+    setScrapeMelding("Scrapen gestart… (GS1 → Open Food Facts → fabrikant → web)");
+    try {
+      await api.scrapeProduct(id);
+      // de scrape draait als achtergrondtaak; na een moment herladen
+      setTimeout(async () => {
+        await laad();
+        setScrapeMelding("Scrape voltooid — resultaten bijgewerkt.");
+        setTimeout(() => setScrapeMelding(null), 4000);
+      }, 6000);
+    } catch (e) {
+      setScrapeMelding("Scrape mislukt: " + e.message);
+    }
+  }
+
+  async function verifieer(veldId) {
+    await api.verifieerWaarde(id, veldId);
+    laad();
+  }
 
   if (error) return <ErrorBox message={error} />;
   if (!product || !regels) return <Loading />;
@@ -41,9 +71,22 @@ export default function ProductDetail() {
         />
       )}
 
-      <Link to="/producten" className="text-sm text-brand-600 hover:underline">
-        ← Terug naar producten
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link to="/producten" className="text-sm text-brand-600 hover:underline">
+          ← Terug naar producten
+        </Link>
+        {product.aantal_ontbrekend > 0 && (
+          <Button variant="ghost" onClick={startScrape}>
+            🔎 Scrape ontbrekende data
+          </Button>
+        )}
+      </div>
+
+      {scrapeMelding && (
+        <div className="rounded-lg bg-brand-50 border border-brand-100 text-brand-700 px-4 py-2 text-sm">
+          {scrapeMelding}
+        </div>
+      )}
 
       <Card className="p-6">
         <div className="flex items-start justify-between gap-6">
@@ -101,22 +144,34 @@ export default function ProductDetail() {
             {items.map((r) => (
               <div
                 key={r.compliance_veld_id}
-                className="px-5 py-3 flex items-center justify-between text-sm"
+                className="px-5 py-3 flex items-center justify-between gap-3 text-sm"
               >
-                <div>
+                <div className="min-w-0">
                   <div className="text-slate-700">{r.veld_naam}</div>
-                  <div className="text-xs text-slate-400">{r.veld_type}</div>
-                </div>
-                {r.ingevuld ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-500 text-xs max-w-[200px] truncate">
-                      {r.waarde}
-                    </span>
-                    <Badge color="green">✓ ingevuld</Badge>
+                  <div className="text-xs text-slate-400">
+                    {r.veld_type}
+                    {r.waarde && (
+                      <>
+                        {" · "}
+                        <span className="text-slate-500">{r.waarde}</span>
+                      </>
+                    )}
+                    {r.bron_url && (
+                      <>
+                        {" · "}
+                        <a
+                          href={r.bron_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:underline"
+                        >
+                          bron
+                        </a>
+                      </>
+                    )}
                   </div>
-                ) : (
-                  <Badge color="red">ontbreekt</Badge>
-                )}
+                </div>
+                <VeldStatus r={r} onVerifieer={() => verifieer(r.compliance_veld_id)} />
               </div>
             ))}
           </div>
@@ -125,4 +180,28 @@ export default function ProductDetail() {
       })}
     </div>
   );
+}
+
+function VeldStatus({ r, onVerifieer }) {
+  if (r.status === "ingevuld") {
+    return (
+      <Badge color="green">{r.geverifieerd ? "✓ geverifieerd" : "✓ ingevuld"}</Badge>
+    );
+  }
+  if (r.status === "automatisch") {
+    return (
+      <div className="flex items-center gap-2 shrink-0">
+        <Badge color="amber">
+          ✨ automatisch{r.twijfelachtig ? " · twijfelachtig" : ""}
+        </Badge>
+        <Button variant="ghost" onClick={onVerifieer}>
+          Verifieer
+        </Button>
+      </div>
+    );
+  }
+  if (r.status === "niet_gevonden_online") {
+    return <Badge color="slate">niet online gevonden</Badge>;
+  }
+  return <Badge color="red">ontbreekt</Badge>;
 }

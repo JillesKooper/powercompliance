@@ -1,32 +1,53 @@
-from typing import List
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, compliance
+from .. import models, schemas, compliance_service
 from ..database import get_db
 
 router = APIRouter(prefix="/api/leveranciers", tags=["leveranciers"])
 
 
-@router.get("", response_model=List[schemas.LeverancierMetStats])
-def lijst_leveranciers(db: Session = Depends(get_db)):
-    leveranciers = db.query(models.Leverancier).order_by(models.Leverancier.naam).all()
+@router.get("", response_model=schemas.LeveranciersPagina)
+def lijst_leveranciers(
+    zoek: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=1000),
+    db: Session = Depends(get_db),
+):
+    q = db.query(models.Leverancier)
+    if zoek:
+        q = q.filter(models.Leverancier.naam.ilike(f"%{zoek}%"))
+    total = q.count()
+    leveranciers = (
+        q.order_by(models.Leverancier.naam)
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
     resultaat = []
     for lev in leveranciers:
-        totaal_ontbrekend = 0
-        pcts = []
-        for product in lev.producten:
-            stats = compliance.product_compliance(db, product)
-            totaal_ontbrekend += stats["aantal_ontbrekend"]
-            pcts.append(stats["compliance_percentage"])
-        gem = round(sum(pcts) / len(pcts), 1) if pcts else 100.0
+        # gebruik de gedenormaliseerde compliance-cache per product (schaalbaar)
+        producten = lev.producten
+        totaal_ontbrekend = sum(p.aantal_ontbrekend or 0 for p in producten)
+        gem = (
+            round(sum(p.compliance_percentage or 0 for p in producten) / len(producten), 1)
+            if producten
+            else 100.0
+        )
         item = schemas.LeverancierMetStats.model_validate(lev)
-        item.aantal_producten = len(lev.producten)
+        item.aantal_producten = len(producten)
         item.aantal_ontbrekend = totaal_ontbrekend
         item.compliance_percentage = gem
         resultaat.append(item)
-    return resultaat
+    return schemas.LeveranciersPagina(
+        items=resultaat,
+        total=total,
+        page=page,
+        per_page=per_page,
+        pages=(total + per_page - 1) // per_page if per_page else 1,
+    )
 
 
 @router.get("/{leverancier_id}", response_model=schemas.LeverancierOut)

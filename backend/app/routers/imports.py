@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from .. import importer, schemas
+from .. import compliance_service, importer, schemas
 from ..database import get_db
 
 router = APIRouter(prefix="/api/import", tags=["import"])
@@ -31,12 +31,15 @@ async def import_leveranciers(
             status_code=422,
             detail=f"Ontbrekende verplichte kolommen: {', '.join(e.kolommen)}",
         )
+    compliance_service.invalideer_dashboard()
     return resultaat
 
 
 @router.post("/producten", response_model=schemas.ImportSamenvatting)
 async def import_producten(
-    file: UploadFile = File(...), db: Session = Depends(get_db)
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
 ):
     _controleer_bestand(file)
     inhoud = await file.read()
@@ -47,4 +50,6 @@ async def import_producten(
             status_code=422,
             detail=f"Ontbrekende verplichte kolommen: {', '.join(e.kolommen)}",
         )
+    # compliance-cache van alle producten asynchroon herberekenen
+    background_tasks.add_task(compliance_service.herbereken_alle_bg)
     return resultaat

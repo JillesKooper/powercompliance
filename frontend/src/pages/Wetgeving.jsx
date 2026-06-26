@@ -62,14 +62,31 @@ export default function Wetgeving() {
                 )}
               </div>
               <div className="text-sm text-slate-600 mt-0.5">{w.naam}</div>
+              {w.samenvatting && (
+                <p className="text-sm text-slate-500 mt-2 leading-relaxed max-w-3xl">
+                  {w.samenvatting}
+                </p>
+              )}
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <Button
-                variant="ghost"
-                onClick={() => setUitvraag({ code: w.code, naam: w.naam })}
-              >
-                ✉️ Uitvragen
-              </Button>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex items-center gap-3">
+                {w.info_url && (
+                  <a
+                    href={w.info_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Officiële tekst →
+                  </a>
+                )}
+                <Button
+                  variant="ghost"
+                  onClick={() => setUitvraag({ code: w.code, naam: w.naam })}
+                >
+                  ✉️ Uitvragen
+                </Button>
+              </div>
               <button
                 onClick={() => setOpen(open === w.id ? null : w.id)}
                 className="text-xs text-slate-400 hover:text-slate-600"
