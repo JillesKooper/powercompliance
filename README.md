@@ -43,14 +43,25 @@ Open http://localhost:5173 — de Vite-dev-server proxyt `/api` naar de backend.
 | **Leverancier** | Toeleverancier met contactgegevens |
 | **Product** | Artikel, gekoppeld aan leverancier + categorie |
 | **Categorie** | Productcategorie (bepaalt welke velden van toepassing zijn) |
-| **Wetgeving** | EU-regelgeving (PPWR, Batterij, REACH/CLP, CPR, GPSR, ErP) |
+| **Wetgeving** | EU-regelgeving (PPWR, CSRD, Batterij, REACH/CLP, CPR, GPSR, ErP, EUDR, Textiel, Speelgoed, MDR, Cosmetica) — met `actief`-toggle en gekoppelde categorieën |
 | **ComplianceVeld** | Verplicht datapunt onder een wetgeving |
 | **ProductComplianceWaarde** | Ingevulde waarde per product/veld (basis voor "ontbrekende data") |
 | **Dataverzoek** | Verzoek aan leverancier om ontbrekende data aan te leveren |
 | **Notificatie** | Meldingen (bv. aankomende wetgeving) |
 
-Een compliance-veld geldt voor een product als het veld géén categorie heeft
-(geldt voor alles) óf de categorie overeenkomt met die van het product.
+Welke wetgeving op een product van toepassing is, wordt **automatisch bepaald op
+basis van de categorie** van het product (wetgeving↔categorie-koppeling). Alleen
+**actieve** wetgeving telt mee in compliance-berekeningen en dataverzoeken. Een
+compliance-veld van een relevante, actieve wetgeving geldt voor het product.
+
+## Wetgevingsbeheer (instellingen)
+
+Op **Instellingen** staat een beheeroverzicht van alle wetgeving met een
+aan/uit-toggle. Per wetgeving zie je hoeveel producten eronder vallen en de
+huidige compliance-score. Wetgeving staat standaard AAN als er producten onder
+vallen (anders uit, bv. Speelgoed/MDR/Cosmetica zonder producten). Uitgezette
+wetgeving wordt genegeerd in alle compliance-berekeningen, het dashboard en
+dataverzoeken.
 
 ## Belangrijkste endpoints
 

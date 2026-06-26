@@ -52,6 +52,9 @@ export default function Wetgeving() {
                 <Badge color={STATUS_KLEUR[w.status] || "slate"}>
                   {w.status}
                 </Badge>
+                {w.actief === false && (
+                  <Badge color="slate">uitgeschakeld</Badge>
+                )}
                 {w.van_kracht_vanaf && (
                   <span className="text-xs text-slate-400">
                     vanaf {w.van_kracht_vanaf}

@@ -18,12 +18,23 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Table,
     Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
 from .database import Base
+
+
+# Koppeltabel: welke categorieën vallen onder welke wetgeving (m-op-n).
+# Bepaalt welke wetgeving automatisch van toepassing is op een product.
+wetgeving_categorie = Table(
+    "wetgeving_categorie",
+    Base.metadata,
+    Column("wetgeving_id", Integer, ForeignKey("wetgeving.id"), primary_key=True),
+    Column("categorie_id", Integer, ForeignKey("categorieen.id"), primary_key=True),
+)
 
 
 class Categorie(Base):
@@ -89,9 +100,14 @@ class Wetgeving(Base):
     beschrijving = Column(Text, nullable=True)
     van_kracht_vanaf = Column(Date, nullable=True)
     status = Column(String, default="van kracht")  # van kracht | aankomend | concept
+    # door beheerder aan/uit te zetten; uit = niet meegenomen in compliance
+    actief = Column(Boolean, default=True)
 
     compliance_velden = relationship(
         "ComplianceVeld", back_populates="wetgeving", cascade="all, delete-orphan"
+    )
+    categorieen = relationship(
+        "Categorie", secondary=wetgeving_categorie, backref="wetgevingen"
     )
 
 

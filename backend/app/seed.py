@@ -1,10 +1,16 @@
-"""Vult de database met voorbeelddata: EU-wetgeving, compliance-velden,
-categorieën, leveranciers en producten — inclusief deels ontbrekende data zodat
-de 'ontbrekende data'-functionaliteit zichtbaar is.
+"""Vult de database met uitgebreide voorbeelddata.
+
+- 10 categorieën; wetgeving is per categorie gekoppeld (wetgeving↔categorie).
+- 12 EU-wetgevingen, elk met compliance-velden en de categorieën waarvoor ze
+  gelden. Wetgeving staat standaard AAN als er producten onder vallen.
+- 10 leveranciers met Nederlandse bedrijfsnamen.
+- 50 producten verdeeld over 7 productcategorieën, met ~40% compliant,
+  ~20% gedeeltelijk en ~40% incompleet ingevulde compliance-data.
 
 Draai met:  python -m app.seed
 """
-from datetime import date, datetime, timedelta
+from collections import defaultdict
+from datetime import date, timedelta
 
 from .database import Base, SessionLocal, engine
 from . import models
@@ -15,46 +21,78 @@ def reset_db():
     Base.metadata.create_all(bind=engine)
 
 
-# (code, naam, beschrijving, van_kracht_vanaf, status, [velden])
-# veld = (naam, sleutel, veld_type, categorie_naam_of_None)
+# (naam, beschrijving)
+CATEGORIEEN = [
+    ("Elektronica", "Elektrische en elektronische apparaten"),
+    ("Chemie", "Chemische producten en stoffen"),
+    ("Bouwmaterialen", "Producten voor de bouw"),
+    ("Verpakkingen", "Verpakkingsmaterialen"),
+    ("Textiel", "Textiel en kleding"),
+    ("Meubels", "Meubilair en woninginrichting"),
+    ("Voedsel", "Voedingsmiddelen en ingrediënten"),
+    ("Speelgoed", "Speelgoed en spelmateriaal"),
+    ("Medisch", "Medische hulpmiddelen"),
+    ("Cosmetica", "Cosmetica en verzorgingsproducten"),
+]
+
+ALLE = "ALLE"  # geldt voor alle categorieën
+
+# code, naam, beschrijving, van_kracht_vanaf, status,
+#   velden=[(naam, sleutel, type)], categorieen=[namen] of ALLE
 WETGEVING = [
     (
         "PPWR",
         "Verpakkingsverordening (Packaging & Packaging Waste Regulation)",
-        "EU-verordening 2025/40 over verpakkingen en verpakkingsafval: recycleerbaarheid, recyclaatgehalte en etikettering.",
+        "EU-verordening 2025/40 over verpakkingen en verpakkingsafval.",
         date(2026, 8, 12),
         "aankomend",
         [
-            ("Verpakkingsmateriaal", "ppwr_materiaal", "tekst", None),
-            ("Recycleerbaarheid (%)", "ppwr_recycleerbaarheid", "getal", None),
-            ("Aandeel gerecycled materiaal (%)", "ppwr_recyclaat", "getal", None),
-            ("Verpakkingsgewicht (g)", "ppwr_gewicht", "getal", None),
+            ("Verpakkingsmateriaal", "ppwr_materiaal", "tekst"),
+            ("Recycleerbaarheid (%)", "ppwr_recycleerbaarheid", "getal"),
+            ("Aandeel gerecycled materiaal (%)", "ppwr_recyclaat", "getal"),
+            ("Verpakkingsgewicht (g)", "ppwr_gewicht", "getal"),
         ],
+        ALLE,
+    ),
+    (
+        "CSRD",
+        "Corporate Sustainability Reporting Directive",
+        "Duurzaamheidsrapportageverplichting voor grote bedrijven (ESG).",
+        date(2024, 1, 1),
+        "van kracht",
+        [
+            ("ESG-rapportagecode", "csrd_code", "tekst"),
+            ("CO2-voetafdruk scope 1+2 (kg CO2e)", "csrd_co2", "getal"),
+            ("Duurzaamheidsverslag (URL)", "csrd_verslag", "tekst"),
+        ],
+        ALLE,
     ),
     (
         "BATTERIJ",
         "Batterijverordening (EU) 2023/1542",
-        "Eisen aan duurzaamheid, koolstofvoetafdruk, recyclaatgehalte en het digitale batterijpaspoort.",
+        "Eisen aan duurzaamheid, koolstofvoetafdruk en het batterijpaspoort.",
         date(2024, 2, 18),
         "van kracht",
         [
-            ("Batterijchemie", "bat_chemie", "tekst", "Batterijen & Accu's"),
-            ("Capaciteit (Wh)", "bat_capaciteit", "getal", "Batterijen & Accu's"),
-            ("CO2-voetafdruk (kg CO2e)", "bat_co2", "getal", "Batterijen & Accu's"),
-            ("Batterijpaspoort-ID", "bat_paspoort", "tekst", "Batterijen & Accu's"),
+            ("Batterijchemie", "bat_chemie", "tekst"),
+            ("Capaciteit (Wh)", "bat_capaciteit", "getal"),
+            ("CO2-voetafdruk (kg CO2e)", "bat_co2", "getal"),
+            ("Batterijpaspoort-ID", "bat_paspoort", "tekst"),
         ],
+        ["Elektronica"],
     ),
     (
         "REACH",
         "REACH/CLP — Stoffen & etikettering",
-        "Registratie en beperking van chemische stoffen (REACH) en indeling, etikettering en verpakking van gevaarlijke stoffen (CLP).",
+        "Registratie en beperking van chemische stoffen en etikettering.",
         date(2007, 6, 1),
         "van kracht",
         [
-            ("SVHC-stoffen aanwezig", "reach_svhc", "boolean", None),
-            ("Veiligheidsinformatieblad (SDS)", "reach_sds", "bestand", None),
-            ("CLP-gevarenpictogrammen", "reach_clp", "tekst", None),
+            ("SVHC-stoffen aanwezig", "reach_svhc", "boolean"),
+            ("Veiligheidsinformatieblad (SDS)", "reach_sds", "bestand"),
+            ("CLP-gevarenpictogrammen", "reach_clp", "tekst"),
         ],
+        ["Chemie", "Cosmetica", "Textiel", "Bouwmaterialen", "Speelgoed", "Elektronica"],
     ),
     (
         "CPR",
@@ -63,22 +101,24 @@ WETGEVING = [
         date(2013, 7, 1),
         "van kracht",
         [
-            ("Prestatieverklaring (DoP)", "cpr_dop", "bestand", "Bouwmaterialen"),
-            ("CE-markering", "cpr_ce", "boolean", "Bouwmaterialen"),
-            ("Brandklasse", "cpr_brandklasse", "tekst", "Bouwmaterialen"),
+            ("Prestatieverklaring (DoP)", "cpr_dop", "bestand"),
+            ("CE-markering", "cpr_ce", "boolean"),
+            ("Brandklasse", "cpr_brandklasse", "tekst"),
         ],
+        ["Bouwmaterialen"],
     ),
     (
         "GPSR",
         "Algemene productveiligheidsverordening (General Product Safety Regulation)",
-        "EU-verordening 2023/988: veiligheidswaarschuwingen, traceerbaarheid en verantwoordelijke marktdeelnemer in de EU.",
+        "EU 2023/988: veiligheidswaarschuwingen en traceerbaarheid.",
         date(2024, 12, 13),
         "van kracht",
         [
-            ("Verantwoordelijke EU-marktdeelnemer", "gpsr_marktdeelnemer", "tekst", None),
-            ("Veiligheidswaarschuwingen", "gpsr_waarschuwingen", "tekst", None),
-            ("Gebruiksaanwijzing aanwezig", "gpsr_handleiding", "boolean", None),
+            ("Verantwoordelijke EU-marktdeelnemer", "gpsr_marktdeelnemer", "tekst"),
+            ("Veiligheidswaarschuwingen", "gpsr_waarschuwingen", "tekst"),
+            ("Gebruiksaanwijzing aanwezig", "gpsr_handleiding", "boolean"),
         ],
+        ["Elektronica", "Speelgoed", "Meubels", "Textiel", "Cosmetica"],
     ),
     (
         "ERP",
@@ -87,42 +127,137 @@ WETGEVING = [
         date(2009, 11, 20),
         "van kracht",
         [
-            ("Energie-efficiëntieklasse", "erp_energieklasse", "tekst", "Elektronica"),
-            ("Energieverbruik (kWh/jaar)", "erp_verbruik", "getal", "Elektronica"),
-            ("EPREL-registratienummer", "erp_eprel", "tekst", "Elektronica"),
+            ("Energie-efficiëntieklasse", "erp_energieklasse", "tekst"),
+            ("Energieverbruik (kWh/jaar)", "erp_verbruik", "getal"),
+            ("EPREL-registratienummer", "erp_eprel", "tekst"),
         ],
+        ["Elektronica"],
+    ),
+    (
+        "EUDR",
+        "EU-ontbossingsverordening (Deforestation Regulation)",
+        "EU 2023/1115: ontbossingsvrije toeleveringsketens voor o.a. hout, "
+        "papier, soja, cacao en palmolie.",
+        date(2025, 12, 30),
+        "aankomend",
+        [
+            ("Herkomstland grondstof", "eudr_herkomst", "tekst"),
+            ("Geolocatie productie (coördinaten)", "eudr_geo", "tekst"),
+            ("Ontbossingsvrij verklaard", "eudr_ontbossingsvrij", "boolean"),
+            ("Due-diligence verklaringsnummer", "eudr_dds", "tekst"),
+        ],
+        ["Bouwmaterialen", "Verpakkingen", "Voedsel", "Meubels"],
+    ),
+    (
+        "TEXTIEL",
+        "Textielverordening (EU)",
+        "Etikettering, vezelsamenstelling en digitaal productpaspoort voor textiel.",
+        date(2025, 7, 1),
+        "aankomend",
+        [
+            ("Vezelsamenstelling", "tex_vezels", "tekst"),
+            ("Onderhoudssymbolen", "tex_onderhoud", "tekst"),
+            ("Land van vervaardiging", "tex_land", "tekst"),
+            ("Digitaal productpaspoort-ID", "tex_dpp", "tekst"),
+        ],
+        ["Textiel"],
+    ),
+    (
+        "SPEELGOED",
+        "Speelgoedrichtlijn 2009/48/EC",
+        "Veiligheidseisen voor speelgoed (CE, leeftijd, EN 71).",
+        date(2011, 7, 20),
+        "van kracht",
+        [
+            ("CE-markering", "toy_ce", "boolean"),
+            ("Leeftijdsclassificatie", "toy_leeftijd", "tekst"),
+            ("Waarschuwing kleine onderdelen", "toy_waarschuwing", "tekst"),
+            ("EN 71 testrapport", "toy_en71", "bestand"),
+        ],
+        ["Speelgoed"],
+    ),
+    (
+        "MDR",
+        "Medische hulpmiddelen (MDR 2017/745)",
+        "Eisen aan medische hulpmiddelen: UDI, risicoklasse, CE-certificaat.",
+        date(2021, 5, 26),
+        "van kracht",
+        [
+            ("UDI-DI code", "mdr_udi", "tekst"),
+            ("Risicoklasse", "mdr_klasse", "tekst"),
+            ("CE-certificaat (aangemelde instantie)", "mdr_ce", "bestand"),
+            ("Klinische evaluatie", "mdr_klinisch", "bestand"),
+        ],
+        ["Medisch"],
+    ),
+    (
+        "COSMETICA",
+        "Cosmeticaverordening (EC) 1223/2009",
+        "Eisen aan cosmetica: INCI, CPNP-notificatie, verantwoordelijke persoon.",
+        date(2013, 7, 11),
+        "van kracht",
+        [
+            ("INCI-ingrediëntenlijst", "cos_inci", "tekst"),
+            ("CPNP-notificatienummer", "cos_cpnp", "tekst"),
+            ("Verantwoordelijke persoon (EU)", "cos_rp", "tekst"),
+            ("Productinformatiedossier (PIF)", "cos_pif", "bestand"),
+        ],
+        ["Cosmetica"],
     ),
 ]
 
-CATEGORIEEN = [
-    ("Elektronica", "Elektrische en elektronische apparaten"),
-    ("Batterijen & Accu's", "Draagbare en industriële batterijen"),
-    ("Bouwmaterialen", "Producten voor de bouw"),
-    ("Verpakkingen", "Verpakkingsmaterialen"),
-    ("Gereedschap", "Hand- en elektrisch gereedschap"),
-]
-
 LEVERANCIERS = [
-    ("Volt Electronics B.V.", "Jan de Vries", "j.devries@volt-electro.nl", "NL"),
-    ("PowerCell GmbH", "Anna Schmidt", "a.schmidt@powercell.de", "DE"),
-    ("BouwTotaal Groothandel", "Mark Jansen", "info@bouwtotaal.nl", "NL"),
-    ("GreenPack Solutions", "Lisa Bakker", "lisa@greenpack.eu", "BE"),
-    ("ToolMaster Trading", "Peter Visser", "p.visser@toolmaster.nl", "NL"),
+    ("Van der Berg Elektronica B.V.", "Jan van der Berg", "j.vandenberg@vdberg-elektro.nl", "NL"),
+    ("Koninklijke Jansen Chemie N.V.", "Petra Jansen", "p.jansen@jansenchemie.nl", "NL"),
+    ("Bouwgroep De Vries", "Mark de Vries", "info@bouwgroepdevries.nl", "NL"),
+    ("GreenPack Verpakkingen B.V.", "Lisa Bakker", "lisa@greenpack.nl", "NL"),
+    ("Textielhandel Bakker & Zonen", "Henk Bakker", "verkoop@bakkertextiel.nl", "NL"),
+    ("Meubelfabriek Hendriks", "Sophie Hendriks", "s.hendriks@meubelhendriks.nl", "NL"),
+    ("Smit Foods Nederland B.V.", "Karel Smit", "k.smit@smitfoods.nl", "NL"),
+    ("Visser Trading B.V.", "Anouk Visser", "a.visser@vissertrading.nl", "NL"),
+    ("De Groot Groothandel", "Thomas de Groot", "thomas@degrootgroothandel.nl", "NL"),
+    ("Mulder Industriële Supplies", "Ellen Mulder", "e.mulder@mulder-supplies.nl", "NL"),
 ]
 
-# (naam, artikelnummer, ean, categorie_naam, leverancier_naam)
-PRODUCTEN = [
-    ("LED Paneel 60x60", "VLT-LED-6060", "8710000000017", "Elektronica", "Volt Electronics B.V."),
-    ("USB-C Snellader 65W", "VLT-CHG-65", "8710000000024", "Elektronica", "Volt Electronics B.V."),
-    ("Lithium Accu 18V 4Ah", "PWR-LI-184", "4010000000010", "Batterijen & Accu's", "PowerCell GmbH"),
-    ("AA Oplaadbare Batterij 4-pack", "PWR-AA-4", "4010000000027", "Batterijen & Accu's", "PowerCell GmbH"),
-    ("Gipsplaat 12.5mm", "BT-GIPS-125", "8712000000013", "Bouwmaterialen", "BouwTotaal Groothandel"),
-    ("Isolatieplaat PIR 100mm", "BT-PIR-100", "8712000000020", "Bouwmaterialen", "BouwTotaal Groothandel"),
-    ("Kartonnen doos 40x30x30", "GP-BOX-403030", "5410000000019", "Verpakkingen", "GreenPack Solutions"),
-    ("Krimpfolie rol 50cm", "GP-FOIL-50", "5410000000026", "Verpakkingen", "GreenPack Solutions"),
-    ("Accuboormachine 18V", "TM-DRILL-18", "8714000000015", "Gereedschap", "ToolMaster Trading"),
-    ("Haakse slijper 125mm", "TM-GRIND-125", "8714000000022", "Gereedschap", "ToolMaster Trading"),
-]
+# productnamen per categorie (samen 50)
+PRODUCTEN_PER_CAT = {
+    "Elektronica": [
+        "LED Paneel 60x60", "USB-C Snellader 65W", "Draadloze Muis", "Bluetooth Speaker",
+        "4K Monitor 27 inch", "Powerbank 20000mAh", "Slimme Thermostaat", "Wifi Router AX",
+    ],
+    "Chemie": [
+        "Industriële Ontvetter 5L", "Siliconenkit Transparant", "Tweecomponentenlijm",
+        "Verfverdunner 1L", "Antivries -36", "Vloeibaar Wasmiddel 5L", "Bleekmiddel 2L",
+    ],
+    "Bouwmaterialen": [
+        "Gipsplaat 12.5mm", "Isolatieplaat PIR 100mm", "Houten Vloerdeel Eiken",
+        "Betonmortel 25kg", "Dakpan Keramisch", "Multiplex Plaat 18mm", "Cementtegel 60x60",
+    ],
+    "Verpakkingen": [
+        "Kartonnen Doos 40x30x30", "Krimpfolie Rol 50cm", "Luchtkussenfolie 100m",
+        "Papieren Draagtas", "Kraftpapier Rol", "Plastic Pallethoes", "Verzendenvelop Gewatteerd",
+    ],
+    "Textiel": [
+        "Katoenen T-shirt", "Polyester Jas", "Wollen Trui", "Linnen Tafelkleed",
+        "Fleece Deken", "Denim Spijkerbroek", "Microvezel Handdoek",
+    ],
+    "Meubels": [
+        "Eikenhouten Eettafel", "Bureaustoel Ergonomisch", "Boekenkast Grenen",
+        "2-zits Bank Stof", "Salontafel Walnoot", "Ledikant Beuken", "TV-meubel Eiken",
+    ],
+    "Voedsel": [
+        "Pure Chocolade 70%", "Sojasaus 1L", "Palmolie 5L", "Koffiebonen 1kg",
+        "Cacaopoeder 500g", "Olijfolie Extra Vierge", "Rijst Basmati 5kg",
+    ],
+}
+
+
+def _aantal_te_vullen(profiel: str, n: int) -> int:
+    if profiel == "compliant":
+        return n
+    if profiel == "partial":
+        return round(n * 0.65)
+    return round(n * 0.15)  # incompleet
 
 
 def seed():
@@ -136,172 +271,187 @@ def seed():
             db.add(c)
             cat_map[naam] = c
         db.flush()
+        alle_cat_namen = list(cat_map.keys())
 
-        # wetgeving + velden
-        veld_objs = []
-        for code, naam, beschr, dt, status, velden in WETGEVING:
+        # wetgeving + velden + categorie-koppeling
+        wet_map = {}  # code -> Wetgeving
+        wetcode_to_velden = defaultdict(list)
+        wetcode_to_catnamen = {}
+        for code, naam, beschr, dt, status, velden, catnamen in WETGEVING:
             w = models.Wetgeving(
-                code=code,
-                naam=naam,
-                beschrijving=beschr,
-                van_kracht_vanaf=dt,
-                status=status,
+                code=code, naam=naam, beschrijving=beschr,
+                van_kracht_vanaf=dt, status=status, actief=True,
             )
+            namen = alle_cat_namen if catnamen == ALLE else catnamen
+            w.categorieen = [cat_map[n] for n in namen]
             db.add(w)
             db.flush()
-            for vnaam, sleutel, vtype, cat_naam in velden:
+            wet_map[code] = w
+            wetcode_to_catnamen[code] = namen
+            for vnaam, sleutel, vtype in velden:
                 cv = models.ComplianceVeld(
-                    naam=vnaam,
-                    sleutel=sleutel,
-                    veld_type=vtype,
-                    verplicht=True,
-                    wetgeving_id=w.id,
-                    categorie_id=cat_map[cat_naam].id if cat_naam else None,
+                    naam=vnaam, sleutel=sleutel, veld_type=vtype,
+                    verplicht=True, wetgeving_id=w.id, categorie_id=None,
                 )
                 db.add(cv)
-                veld_objs.append(cv)
+                wetcode_to_velden[code].append(cv)
         db.flush()
 
+        # categorie -> relevante velden (voor het vullen van data)
+        cat_to_velden = defaultdict(list)
+        for code, namen in wetcode_to_catnamen.items():
+            for n in namen:
+                cat_to_velden[n].extend(wetcode_to_velden[code])
+
         # leveranciers
-        lev_map = {}
+        leveranciers = []
         for naam, contact, email, land in LEVERANCIERS:
             lev = models.Leverancier(
                 naam=naam, contactpersoon=contact, email=email, land=land, actief=True
             )
             db.add(lev)
-            lev_map[naam] = lev
+            leveranciers.append(lev)
         db.flush()
 
-        # producten
+        # platte lijst van (naam, categorie)
+        producten_def = []
+        for cat_naam, namen in PRODUCTEN_PER_CAT.items():
+            for n in namen:
+                producten_def.append((n, cat_naam))
+
+        primary = {
+            "Elektronica": leveranciers[0],
+            "Chemie": leveranciers[1],
+            "Bouwmaterialen": leveranciers[2],
+            "Verpakkingen": leveranciers[3],
+            "Textiel": leveranciers[4],
+            "Meubels": leveranciers[5],
+            "Voedsel": leveranciers[6],
+        }
+        generals = [leveranciers[7], leveranciers[8], leveranciers[9]]
+
         prod_objs = []
-        for naam, art, ean, cat_naam, lev_naam in PRODUCTEN:
+        for i, (naam, cat_naam) in enumerate(producten_def):
+            lev = generals[(i // 5) % 3] if i % 5 == 4 else primary[cat_naam]
             p = models.Product(
                 naam=naam,
-                artikelnummer=art,
-                ean=ean,
+                artikelnummer=f"ART-{1000 + i}",
+                ean=f"87{i:011d}",
                 categorie_id=cat_map[cat_naam].id,
-                leverancier_id=lev_map[lev_naam].id,
+                leverancier_id=lev.id,
             )
             db.add(p)
-            prod_objs.append(p)
+            prod_objs.append((p, cat_naam))
         db.flush()
 
-        # compliance-waarden: vul ~60% in zodat er duidelijk data ontbreekt.
-        for i, product in enumerate(prod_objs):
-            van_toepassing = [
-                v
-                for v in veld_objs
-                if v.categorie_id is None or v.categorie_id == product.categorie_id
-            ]
-            for j, veld in enumerate(van_toepassing):
-                # deterministisch patroon: laat sommige velden bewust leeg
-                ingevuld = (i + j) % 5 != 0 and (i + j) % 7 != 0
-                if ingevuld:
-                    db.add(
-                        models.ProductComplianceWaarde(
-                            product_id=product.id,
-                            compliance_veld_id=veld.id,
-                            waarde="ingevuld",
-                            ingevuld=True,
-                        )
+        # compliance-waarden vullen volgens profiel (~40/20/40)
+        telling = {"compliant": 0, "partial": 0, "incompleet": 0}
+        for i, (product, cat_naam) in enumerate(prod_objs):
+            r = i % 5
+            profiel = "compliant" if r in (0, 1) else "partial" if r == 2 else "incompleet"
+            telling[profiel] += 1
+            velden = sorted(cat_to_velden.get(cat_naam, []), key=lambda v: v.id)
+            k = _aantal_te_vullen(profiel, len(velden))
+            for veld in velden[:k]:
+                db.add(
+                    models.ProductComplianceWaarde(
+                        product_id=product.id,
+                        compliance_veld_id=veld.id,
+                        waarde="ingevuld",
+                        ingevuld=True,
                     )
+                )
 
-        # een paar dataverzoeken
-        db.add(
-            models.Dataverzoek(
-                leverancier_id=lev_map["Volt Electronics B.V."].id,
-                onderwerp="Ontbrekende PPWR-verpakkingsdata",
-                bericht="Graag aanleveren: verpakkingsmateriaal en recyclaatgehalte.",
-                status="verzonden",
-                deadline=date.today() + timedelta(days=14),
-            )
-        )
-        db.add(
-            models.Dataverzoek(
-                leverancier_id=lev_map["PowerCell GmbH"].id,
-                onderwerp="Batterijpaspoort + CO2-voetafdruk",
-                bericht="Conform Batterijverordening hebben we het paspoort-ID nodig.",
-                status="open",
-                deadline=date.today() + timedelta(days=30),
-            )
+        # wetgeving standaard AAN als er producten onder vallen
+        product_cat_namen = {cat for _, cat in prod_objs}
+        for code, w in wet_map.items():
+            w.actief = bool(set(wetcode_to_catnamen[code]) & product_cat_namen)
+
+        # dataverzoeken
+        db.add_all(
+            [
+                models.Dataverzoek(
+                    leverancier_id=leveranciers[0].id,
+                    onderwerp="Ontbrekende PPWR-verpakkingsdata",
+                    bericht="Graag aanleveren: verpakkingsmateriaal en recyclaatgehalte.",
+                    status="verzonden",
+                    deadline=date.today() + timedelta(days=14),
+                ),
+                models.Dataverzoek(
+                    leverancier_id=leveranciers[6].id,
+                    onderwerp="EUDR due-diligence voor voedingsproducten",
+                    bericht="Herkomst en ontbossingsvrij-verklaring nodig conform EUDR.",
+                    status="open",
+                    deadline=date.today() + timedelta(days=30),
+                ),
+            ]
         )
 
-        # notificaties (met categorie + gerelateerde entiteit voor doorklikken)
-        accu = next(p for p in prod_objs if p.naam.startswith("Lithium Accu"))
-        led = prod_objs[0]
-        volt = lev_map["Volt Electronics B.V."]
-        powercell = lev_map["PowerCell GmbH"]
+        # notificaties met categorie + gerelateerde entiteit
+        led = prod_objs[0][0]
+        choco = next(p for p, _ in prod_objs if p.naam.startswith("Pure Chocolade"))
+        leverancier0 = leveranciers[0]
         db.add_all(
             [
                 models.Notificatie(
-                    titel="PPWR wordt binnenkort van kracht",
+                    titel="EUDR wordt binnenkort van kracht",
                     bericht=(
-                        "De Verpakkingsverordening (PPWR) geldt vanaf 12 augustus 2026. "
-                        "Controleer of alle producten de vereiste verpakkingsdata hebben."
+                        "De EU-ontbossingsverordening geldt vanaf eind 2025. Controleer "
+                        "herkomst en due-diligence voor hout-, papier- en voedingsproducten."
                     ),
                     type="waarschuwing",
                     categorie="Aankomende wetgeving",
                 ),
                 models.Notificatie(
-                    titel=f"Nieuwe data ontvangen voor {accu.naam}",
-                    bericht=(
-                        f"{powercell.naam} heeft de batterijchemie en capaciteit "
-                        f"aangeleverd voor {accu.naam}."
-                    ),
+                    titel=f"Nieuwe data ontvangen voor {choco.naam}",
+                    bericht="De leverancier heeft de EUDR-herkomstdata aangeleverd.",
                     type="succes",
                     categorie="Nieuwe data ontvangen",
                     entiteit_type="product",
-                    entiteit_id=accu.id,
+                    entiteit_id=choco.id,
                 ),
                 models.Notificatie(
                     titel="Deadline dataverzoek nadert",
                     bericht=(
-                        f"Het dataverzoek aan {volt.naam} voor PPWR-data verloopt binnen "
-                        "7 dagen. Er is nog geen reactie ontvangen."
+                        f"Het dataverzoek aan {leverancier0.naam} voor PPWR-data verloopt "
+                        "binnen 7 dagen."
                     ),
                     type="waarschuwing",
                     categorie="Deadline nadert",
                     entiteit_type="dataverzoek",
-                    entiteit_id=volt.id,
+                    entiteit_id=leverancier0.id,
                 ),
                 models.Notificatie(
                     titel=f"Twijfelachtige waarde bij {led.naam}",
-                    bericht=(
-                        "De opgegeven recycleerbaarheid (120%) valt buiten het geldige "
-                        "bereik (0–100%). Controleer de waarde bij de leverancier."
-                    ),
+                    bericht="De opgegeven recycleerbaarheid valt buiten het bereik (0–100%).",
                     type="fout",
                     categorie="Twijfelachtige waarde",
                     entiteit_type="product",
                     entiteit_id=led.id,
                 ),
                 models.Notificatie(
-                    titel=f"{volt.naam} heeft openstaande dataverzoeken",
-                    bericht="Deze leverancier heeft meerdere producten met ontbrekende data.",
+                    titel=f"{leverancier0.naam} heeft openstaande dataverzoeken",
+                    bericht="Meerdere producten van deze leverancier missen data.",
                     type="info",
                     categorie="Leverancier-update",
                     entiteit_type="leverancier",
-                    entiteit_id=volt.id,
-                ),
-                models.Notificatie(
-                    titel=f"Dataverzoek verstuurd naar {volt.naam}",
-                    bericht="Het verzoek voor PPWR-data is verzonden.",
-                    type="succes",
-                    categorie="Dataverzoek verstuurd",
-                    entiteit_type="dataverzoek",
-                    entiteit_id=volt.id,
-                    gelezen=True,
+                    entiteit_id=leverancier0.id,
                 ),
             ]
         )
 
         db.commit()
+        actief = [c for c, w in wet_map.items() if w.actief]
+        inactief = [c for c, w in wet_map.items() if not w.actief]
         print("Seed voltooid:")
-        print(f"  {db.query(models.Wetgeving).count()} wetgevingen")
-        print(f"  {db.query(models.ComplianceVeld).count()} compliance-velden")
         print(f"  {db.query(models.Categorie).count()} categorieën")
+        print(f"  {db.query(models.Wetgeving).count()} wetgevingen "
+              f"(actief: {', '.join(actief)} | inactief: {', '.join(inactief) or '—'})")
+        print(f"  {db.query(models.ComplianceVeld).count()} compliance-velden")
         print(f"  {db.query(models.Leverancier).count()} leveranciers")
-        print(f"  {db.query(models.Product).count()} producten")
+        print(f"  {db.query(models.Product).count()} producten "
+              f"(compliant: {telling['compliant']}, gedeeltelijk: {telling['partial']}, "
+              f"incompleet: {telling['incompleet']})")
     finally:
         db.close()
 

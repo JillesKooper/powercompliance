@@ -21,6 +21,54 @@ def lijst_wetgeving(db: Session = Depends(get_db)):
     return db.query(models.Wetgeving).order_by(models.Wetgeving.code).all()
 
 
+@router.get("/wetgeving/beheer", response_model=List[schemas.WetgevingBeheer])
+def wetgeving_beheer(db: Session = Depends(get_db)):
+    """Beheeroverzicht: per wetgeving aan/uit, aantal producten en compliance-score."""
+    resultaat = []
+    for wet in db.query(models.Wetgeving).order_by(models.Wetgeving.code).all():
+        stats = compliance.wetgeving_stats(db, wet)
+        resultaat.append(
+            schemas.WetgevingBeheer(
+                id=wet.id,
+                code=wet.code,
+                naam=wet.naam,
+                status=wet.status,
+                actief=wet.actief,
+                aantal_velden=len(wet.compliance_velden),
+                aantal_producten=stats["aantal_producten"],
+                compliance_percentage=stats["compliance_percentage"],
+                categorieen=sorted(c.naam for c in wet.categorieen),
+            )
+        )
+    return resultaat
+
+
+@router.post("/wetgeving/{wetgeving_id}/actief", response_model=schemas.WetgevingBeheer)
+def zet_wetgeving_actief(
+    wetgeving_id: int,
+    data: schemas.WetgevingActiefRequest,
+    db: Session = Depends(get_db),
+):
+    wet = db.get(models.Wetgeving, wetgeving_id)
+    if not wet:
+        raise HTTPException(status_code=404, detail="Wetgeving niet gevonden")
+    wet.actief = data.actief
+    db.commit()
+    db.refresh(wet)
+    stats = compliance.wetgeving_stats(db, wet)
+    return schemas.WetgevingBeheer(
+        id=wet.id,
+        code=wet.code,
+        naam=wet.naam,
+        status=wet.status,
+        actief=wet.actief,
+        aantal_velden=len(wet.compliance_velden),
+        aantal_producten=stats["aantal_producten"],
+        compliance_percentage=stats["compliance_percentage"],
+        categorieen=sorted(c.naam for c in wet.categorieen),
+    )
+
+
 # ---------- Ontbrekende data ----------
 @router.get("/ontbrekende-data", response_model=List[schemas.OntbrekendProduct])
 def ontbrekende_data(db: Session = Depends(get_db)):
@@ -119,26 +167,25 @@ def dashboard(db: Session = Depends(get_db)):
         if stats["aantal_ontbrekend"] > 0:
             incompleet += 1
 
-    # compliance per wetgeving
+    # compliance per actieve wetgeving (met producten die eronder vallen)
     per_wet = []
-    for wet in db.query(models.Wetgeving).order_by(models.Wetgeving.code).all():
-        veld_ids = [v.id for v in wet.compliance_velden]
-        if not veld_ids or not producten:
-            per_wet.append({"code": wet.code, "naam": wet.naam, "percentage": 100.0})
+    actieve_wetten = (
+        db.query(models.Wetgeving)
+        .filter(models.Wetgeving.actief.is_(True))
+        .order_by(models.Wetgeving.code)
+        .all()
+    )
+    for wet in actieve_wetten:
+        stats = compliance.wetgeving_stats(db, wet)
+        if stats["aantal_producten"] == 0:
             continue
-        verwacht = 0
-        ingevuld = 0
-        for product in producten:
-            van_toepassing = [
-                v
-                for v in wet.compliance_velden
-                if v.categorie_id is None or v.categorie_id == product.categorie_id
-            ]
-            verwacht += len(van_toepassing)
-            ingevuld_ids = compliance.ingevulde_veld_ids(db, product.id)
-            ingevuld += len([v for v in van_toepassing if v.id in ingevuld_ids])
-        pct = round((ingevuld / verwacht) * 100, 1) if verwacht else 100.0
-        per_wet.append({"code": wet.code, "naam": wet.naam, "percentage": pct})
+        per_wet.append(
+            {
+                "code": wet.code,
+                "naam": wet.naam,
+                "percentage": stats["compliance_percentage"],
+            }
+        )
 
     return schemas.DashboardStats(
         aantal_leveranciers=db.query(models.Leverancier).count(),

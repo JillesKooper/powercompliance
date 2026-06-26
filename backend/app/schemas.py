@@ -111,7 +111,24 @@ class WetgevingOut(BaseModel):
     beschrijving: Optional[str] = None
     van_kracht_vanaf: Optional[date] = None
     status: str
+    actief: bool = True
     compliance_velden: List[ComplianceVeldOut] = []
+
+
+class WetgevingBeheer(BaseModel):
+    id: int
+    code: str
+    naam: str
+    status: str
+    actief: bool
+    aantal_velden: int
+    aantal_producten: int
+    compliance_percentage: float
+    categorieen: List[str] = []
+
+
+class WetgevingActiefRequest(BaseModel):
+    actief: bool
 
 
 # ---------- Ontbrekende data ----------

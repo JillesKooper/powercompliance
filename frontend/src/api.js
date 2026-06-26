@@ -59,6 +59,12 @@ export const api = {
 
   categorieen: () => request("/categorieen"),
   wetgeving: () => request("/wetgeving"),
+  wetgevingBeheer: () => request("/wetgeving/beheer"),
+  zetWetgevingActief: (id, actief) =>
+    request(`/wetgeving/${id}/actief`, {
+      method: "POST",
+      body: JSON.stringify({ actief }),
+    }),
   ontbrekendeData: () => request("/ontbrekende-data"),
   dataverzoeken: () => request("/dataverzoeken"),
   notificaties: () => request("/notificaties"),

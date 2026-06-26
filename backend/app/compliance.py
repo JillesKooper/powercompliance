@@ -1,8 +1,9 @@
-"""Logica om te bepalen welke compliance-data ontbreekt.
+"""Logica om te bepalen welke compliance-data van toepassing is en ontbreekt.
 
-Een compliance-veld is van toepassing op een product wanneer:
-- het veld geen categorie heeft (geldt dan voor alle producten), OF
-- de categorie van het veld gelijk is aan de categorie van het product.
+Welke wetgeving geldt voor een product wordt automatisch bepaald op basis van de
+categorie van het product (de wetgeving↔categorie-koppeling). Alleen wetgeving
+die actief staat (door de beheerder ingeschakeld) telt mee. Alle compliance-velden
+van een relevante, actieve wetgeving zijn van toepassing op het product.
 
 Een veld 'ontbreekt' wanneer er geen ProductComplianceWaarde bestaat met
 ingevuld=True voor dat product/veld.
@@ -14,13 +15,26 @@ from sqlalchemy.orm import Session
 from . import models
 
 
-def velden_voor_product(db: Session, product: models.Product) -> List[models.ComplianceVeld]:
-    """Alle compliance-velden die van toepassing zijn op dit product."""
-    q = db.query(models.ComplianceVeld).filter(
-        (models.ComplianceVeld.categorie_id.is_(None))
-        | (models.ComplianceVeld.categorie_id == product.categorie_id)
+def relevante_wetgeving_voor_product(
+    db: Session, product: models.Product, alleen_actief: bool = True
+) -> List[models.Wetgeving]:
+    """Wetgeving die op dit product van toepassing is (op basis van categorie)."""
+    if product.categorie_id is None:
+        return []
+    q = db.query(models.Wetgeving).filter(
+        models.Wetgeving.categorieen.any(id=product.categorie_id)
     )
-    return q.all()
+    if alleen_actief:
+        q = q.filter(models.Wetgeving.actief.is_(True))
+    return q.order_by(models.Wetgeving.code).all()
+
+
+def velden_voor_product(db: Session, product: models.Product) -> List[models.ComplianceVeld]:
+    """Alle compliance-velden van de relevante, actieve wetgeving voor dit product."""
+    velden = []
+    for wet in relevante_wetgeving_voor_product(db, product):
+        velden.extend(wet.compliance_velden)
+    return velden
 
 
 def ingevulde_veld_ids(db: Session, product_id: int) -> set:
@@ -57,3 +71,32 @@ def ontbrekende_velden_voor_product(
     velden = velden_voor_product(db, product)
     ingevuld = ingevulde_veld_ids(db, product.id)
     return [v for v in velden if v.id not in ingevuld]
+
+
+def wetgeving_stats(db: Session, wetgeving: models.Wetgeving) -> dict:
+    """Aantal producten dat onder deze wetgeving valt + gem. compliance-score.
+
+    Onafhankelijk van of de wetgeving actief staat (voor het beheeroverzicht)."""
+    cat_ids = {c.id for c in wetgeving.categorieen}
+    veld_ids = [v.id for v in wetgeving.compliance_velden]
+    if not cat_ids:
+        return {"aantal_producten": 0, "compliance_percentage": 100.0}
+    producten = (
+        db.query(models.Product)
+        .filter(models.Product.categorie_id.in_(cat_ids))
+        .all()
+    )
+    if not producten or not veld_ids:
+        return {
+            "aantal_producten": len(producten),
+            "compliance_percentage": 100.0,
+        }
+    pcts = []
+    for p in producten:
+        ingevuld = ingevulde_veld_ids(db, p.id)
+        aantal = len([vid for vid in veld_ids if vid in ingevuld])
+        pcts.append(aantal / len(veld_ids) * 100)
+    return {
+        "aantal_producten": len(producten),
+        "compliance_percentage": round(sum(pcts) / len(pcts), 1),
+    }
