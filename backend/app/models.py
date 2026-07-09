@@ -103,6 +103,11 @@ class Product(Base):
         back_populates="product",
         cascade="all, delete-orphan",
     )
+    documenten = relationship(
+        "ProductDocument",
+        back_populates="product",
+        cascade="all, delete-orphan",
+    )
 
 
 class Wetgeving(Base):
@@ -206,6 +211,61 @@ class DataverzoekRegel(Base):
     )
 
     dataverzoek = relationship("Dataverzoek", back_populates="regels")
+
+
+class ProductDocument(Base):
+    """Geüpload document gekoppeld aan een product (PDF e.d.).
+
+    Documenttype bv. veiligheidsblad, CE-certificaat, DoP, energielabel.
+    Verloopdatum wordt bijgehouden voor vervalnotificaties.
+    """
+
+    __tablename__ = "product_documenten"
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("producten.id"), nullable=False, index=True)
+    documenttype = Column(String, nullable=False)  # veiligheidsblad | ce-certificaat | dop | energielabel | overig
+    bestandsnaam = Column(String, nullable=False)  # opgeslagen bestandsnaam (uniek)
+    originele_naam = Column(String, nullable=False)  # naam zoals geüpload
+    mime_type = Column(String, nullable=True)
+    grootte = Column(Integer, default=0)  # bytes
+    verloopdatum = Column(Date, nullable=True, index=True)
+    notitie = Column(Text, nullable=True)
+    geupload_op = Column(DateTime, default=datetime.utcnow)
+
+    product = relationship("Product", back_populates="documenten")
+
+
+class ExportLog(Base):
+    """Exporthistorie: registreert elke export naar een bronsysteem (PIM/ERP)."""
+
+    __tablename__ = "export_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    formaat = Column(String, nullable=False)  # csv | xlsx | json
+    bestandsnaam = Column(String, nullable=False)
+    aantal_producten = Column(Integer, default=0)
+    aantal_velden = Column(Integer, default=0)
+    velden = Column(Text, nullable=True)  # JSON-lijst van geëxporteerde veldsleutels
+    filters = Column(Text, nullable=True)  # JSON van toegepaste filters
+    bron = Column(String, default="handmatig")  # handmatig | webhook
+    webhook_resultaat = Column(Text, nullable=True)  # JSON met afleverstatus per abonnee
+    aangemaakt_op = Column(DateTime, default=datetime.utcnow)
+
+
+class WebhookAbonnement(Base):
+    """Extern systeem dat zich abonneert op export-events (generieke koppeling)."""
+
+    __tablename__ = "webhook_abonnementen"
+
+    id = Column(Integer, primary_key=True, index=True)
+    url = Column(String, nullable=False)
+    beschrijving = Column(String, nullable=True)
+    geheim = Column(String, nullable=True)  # optioneel gedeeld geheim (header)
+    actief = Column(Boolean, default=True)
+    laatste_status = Column(String, nullable=True)  # bv. "200 OK" of foutmelding
+    laatst_afgeleverd_op = Column(DateTime, nullable=True)
+    aangemaakt_op = Column(DateTime, default=datetime.utcnow)
 
 
 class Notificatie(Base):

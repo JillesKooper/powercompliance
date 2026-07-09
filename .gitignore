@@ -9,6 +9,9 @@ __pycache__/
 backend/*.db
 backend/powercompliance.db
 
+# Geüploade documenten (binaire bestanden niet in git)
+backend/uploads/
+
 # Node / frontend
 frontend/node_modules/
 frontend/dist/

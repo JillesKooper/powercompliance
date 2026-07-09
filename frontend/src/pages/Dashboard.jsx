@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { Card, StatCard, ProgressBar, Loading, ErrorBox } from "../components/ui";
+import { Card, StatCard, ProgressBar, Loading, ErrorBox, Button } from "../components/ui";
 import { useNotificaties } from "../context/notificaties";
 import NotificatieModal from "../components/NotificatieModal.jsx";
+import ExportModal from "../components/ExportModal.jsx";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
+  const [documenten, setDocumenten] = useState(null);
+  const [toonExport, setToonExport] = useState(false);
   const { items: notificaties, ongelezen, markeerAllesGelezen } =
     useNotificaties();
   const [gekozenId, setGekozenId] = useState(null);
@@ -18,6 +22,7 @@ export default function Dashboard() {
       .dashboard()
       .then(setStats)
       .catch((e) => setError(e.message));
+    api.verlopendeDocumenten().then(setDocumenten).catch(() => {});
   }, []);
 
   if (error) return <ErrorBox message={error} />;
@@ -32,31 +37,65 @@ export default function Dashboard() {
         />
       )}
 
+      {toonExport && <ExportModal onClose={() => setToonExport(false)} />}
+
+      <div className="flex justify-end">
+        <Button variant="ghost" onClick={() => setToonExport(true)}>
+          ⇪ Exporteer naar PIM
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Gemiddelde compliance"
           value={`${stats.gemiddelde_compliance}%`}
           accent={stats.gemiddelde_compliance >= 80 ? "green" : "amber"}
           sub="over alle producten"
+          onClick={() => navigate("/producten")}
         />
         <StatCard
           label="Ontbrekende velden"
           value={stats.aantal_ontbrekende_velden}
           accent="red"
           sub={`${stats.aantal_producten_incompleet} producten incompleet`}
+          onClick={() => navigate("/ontbrekende-data")}
         />
         <StatCard
           label="Leveranciers"
           value={stats.aantal_leveranciers}
           sub={`${stats.aantal_producten} producten`}
+          onClick={() => navigate("/leveranciers")}
         />
         <StatCard
           label="Open dataverzoeken"
           value={stats.open_dataverzoeken}
           accent="amber"
           sub={`${stats.aantal_wetgeving} wetgevingen gevolgd`}
+          onClick={() => navigate("/instellingen#dataverzoeken")}
         />
       </div>
+
+      {documenten &&
+        (documenten.aantal_verlopen > 0 || documenten.aantal_binnenkort > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DocumentWidget
+              titel="Verlopen documenten"
+              icoon="⛔"
+              kleur="red"
+              items={documenten.verlopen}
+              leeg="Geen verlopen documenten."
+              metDagen={(d) => `${Math.abs(d.dagen_tot_verloop)} dagen verlopen`}
+            />
+            <DocumentWidget
+              titel="Verloopt binnenkort"
+              icoon="⏳"
+              kleur="amber"
+              items={documenten.verloopt_binnenkort}
+              leeg="Niets verloopt binnen 60 dagen."
+              metDagen={(d) => `nog ${d.dagen_tot_verloop} dagen`}
+            />
+          </div>
+        )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 p-6">
@@ -71,9 +110,14 @@ export default function Dashboard() {
               Bekijk wetgeving →
             </Link>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-1">
             {stats.compliance_per_wetgeving.map((w) => (
-              <div key={w.code}>
+              <button
+                key={w.code}
+                type="button"
+                onClick={() => navigate("/wetgeving", { state: { code: w.code } })}
+                className="w-full text-left rounded-md -mx-2 px-2 py-2 cursor-pointer transition-colors hover:bg-hover"
+              >
                 <div className="flex justify-between text-sm mb-1">
                   <span className="font-medium text-slate-700">{w.code}</span>
                   <span className="text-slate-400 truncate ml-4 max-w-xs">
@@ -81,7 +125,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <ProgressBar value={w.percentage} />
-              </div>
+              </button>
             ))}
           </div>
         </Card>
@@ -113,7 +157,7 @@ export default function Dashboard() {
               <button
                 key={n.id}
                 onClick={() => setGekozenId(n.id)}
-                className={`w-full text-left rounded-lg border p-3 text-sm transition-colors hover:border-brand-300 ${
+                className={`w-full text-left rounded-lg border p-3 text-sm cursor-pointer transition-colors hover:border-brand-300 hover:bg-hover ${
                   n.gelezen
                     ? "border-slate-200 bg-slate-50"
                     : "border-brand-100 bg-brand-50"
@@ -156,5 +200,58 @@ export default function Dashboard() {
         </Card>
       </div>
     </div>
+  );
+}
+
+function DocumentWidget({ titel, icoon, kleur, items, leeg, metDagen }) {
+  const tekstKleur = kleur === "red" ? "text-red-600" : "text-amber-600";
+  return (
+    <Card className="p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-semibold text-ink">
+          <span className="mr-2">{icoon}</span>
+          {titel}
+        </h2>
+        <span
+          className={`inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-xs font-semibold ${
+            kleur === "red"
+              ? "bg-red-50 text-red-600"
+              : "bg-amber-50 text-amber-600"
+          }`}
+        >
+          {items.length}
+        </span>
+      </div>
+      {items.length === 0 ? (
+        <div className="text-sm text-muted">{leeg}</div>
+      ) : (
+        <div className="space-y-2">
+          {items.slice(0, 5).map((d) => (
+            <Link
+              key={d.id}
+              to={`/producten/${d.product_id}`}
+              className="flex items-center justify-between gap-3 rounded-md border border-line px-3 py-2 text-sm hover:bg-hover"
+            >
+              <div className="min-w-0">
+                <div className="font-medium text-ink truncate">
+                  {d.product_naam}
+                </div>
+                <div className="text-xs text-muted truncate">
+                  {d.originele_naam}
+                </div>
+              </div>
+              <span className={`text-xs shrink-0 ${tekstKleur}`}>
+                {metDagen(d)}
+              </span>
+            </Link>
+          ))}
+          {items.length > 5 && (
+            <div className="text-xs text-muted pt-1">
+              + {items.length - 5} meer
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }

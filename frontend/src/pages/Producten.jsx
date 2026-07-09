@@ -11,6 +11,7 @@ import {
   Paginatie,
 } from "../components/ui";
 import ImportDialog from "../components/ImportDialog.jsx";
+import ExportModal from "../components/ExportModal.jsx";
 
 const LEEG = {
   naam: "",
@@ -31,6 +32,7 @@ export default function Producten() {
   const [page, setPage] = useState(1);
   const [toonForm, setToonForm] = useState(false);
   const [toonImport, setToonImport] = useState(false);
+  const [toonExport, setToonExport] = useState(false);
   const [form, setForm] = useState(LEEG);
 
   const producten = pagina?.items ?? null;
@@ -96,12 +98,12 @@ export default function Producten() {
           placeholder="Zoek op naam, artikelnr of EAN…"
           value={zoek}
           onChange={(e) => setZoek(e.target.value)}
-          className="flex-1 min-w-[220px] rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          className="flex-1 min-w-[220px] rounded-md border border-line px-3 py-2 text-sm text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
         />
         <select
           value={filterLev}
           onChange={(e) => setFilterLev(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
+          className="rounded-md border border-line px-3 py-2 text-sm bg-white text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
         >
           <option value="">Alle leveranciers</option>
           {leveranciers.map((l) => (
@@ -113,7 +115,7 @@ export default function Producten() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
+          className="rounded-md border border-line px-3 py-2 text-sm bg-white text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
         >
           <option value="">Alle statussen</option>
           <option value="compliant">Compliant</option>
@@ -123,8 +125,13 @@ export default function Producten() {
         <Button variant="ghost" onClick={() => setToonImport(true)}>
           ⬆ Importeren
         </Button>
+        <Button variant="ghost" onClick={() => setToonExport(true)}>
+          ⇪ Exporteer naar PIM
+        </Button>
         <Button onClick={() => setToonForm((v) => !v)}>+ Nieuw product</Button>
       </div>
+
+      {toonExport && <ExportModal onClose={() => setToonExport(false)} />}
 
       {toonImport && (
         <ImportDialog

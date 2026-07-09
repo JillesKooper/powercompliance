@@ -7,8 +7,12 @@ const NAV = [
   { to: "/leveranciers", label: "Leveranciers", icon: "🏭" },
   { to: "/ontbrekende-data", label: "Ontbrekende data", icon: "⚠️" },
   { to: "/wetgeving", label: "Wetgeving", icon: "⚖️" },
+  { to: "/rapportages", label: "Rapportages", icon: "📈" },
   { to: "/instellingen", label: "Instellingen", icon: "⚙️" },
 ];
+
+const GEBRUIKER = "Gijs van der Mond";
+const BEDRIJF = "Machine Learning Company";
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -18,61 +22,117 @@ export default function Layout({ children }) {
   );
 
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-64 shrink-0 bg-slate-900 text-slate-100 flex flex-col">
-        <div className="px-6 py-5 border-b border-slate-700/60">
-          <div className="text-lg font-bold tracking-tight">
-            ⚡ Power<span className="text-brand-500">Compliance</span>
-          </div>
-          <div className="text-xs text-slate-400 mt-0.5">
-            Compliance voor groothandels
-          </div>
+    <div className="min-h-screen flex flex-col bg-canvas">
+      {/* Topbar */}
+      <header className="h-14 shrink-0 bg-white border-b border-line flex items-center px-5">
+        <div className="flex items-center gap-2.5">
+          {/* Blauw A-icoon (placeholder) */}
+          <span className="h-7 w-7 rounded-full bg-brand-500 grid place-items-center text-white text-sm font-bold">
+            A
+          </span>
+          <span className="text-[15px] text-ink tracking-tight">
+            Power<span className="font-bold">Compliance</span>
+          </span>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
-          {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-brand-600 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`
-              }
-            >
-              <span className="text-base">{item.icon}</span>
-              {item.label}
-              {item.to === "/" && ongelezen > 0 && (
-                <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold">
-                  {ongelezen}
-                </span>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="p-4 text-xs text-slate-500 border-t border-slate-700/60">
-          v0.1.0 · EU-compliance
+        <div className="ml-auto flex items-center gap-1 text-muted">
+          <button
+            type="button"
+            aria-label="Instellingen"
+            className="h-9 w-9 grid place-items-center rounded-md hover:bg-hover hover:text-ink transition-colors"
+          >
+            <GearIcon />
+          </button>
+          <button
+            type="button"
+            aria-label="Apps"
+            className="h-9 w-9 grid place-items-center rounded-md hover:bg-hover hover:text-ink transition-colors"
+          >
+            <GridIcon />
+          </button>
         </div>
-      </aside>
+      </header>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center px-8">
-          <h1 className="text-lg font-semibold text-slate-800">
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar */}
+        <aside className="w-[210px] shrink-0 bg-white flex flex-col">
+          <div className="px-4 py-4">
+            <div className="text-sm font-bold text-ink leading-tight">
+              {GEBRUIKER}
+            </div>
+            <div className="text-xs text-muted mt-0.5">{BEDRIJF}</div>
+          </div>
+          <nav className="flex-1 px-2 space-y-0.5">
+            {NAV.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                    isActive
+                      ? "bg-hover text-ink font-medium"
+                      : "text-muted hover:bg-hover hover:text-ink"
+                  }`
+                }
+              >
+                <span className="text-base">{item.icon}</span>
+                <span className="flex-1">{item.label}</span>
+                {item.to === "/" && ongelezen > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-brand-500 text-white text-[11px] font-semibold">
+                    {ongelezen}
+                  </span>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main */}
+        <main className="flex-1 min-w-0 overflow-auto p-8">
+          <h1 className="text-xl font-semibold text-ink mb-6">
             {huidig?.label ?? "PowerCompliance"}
           </h1>
-          <div className="ml-auto flex items-center gap-3 text-sm text-slate-500">
-            <span className="hidden sm:inline">gvdmond@machine-learning.company</span>
-            <div className="h-8 w-8 rounded-full bg-brand-100 text-brand-700 grid place-items-center font-semibold">
-              G
-            </div>
-          </div>
-        </header>
-        <main className="flex-1 p-8 overflow-auto">{children}</main>
+          {children}
+        </main>
       </div>
     </div>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+function GridIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
   );
 }

@@ -347,6 +347,75 @@ def _aantal_te_vullen(profiel: str, n: int) -> int:
     return round(n * 0.15)  # incompleet
 
 
+# Realistische voorbeeldwaarden per compliance-veld, zodat producten echte data
+# tonen (bv. "85") i.p.v. een placeholder. Tekstvelden kiezen uit een lijst;
+# id-, getal-, boolean- en bestandvelden worden afgeleid van het veldtype.
+_ID_PREFIX = {
+    "bat_paspoort": "BP",
+    "erp_eprel": "EPREL",
+    "espr_dpp": "DPP",
+    "tex_dpp": "DPP",
+    "eudr_dds": "DDS",
+    "mdr_udi": "UDI",
+    "cos_cpnp": "CPNP",
+}
+_TEKST_KEUZES = {
+    "ppwr_materiaal": ["Karton (FSC-gecertificeerd)", "PET (mono-materiaal)", "Polypropyleen (PP)", "Glas", "Aluminium"],
+    "csrd_code": ["ESRS-E1", "ESRS-E5", "ESRS-S1", "ESRS-G1"],
+    "csrd_verslag": ["https://example.com/duurzaamheidsverslag-2025.pdf"],
+    "bat_chemie": ["Li-ion (NMC)", "LiFePO4", "NiMH", "Loodzuur"],
+    "reach_clp": ["GHS02, GHS07", "GHS05", "GHS07, GHS08", "Geen pictogram vereist"],
+    "cpr_brandklasse": ["A1", "A2-s1,d0", "B-s1,d0", "C-s2,d0"],
+    "gpsr_marktdeelnemer": ["EU-Importeur B.V., Rotterdam", "Compliance Partners GmbH, Keulen", "EuroDistributie N.V., Antwerpen"],
+    "gpsr_waarschuwingen": ["Niet geschikt voor kinderen < 3 jaar", "Buiten bereik van kinderen houden", "Niet blootstellen aan vocht"],
+    "erp_energieklasse": ["A", "B", "C", "A+"],
+    "espr_repareerbaarheid": ["8,5 / 10", "7,2 / 10", "6,0 / 10", "9,1 / 10"],
+    "eudr_herkomst": ["Brazilië", "Indonesië", "Ghana", "Zweden", "Duitsland"],
+    "eudr_geo": ["-3.4653, -62.2159", "1.3521, 103.8198", "5.6037, -0.1870"],
+    "tex_vezels": ["80% katoen, 20% polyester", "100% biologisch katoen", "65% polyester, 35% viscose"],
+    "tex_onderhoud": ["30°C, niet bleken, strijken op lage temperatuur", "Handwas, niet in de droger"],
+    "tex_land": ["Portugal", "Turkije", "India", "Bangladesh"],
+    "toy_leeftijd": ["3+", "6+", "0-3 jaar (geen kleine onderdelen)", "8+"],
+    "toy_waarschuwing": ["Bevat kleine onderdelen — verstikkingsgevaar", "Niet geschikt voor kinderen < 3 jaar"],
+    "mdr_klasse": ["Klasse I", "Klasse IIa", "Klasse IIb", "Klasse III"],
+    "cos_inci": ["Aqua, Glycerin, Parfum", "Aqua, Sodium Laureth Sulfate, Cocamidopropyl Betaine"],
+    "cos_rp": ["CosmeSafe EU B.V., Amsterdam", "Beauty Compliance GmbH, München"],
+}
+
+
+def _voorbeeld_waarde(veld: "models.ComplianceVeld", product: "models.Product") -> str:
+    """Genereer een realistische, deterministische waarde voor een compliance-veld."""
+    naam = veld.naam.lower()
+    h = (product.id * 31 + veld.id * 7) % 9973  # deterministische variatie per product/veld
+
+    if veld.veld_type == "boolean":
+        if "svhc" in veld.sleutel:
+            return "Nee" if h % 5 else "Ja"  # meestal geen SVHC-stoffen aanwezig
+        return "Ja" if h % 4 else "Nee"
+    if veld.veld_type == "bestand":
+        ref = product.artikelnummer or f"P{product.id}"
+        return f"{veld.sleutel}_{ref}.pdf"
+    if veld.veld_type == "getal":
+        if "%" in veld.naam:
+            return str(40 + h % 61)  # 40–100 %
+        if "co2" in naam:
+            return str(50 + h % 1950)  # kg CO2e
+        if "kwh" in naam:
+            return str(15 + h % 285)  # kWh/jaar
+        if "wh" in naam:
+            return str(800 + h % 4200)  # Wh
+        if "(g)" in naam or "gewicht" in naam:
+            return str(20 + h % 480)  # gram
+        return str(1 + h % 999)
+    # tekst
+    if veld.sleutel in _ID_PREFIX:
+        return f"{_ID_PREFIX[veld.sleutel]}-{1000 + h % 9000}"
+    keuzes = _TEKST_KEUZES.get(veld.sleutel)
+    if keuzes:
+        return keuzes[h % len(keuzes)]
+    return f"{veld.naam} (gedocumenteerd)"
+
+
 def seed():
     reset_db()
     db = SessionLocal()
@@ -446,7 +515,7 @@ def seed():
                     models.ProductComplianceWaarde(
                         product_id=product.id,
                         compliance_veld_id=veld.id,
-                        waarde="ingevuld",
+                        waarde=_voorbeeld_waarde(veld, product),
                         ingevuld=True,
                     )
                 )

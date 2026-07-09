@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { api } from "../api";
-import { Card, Badge, Loading, ProgressBar } from "../components/ui";
+import { Card, Badge, Button, Loading, ProgressBar } from "../components/ui";
 
 const STATUS_KLEUR = {
   open: "amber",
@@ -10,6 +11,7 @@ const STATUS_KLEUR = {
 };
 
 export default function Instellingen() {
+  const location = useLocation();
   const [categorieen, setCategorieen] = useState([]);
   const [dataverzoeken, setDataverzoeken] = useState(null);
   const [wetgeving, setWetgeving] = useState(null);
@@ -19,6 +21,13 @@ export default function Instellingen() {
     api.dataverzoeken().then((d) => setDataverzoeken(d.items)).catch(() => {});
     api.wetgevingBeheer().then(setWetgeving).catch(() => {});
   }, []);
+
+  // scroll naar de juiste sectie als er een hash is meegegeven (#dataverzoeken)
+  useEffect(() => {
+    if (!location.hash) return;
+    const el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [location.hash, dataverzoeken]);
 
   async function toggleWetgeving(w) {
     const bijgewerkt = await api.zetWetgevingActief(w.id, !w.actief);
@@ -118,7 +127,9 @@ export default function Instellingen() {
         </div>
       </Card>
 
-      <Card className="p-6">
+      <ExportKoppeling />
+
+      <Card className="p-6" id="dataverzoeken">
         <h2 className="font-semibold text-slate-800 mb-4">Dataverzoeken</h2>
         {!dataverzoeken ? (
           <Loading />
@@ -149,5 +160,162 @@ export default function Instellingen() {
         )}
       </Card>
     </div>
+  );
+}
+
+function ExportKoppeling() {
+  const [webhooks, setWebhooks] = useState(null);
+  const [historie, setHistorie] = useState(null);
+  const [url, setUrl] = useState("");
+  const [beschrijving, setBeschrijving] = useState("");
+  const [bezig, setBezig] = useState(false);
+  const [fout, setFout] = useState(null);
+
+  function laad() {
+    api.webhooks().then(setWebhooks).catch(() => setWebhooks([]));
+    api.exportHistorie().then(setHistorie).catch(() => setHistorie([]));
+  }
+
+  useEffect(() => {
+    laad();
+  }, []);
+
+  async function abonneer(e) {
+    e.preventDefault();
+    setBezig(true);
+    setFout(null);
+    try {
+      await api.abonneerWebhook({ url, beschrijving: beschrijving || null });
+      setUrl("");
+      setBeschrijving("");
+      laad();
+    } catch (e) {
+      setFout(e.message);
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  async function verwijder(id) {
+    if (!confirm("Webhook-abonnement verwijderen?")) return;
+    await api.verwijderWebhook(id);
+    laad();
+  }
+
+  return (
+    <Card className="p-6">
+      <h2 className="font-semibold text-slate-800 mb-1">PIM/ERP-koppeling</h2>
+      <p className="text-sm text-slate-500 mb-4">
+        Abonneer een extern systeem op export-events. Bij elke export ontvangt de
+        opgegeven URL een POST met een JSON-samenvatting van de geëxporteerde data.
+      </p>
+
+      <form onSubmit={abonneer} className="flex flex-wrap items-end gap-3 mb-4">
+        <label className="block flex-1 min-w-[240px]">
+          <span className="block text-xs font-medium text-muted mb-1">Webhook-URL</span>
+          <input
+            type="url"
+            required
+            placeholder="https://mijn-pim.example/webhooks/compliance"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="input"
+          />
+        </label>
+        <label className="block flex-1 min-w-[180px]">
+          <span className="block text-xs font-medium text-muted mb-1">
+            Beschrijving (optioneel)
+          </span>
+          <input
+            value={beschrijving}
+            onChange={(e) => setBeschrijving(e.target.value)}
+            className="input"
+          />
+        </label>
+        <Button type="submit" disabled={bezig}>
+          {bezig ? "Bezig…" : "Abonneren"}
+        </Button>
+      </form>
+      {fout && (
+        <div className="mb-4 rounded-md bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-sm">
+          {fout}
+        </div>
+      )}
+
+      {webhooks && webhooks.length > 0 && (
+        <div className="space-y-2 mb-6">
+          {webhooks.map((w) => (
+            <div
+              key={w.id}
+              className="flex items-center justify-between gap-3 rounded-md border border-line px-4 py-2 text-sm"
+            >
+              <div className="min-w-0">
+                <div className="font-medium text-ink truncate">{w.url}</div>
+                <div className="text-xs text-muted">
+                  {w.beschrijving ? `${w.beschrijving} · ` : ""}
+                  {w.laatste_status
+                    ? `laatste levering: ${w.laatste_status}`
+                    : "nog niet afgeleverd"}
+                </div>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <Badge color={w.actief ? "green" : "slate"}>
+                  {w.actief ? "actief" : "uit"}
+                </Badge>
+                <button
+                  onClick={() => verwijder(w.id)}
+                  className="text-red-500 hover:text-red-700 text-xs"
+                >
+                  Verwijderen
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <h3 className="text-sm font-semibold text-ink mb-2">Exporthistorie</h3>
+      {!historie ? (
+        <Loading />
+      ) : historie.length === 0 ? (
+        <div className="text-sm text-muted">Nog geen exports uitgevoerd.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-muted border-b border-line">
+                <th className="px-3 py-2 font-medium">Bestand</th>
+                <th className="px-3 py-2 font-medium">Formaat</th>
+                <th className="px-3 py-2 font-medium">Producten</th>
+                <th className="px-3 py-2 font-medium">Webhooks</th>
+                <th className="px-3 py-2 font-medium">Wanneer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historie.map((h) => {
+                let webhookInfo = "—";
+                try {
+                  const r = h.webhook_resultaat ? JSON.parse(h.webhook_resultaat) : [];
+                  if (r.length) webhookInfo = `${r.length} afgeleverd`;
+                } catch (_) {}
+                return (
+                  <tr key={h.id} className="border-b border-line/60">
+                    <td className="px-3 py-2 text-ink">{h.bestandsnaam}</td>
+                    <td className="px-3 py-2">
+                      <Badge color="blue">{h.formaat.toUpperCase()}</Badge>
+                    </td>
+                    <td className="px-3 py-2 text-muted">{h.aantal_producten}</td>
+                    <td className="px-3 py-2 text-muted">{webhookInfo}</td>
+                    <td className="px-3 py-2 text-muted">
+                      {new Date(h.aangemaakt_op).toLocaleString("nl-NL")}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
   );
 }

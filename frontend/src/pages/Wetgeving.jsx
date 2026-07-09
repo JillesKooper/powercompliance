@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { api } from "../api";
 import { Card, Badge, Loading, ErrorBox, Button } from "../components/ui";
 import BulkEmailModal from "../components/BulkEmailModal.jsx";
@@ -10,6 +11,7 @@ const STATUS_KLEUR = {
 };
 
 export default function Wetgeving() {
+  const location = useLocation();
   const [wetten, setWetten] = useState(null);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(null);
@@ -18,6 +20,18 @@ export default function Wetgeving() {
   useEffect(() => {
     api.wetgeving().then(setWetten).catch((e) => setError(e.message));
   }, []);
+
+  // vanuit het dashboard kan een wetgeving-code worden meegegeven om die
+  // direct uit te vouwen en in beeld te scrollen
+  useEffect(() => {
+    const code = location.state?.code;
+    if (!code || !wetten) return;
+    const wet = wetten.find((w) => w.code === code);
+    if (!wet) return;
+    setOpen(wet.id);
+    const el = document.getElementById(`wet-${wet.code}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [wetten, location.state]);
 
   if (error) return <ErrorBox message={error} />;
   if (!wetten) return <Loading />;
@@ -33,7 +47,8 @@ export default function Wetgeving() {
       )}
 
       {wetten.map((w) => (
-        <Card key={w.id} className="overflow-hidden">
+        <div key={w.id} id={`wet-${w.code}`}>
+        <Card className="overflow-hidden">
           <div className="px-5 py-4 flex items-start gap-4">
             <div className="h-10 w-10 shrink-0 rounded-lg bg-brand-100 text-brand-700 grid place-items-center font-bold">
               ⚖️
@@ -75,7 +90,7 @@ export default function Wetgeving() {
                     href={w.info_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="rounded-md border border-line px-3 py-2 text-sm font-medium text-ink hover:bg-hover"
                   >
                     Officiële tekst →
                   </a>
@@ -117,6 +132,7 @@ export default function Wetgeving() {
             </div>
           )}
         </Card>
+        </div>
       ))}
     </div>
   );

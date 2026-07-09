@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
 import { Card, ProgressBar, Badge, Loading, ErrorBox, Button } from "../components/ui";
 import EmailModal from "../components/EmailModal.jsx";
+import ProductDocumenten from "../components/ProductDocumenten.jsx";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -11,6 +12,7 @@ export default function ProductDetail() {
   const [error, setError] = useState(null);
   const [mailCode, setMailCode] = useState(null);
   const [scrapeMelding, setScrapeMelding] = useState(null);
+  const [tab, setTab] = useState("compliance");
 
   async function laad() {
     try {
@@ -123,7 +125,29 @@ export default function ProductDetail() {
         </div>
       </Card>
 
-      {Object.entries(perWet).map(([code, items]) => {
+      <div className="flex items-center gap-1 border-b border-line">
+        {[
+          ["compliance", "Compliance"],
+          ["documenten", "Documenten"],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === key
+                ? "border-brand-500 text-ink"
+                : "border-transparent text-muted hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "documenten" && <ProductDocumenten productId={product.id} />}
+
+      {tab === "compliance" &&
+        Object.entries(perWet).map(([code, items]) => {
         const heeftOntbrekend = items.some((i) => !i.ingevuld);
         return (
         <Card key={code} className="overflow-hidden">
@@ -147,29 +171,11 @@ export default function ProductDetail() {
                 className="px-5 py-3 flex items-center justify-between gap-3 text-sm"
               >
                 <div className="min-w-0">
-                  <div className="text-slate-700">{r.veld_naam}</div>
-                  <div className="text-xs text-slate-400">
-                    {r.veld_type}
-                    {r.waarde && (
-                      <>
-                        {" · "}
-                        <span className="text-slate-500">{r.waarde}</span>
-                      </>
-                    )}
-                    {r.bron_url && (
-                      <>
-                        {" · "}
-                        <a
-                          href={r.bron_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-brand-600 hover:underline"
-                        >
-                          bron
-                        </a>
-                      </>
-                    )}
+                  <div className="text-slate-700">
+                    {r.veld_naam}
+                    <span className="text-xs text-slate-400 ml-2">{r.veld_type}</span>
                   </div>
+                  <VeldWaarde r={r} />
                 </div>
                 <VeldStatus r={r} onVerifieer={() => verifieer(r.compliance_veld_id)} />
               </div>
@@ -180,6 +186,60 @@ export default function ProductDetail() {
       })}
     </div>
   );
+}
+
+function VeldWaarde({ r }) {
+  const automatisch = r.bron === "automatisch" || r.status === "automatisch";
+  // de echte waarde komt uit `waarde` (val terug op `waarde_tekst`)
+  const ruwe = r.waarde ?? r.waarde_tekst ?? null;
+  const heeftWaarde = ruwe !== null && String(ruwe).trim() !== "";
+  const isIngevuld = r.ingevuld || r.status === "ingevuld" || automatisch;
+
+  // 1 t/m 3: er is een waarde (handmatig ingevuld of automatisch gevonden)
+  if (heeftWaarde) {
+    return (
+      <div className="mt-0.5 text-sm flex items-center gap-2 flex-wrap">
+        {r.twijfelachtig ? (
+          // 3. twijfelachtig: waarde in oranje met waarschuwingsicoon
+          <span className="inline-flex items-center gap-1 font-medium text-amber-600">
+            <span aria-hidden="true">⚠️</span>
+            {ruwe}
+            <span className="text-xs font-normal text-amber-500">(twijfelachtig)</span>
+          </span>
+        ) : (
+          // 1. ingevulde waarde, direct zichtbaar
+          <span className="font-medium text-slate-800">{ruwe}</span>
+        )}
+        {/* 2. automatisch gevonden via scraping: bron-URL als kleine link */}
+        {automatisch && r.bron_url && (
+          <a
+            href={r.bron_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-brand-600 hover:underline"
+          >
+            🔗 bron
+          </a>
+        )}
+        {automatisch && !r.bron_url && (
+          <span className="text-xs text-slate-400">automatisch gevonden</span>
+        )}
+      </div>
+    );
+  }
+
+  // ingevuld gemarkeerd maar zonder waarde: toon "—"
+  if (isIngevuld) {
+    return <div className="mt-0.5 text-sm text-slate-400">—</div>;
+  }
+
+  // 4. ontbreekt: blijf "ontbreekt" in rood tonen
+  if (r.status === "niet_gevonden_online") {
+    return (
+      <div className="mt-0.5 text-sm text-slate-400">niet online gevonden</div>
+    );
+  }
+  return <div className="mt-0.5 text-sm text-red-500">ontbreekt</div>;
 }
 
 function VeldStatus({ r, onVerifieer }) {

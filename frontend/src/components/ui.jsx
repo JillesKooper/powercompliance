@@ -1,25 +1,35 @@
-export function Card({ children, className = "" }) {
+export function Card({ children, className = "", onClick, ...rest }) {
   return (
     <div
-      className={`bg-white rounded-xl border border-slate-200 shadow-sm ${className}`}
+      onClick={onClick}
+      className={`bg-white rounded-lg border border-line shadow-card ${className}`}
+      {...rest}
     >
       {children}
     </div>
   );
 }
 
-export function StatCard({ label, value, sub, accent = "brand" }) {
+export function StatCard({ label, value, sub, accent = "brand", onClick }) {
   const accents = {
     brand: "text-brand-600",
     green: "text-emerald-600",
     amber: "text-amber-600",
     red: "text-red-600",
   };
+  const klikbaar = typeof onClick === "function";
   return (
-    <Card className="p-5">
-      <div className="text-sm text-slate-500">{label}</div>
+    <Card
+      onClick={onClick}
+      className={`p-5 ${
+        klikbaar
+          ? "cursor-pointer transition-colors hover:bg-hover hover:border-brand-300"
+          : ""
+      }`}
+    >
+      <div className="text-sm text-muted">{label}</div>
       <div className={`text-3xl font-bold mt-1 ${accents[accent]}`}>{value}</div>
-      {sub && <div className="text-xs text-slate-400 mt-1">{sub}</div>}
+      {sub && <div className="text-xs text-muted mt-1">{sub}</div>}
     </Card>
   );
 }
@@ -30,10 +40,10 @@ export function ProgressBar({ value }) {
     v >= 90 ? "bg-emerald-500" : v >= 60 ? "bg-amber-500" : "bg-red-500";
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+      <div className="flex-1 h-2 rounded-full bg-hover overflow-hidden">
         <div className={`h-full ${color}`} style={{ width: `${v}%` }} />
       </div>
-      <span className="text-xs font-medium text-slate-600 w-10 text-right">
+      <span className="text-xs font-medium text-muted w-10 text-right">
         {v}%
       </span>
     </div>
@@ -42,11 +52,11 @@ export function ProgressBar({ value }) {
 
 export function Badge({ children, color = "slate" }) {
   const colors = {
-    slate: "bg-slate-100 text-slate-700",
-    green: "bg-emerald-100 text-emerald-700",
-    amber: "bg-amber-100 text-amber-700",
-    red: "bg-red-100 text-red-700",
-    blue: "bg-brand-100 text-brand-700",
+    slate: "bg-hover text-muted",
+    green: "bg-emerald-50 text-emerald-700",
+    amber: "bg-amber-50 text-amber-700",
+    red: "bg-red-50 text-red-700",
+    blue: "bg-brand-50 text-brand-700",
   };
   return (
     <span
@@ -58,12 +68,12 @@ export function Badge({ children, color = "slate" }) {
 }
 
 export function Loading() {
-  return <div className="text-slate-400 text-sm py-12 text-center">Laden…</div>;
+  return <div className="text-muted text-sm py-12 text-center">Laden…</div>;
 }
 
 export function ErrorBox({ message }) {
   return (
-    <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+    <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
       Fout: {message}
     </div>
   );
@@ -72,7 +82,7 @@ export function ErrorBox({ message }) {
 export function Paginatie({ pagina, onPagina }) {
   if (!pagina || pagina.pages <= 1) {
     return pagina ? (
-      <div className="text-xs text-slate-400 px-1 py-2">
+      <div className="text-xs text-muted px-1 py-2">
         {pagina.total} resultaten
       </div>
     ) : null;
@@ -82,24 +92,24 @@ export function Paginatie({ pagina, onPagina }) {
   const tot = Math.min(page * per_page, total);
   return (
     <div className="flex items-center justify-between px-1 py-3 text-sm">
-      <span className="text-slate-500">
+      <span className="text-muted">
         {van}–{tot} van {total}
       </span>
       <div className="flex items-center gap-2">
         <button
           onClick={() => onPagina(page - 1)}
           disabled={page <= 1}
-          className="rounded-lg border border-slate-300 px-3 py-1 disabled:opacity-40 hover:bg-slate-50"
+          className="rounded-md border border-line px-3 py-1 text-ink disabled:opacity-40 hover:bg-hover"
         >
           ← Vorige
         </button>
-        <span className="text-slate-500">
+        <span className="text-muted">
           {page} / {pages}
         </span>
         <button
           onClick={() => onPagina(page + 1)}
           disabled={page >= pages}
-          className="rounded-lg border border-slate-300 px-3 py-1 disabled:opacity-40 hover:bg-slate-50"
+          className="rounded-md border border-line px-3 py-1 text-ink disabled:opacity-40 hover:bg-hover"
         >
           Volgende →
         </button>
@@ -111,12 +121,12 @@ export function Paginatie({ pagina, onPagina }) {
 export function Button({ children, variant = "primary", ...props }) {
   const variants = {
     primary: "bg-brand-600 hover:bg-brand-700 text-white",
-    ghost: "bg-white hover:bg-slate-50 text-slate-700 border border-slate-300",
+    ghost: "bg-white hover:bg-hover text-ink border border-line",
     danger: "bg-red-600 hover:bg-red-700 text-white",
   };
   return (
     <button
-      className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${variants[variant]}`}
+      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${variants[variant]}`}
       {...props}
     >
       {children}

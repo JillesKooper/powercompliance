@@ -321,3 +321,129 @@ class LeveranciersPagina(Pagina):
 
 class DataverzoekenPagina(Pagina):
     items: List[DataverzoekOut] = []
+
+
+# ---------- Documentbeheer ----------
+class DocumentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    product_id: int
+    documenttype: str
+    originele_naam: str
+    mime_type: Optional[str] = None
+    grootte: int = 0
+    verloopdatum: Optional[date] = None
+    notitie: Optional[str] = None
+    geupload_op: datetime
+    # afgeleid:
+    verloop_status: Optional[str] = None  # geldig | verloopt_binnenkort | verlopen | geen
+    dagen_tot_verloop: Optional[int] = None
+
+
+class DocumentMetProduct(DocumentOut):
+    product_naam: Optional[str] = None
+    artikelnummer: Optional[str] = None
+    leverancier_naam: Optional[str] = None
+
+
+class VerlopendDocumentenOverzicht(BaseModel):
+    verlopen: List[DocumentMetProduct] = []
+    verloopt_binnenkort: List[DocumentMetProduct] = []
+    aantal_verlopen: int = 0
+    aantal_binnenkort: int = 0
+
+
+# ---------- PIM/ERP-export ----------
+class ExportVeld(BaseModel):
+    sleutel: str
+    label: str
+    groep: str  # "product" | wetgeving-code
+
+
+class ExportOpties(BaseModel):
+    velden: List[ExportVeld] = []
+    leveranciers: List[dict] = []
+    categorieen: List[dict] = []
+    wetgeving: List[dict] = []
+
+
+class ExportRequest(BaseModel):
+    formaat: str = "csv"  # csv | xlsx | json
+    velden: List[str] = []  # veldsleutels; leeg = alle product-basisvelden
+    leverancier_id: Optional[int] = None
+    categorie_id: Optional[int] = None
+    wetgeving_code: Optional[str] = None
+    alleen_compliant: bool = False  # alleen goedgekeurde/complete productdata
+
+
+class ExportLogOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    formaat: str
+    bestandsnaam: str
+    aantal_producten: int
+    aantal_velden: int
+    velden: Optional[str] = None
+    filters: Optional[str] = None
+    bron: str
+    webhook_resultaat: Optional[str] = None
+    aangemaakt_op: datetime
+
+
+class WebhookCreate(BaseModel):
+    url: str
+    beschrijving: Optional[str] = None
+    geheim: Optional[str] = None
+
+
+class WebhookOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    url: str
+    beschrijving: Optional[str] = None
+    actief: bool
+    laatste_status: Optional[str] = None
+    laatst_afgeleverd_op: Optional[datetime] = None
+    aangemaakt_op: datetime
+
+
+# ---------- Rapportages ----------
+class ComplianceOverzichtRegel(BaseModel):
+    code: str
+    naam: str
+    aantal_producten: int
+    compliance_percentage: float
+    aantal_ontbrekende_velden: int
+
+
+class LeverancierScorecard(BaseModel):
+    leverancier_id: int
+    naam: str
+    aantal_producten: int
+    compleetheid_percentage: float
+    open_verzoeken: int
+    gem_responstijd_dagen: Optional[float] = None
+
+
+class RisicoLeverancier(BaseModel):
+    leverancier_id: int
+    naam: str
+    deadline: Optional[date] = None
+    dagen_tot_deadline: Optional[int] = None
+    risicocategorie: str  # "30" | "60" | "90"
+    aantal_ontbrekend: int
+    onderwerp: Optional[str] = None
+
+
+class TrendPunt(BaseModel):
+    maand: str  # YYYY-MM
+    label: str  # bv. "jan 2026"
+    compliance_percentage: float
+    aantal_producten: int
+
+
+class RapportagesData(BaseModel):
+    compliance_overzicht: List[ComplianceOverzichtRegel] = []
+    scorecards: List[LeverancierScorecard] = []
+    risico: List[RisicoLeverancier] = []
+    trend: List[TrendPunt] = []

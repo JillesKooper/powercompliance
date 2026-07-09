@@ -7,11 +7,13 @@ export default function LeverancierDetail() {
   const { id } = useParams();
   const [lev, setLev] = useState(null);
   const [producten, setProducten] = useState(null);
+  const [documenten, setDocumenten] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     setLev(null);
     setProducten(null);
+    setDocumenten(null);
     Promise.all([
       api.leverancier(id),
       api.producten({ leverancier_id: id, per_page: 1000 }),
@@ -21,6 +23,7 @@ export default function LeverancierDetail() {
         setProducten(p.items);
       })
       .catch((e) => setError(e.message));
+    api.leverancierDocumenten(id).then(setDocumenten).catch(() => {});
   }, [id]);
 
   if (error) return <ErrorBox message={error} />;
@@ -101,6 +104,63 @@ export default function LeverancierDetail() {
             <div className="px-5 py-8 text-center text-slate-400 text-sm">
               Nog geen producten.
             </div>
+          )}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="px-5 py-3 border-b border-line font-semibold text-ink flex items-center justify-between">
+          <span>Documenten</span>
+          {documenten && (
+            <span className="text-xs font-normal text-muted">
+              {documenten.length} document{documenten.length === 1 ? "" : "en"}
+            </span>
+          )}
+        </div>
+        <div className="divide-y divide-line/70">
+          {documenten === null ? (
+            <div className="px-5 py-6 text-sm text-muted">Laden…</div>
+          ) : documenten.length === 0 ? (
+            <div className="px-5 py-8 text-center text-muted text-sm">
+              Nog geen documenten voor producten van deze leverancier.
+            </div>
+          ) : (
+            documenten.map((d) => (
+              <div
+                key={d.id}
+                className="flex items-center justify-between gap-3 px-5 py-3 text-sm"
+              >
+                <div className="min-w-0">
+                  <Link
+                    to={`/producten/${d.product_id}`}
+                    className="font-medium text-brand-700 hover:underline"
+                  >
+                    {d.product_naam}
+                  </Link>
+                  <div className="text-xs text-muted truncate">
+                    📄 {d.originele_naam}
+                    {d.verloopdatum ? ` · verloopt ${d.verloopdatum}` : ""}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {d.verloop_status === "verlopen" && (
+                    <Badge color="red">verlopen</Badge>
+                  )}
+                  {d.verloop_status === "verloopt_binnenkort" && (
+                    <Badge color="amber">nog {d.dagen_tot_verloop} d</Badge>
+                  )}
+                  {d.verloop_status === "geldig" && (
+                    <Badge color="green">geldig</Badge>
+                  )}
+                  <button
+                    onClick={() => api.downloadDocument(d.id)}
+                    className="text-brand-600 hover:underline text-xs"
+                  >
+                    Download
+                  </button>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </Card>

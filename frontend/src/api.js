@@ -32,6 +32,44 @@ async function upload(path, file) {
   return res.json();
 }
 
+async function uploadForm(path, formData) {
+  const res = await fetch(`${BASE}${path}`, { method: "POST", body: formData });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      detail = (await res.json()).detail || detail;
+    } catch (_) {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+// Haal een bestand op (blob) en bied het als download aan in de browser.
+async function download(path, options = {}) {
+  const res = await fetch(`${BASE}${path}`, options);
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      detail = (await res.json()).detail || detail;
+    } catch (_) {}
+    throw new Error(detail);
+  }
+  const blob = await res.blob();
+  let naam = "download";
+  const cd = res.headers.get("Content-Disposition") || "";
+  const match = cd.match(/filename="?([^"]+)"?/);
+  if (match) naam = match[1];
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = naam;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  return { aantal: res.headers.get("X-Export-Aantal"), bestandsnaam: naam };
+}
+
 export const api = {
   dashboard: () => request("/dashboard"),
   leveranciers: (params = {}) => {
@@ -106,4 +144,37 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  // ---------- PIM/ERP-export ----------
+  exportOpties: () => request("/export/opties"),
+  exporteer: (data) =>
+    download("/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  exportHistorie: () => request("/export/historie"),
+  webhooks: () => request("/export/webhook"),
+  abonneerWebhook: (data) =>
+    request("/export/webhook", { method: "POST", body: JSON.stringify(data) }),
+  verwijderWebhook: (id) =>
+    request(`/export/webhook/${id}`, { method: "DELETE" }),
+
+  // ---------- Rapportages ----------
+  rapportages: () => request("/rapportages"),
+  exporteerRapportage: (soort, formaat) =>
+    download(`/rapportages/${soort}/export?formaat=${formaat}`),
+
+  // ---------- Documentbeheer ----------
+  documenttypes: () => request("/documenten/types"),
+  productDocumenten: (productId) =>
+    request(`/producten/${productId}/documenten`),
+  uploadDocument: (productId, formData) =>
+    uploadForm(`/producten/${productId}/documenten`, formData),
+  downloadDocument: (id) => download(`/documenten/${id}/download`),
+  verwijderDocument: (id) =>
+    request(`/documenten/${id}`, { method: "DELETE" }),
+  leverancierDocumenten: (leverancierId) =>
+    request(`/leveranciers/${leverancierId}/documenten`),
+  verlopendeDocumenten: () => request("/documenten/verlopend"),
 };
