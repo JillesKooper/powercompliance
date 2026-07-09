@@ -215,3 +215,38 @@ def markeer_alles_gelezen(db: Session = Depends(get_db)):
 @router.get("/dashboard", response_model=schemas.DashboardStats)
 def dashboard(db: Session = Depends(get_db)):
     return compliance_service.bouw_dashboard(db)
+
+
+# ---------- Seed (testdata inladen) ----------
+@router.post("/seed")
+def laad_seed_data(force: bool = Query(False), db: Session = Depends(get_db)):
+    """Vul de database met voorbeelddata.
+
+    Let op: dit reset de volledige database. Om onbedoeld wissen te voorkomen
+    gebeurt dat alleen als de database leeg is; gebruik ?force=true om een
+    reeds gevulde database te overschrijven.
+    """
+    if not force and db.query(models.Product).count() > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Database bevat al data. Gebruik ?force=true om te overschrijven."
+            ),
+        )
+    # Geef de leesverbinding van deze sessie vrij, zodat seed() de tabellen kan
+    # droppen zonder "database is locked" op SQLite.
+    db.rollback()
+    # Lazily importeren: seed importeert zwaardere modules die niet bij elke
+    # request nodig zijn.
+    from .. import seed as seed_module
+
+    seed_module.seed()
+    compliance_service.invalideer_dashboard()
+    return {
+        "status": "ok",
+        "bericht": "Seed-data geladen",
+        "categorieen": db.query(models.Categorie).count(),
+        "wetgevingen": db.query(models.Wetgeving).count(),
+        "leveranciers": db.query(models.Leverancier).count(),
+        "producten": db.query(models.Product).count(),
+    }
