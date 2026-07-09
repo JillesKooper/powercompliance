@@ -1,5 +1,7 @@
 // Dunne API-client. In dev proxyt Vite /api naar de FastAPI-backend.
-const BASE = "/api";
+// In productie wijst VITE_API_URL naar de gedeployde backend (bv.
+// "https://powercompliance-production.up.railway.app/api").
+const BASE = import.meta.env.VITE_API_URL || "/api";
 
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -136,7 +138,7 @@ export const api = {
     request("/email/genereer", { method: "POST", body: JSON.stringify(data) }),
   verstuurEmail: (data) =>
     request("/email/verstuur", { method: "POST", body: JSON.stringify(data) }),
-  bijlageUrl: (leverancierId) => `/api/email/bijlage/${leverancierId}`,
+  bijlageUrl: (leverancierId) => `${BASE}/email/bijlage/${leverancierId}`,
   wetgevingUitvraagLeveranciers: (code) =>
     request(`/email/uitvraag-wetgeving/${encodeURIComponent(code)}/leveranciers`),
   uitvraagWetgeving: (data) =>
