@@ -11,7 +11,7 @@ const NAV = [
   { to: "/instellingen", label: "Instellingen", icon: "⚙️" },
 ];
 
-const GEBRUIKER = "Gijs van der Mond";
+const GEBRUIKER = "Guus van der Mond";
 const BEDRIJF = "Machine Learning Company";
 
 export default function Layout({ children }) {
