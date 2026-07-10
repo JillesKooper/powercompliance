@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
-import { Card, ProgressBar, Badge, Loading, ErrorBox, Button } from "../components/ui";
+import {
+  Card,
+  ProgressBar,
+  Badge,
+  Loading,
+  ErrorBox,
+  Button,
+  AnimatedNumber,
+} from "../components/ui";
 import EmailModal from "../components/EmailModal.jsx";
 import ProductDocumenten from "../components/ProductDocumenten.jsx";
 
@@ -13,6 +21,7 @@ export default function ProductDetail() {
   const [mailCode, setMailCode] = useState(null);
   const [scrapeMelding, setScrapeMelding] = useState(null);
   const [tab, setTab] = useState("compliance");
+  const [weergave, setWeergave] = useState("na"); // voor | na (Voor/Na-vergelijking)
 
   async function laad() {
     try {
@@ -57,9 +66,39 @@ export default function ProductDetail() {
   if (error) return <ErrorBox message={error} />;
   if (!product || !regels) return <Loading />;
 
+  // Velden die via een leveranciersreply zijn aangevuld (bron === "reply").
+  const heeftReply = regels.some((r) => r.bron === "reply");
+  const toonVoor = heeftReply && weergave === "voor";
+
+  // Afgeleide regels voor de gekozen weergave: in "Voor" tonen we de via de
+  // reply verrijkte velden weer als ontbrekend (rood).
+  const toonRegels = regels.map((r) => {
+    const isReply = r.bron === "reply";
+    if (toonVoor && isReply) {
+      return {
+        ...r,
+        ingevuld: false,
+        waarde: null,
+        bron: null,
+        geverifieerd: false,
+        twijfelachtig: false,
+        status: "ontbreekt",
+      };
+    }
+    return { ...r, _replyNieuw: heeftReply && !toonVoor && isReply };
+  });
+
+  // Afgeleide compliance-cijfers voor de gekozen weergave.
+  const totaalVelden = regels.length;
+  const ingevuldNu = toonRegels.filter((r) => r.ingevuld).length;
+  const pct = totaalVelden
+    ? Math.round((ingevuldNu / totaalVelden) * 1000) / 10
+    : 100;
+  const ontbrekendNu = totaalVelden - ingevuldNu;
+
   // groepeer regels per wetgeving
   const perWet = {};
-  for (const r of regels) (perWet[r.wetgeving_code] ??= []).push(r);
+  for (const r of toonRegels) (perWet[r.wetgeving_code] ??= []).push(r);
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -110,19 +149,50 @@ export default function ProductDetail() {
             </div>
           </div>
           <div className="text-right shrink-0 w-44">
-            <div className="text-3xl font-bold text-slate-800">
-              {product.compliance_percentage}%
+            <div
+              className={`text-3xl font-bold transition-colors duration-500 ${
+                toonVoor ? "text-red-500" : "text-slate-800"
+              }`}
+            >
+              <AnimatedNumber value={pct} decimals={1} />%
             </div>
             <div className="text-xs text-slate-400 mb-2">compliance</div>
-            <ProgressBar value={product.compliance_percentage} />
+            <ProgressBar value={pct} />
             <div className="text-xs text-slate-500 mt-2">
-              {product.aantal_ingevuld}/{product.aantal_velden} velden ·{" "}
-              <span className="text-red-500">
-                {product.aantal_ontbrekend} ontbreekt
-              </span>
+              {ingevuldNu}/{totaalVelden} velden ·{" "}
+              <span className="text-red-500">{ontbrekendNu} ontbreekt</span>
             </div>
           </div>
         </div>
+
+        {heeftReply && (
+          <div className="mt-5 flex items-center justify-between gap-3 rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
+            <div className="text-sm text-slate-600">
+              <span className="font-medium text-slate-800">Voor/Na-vergelijking</span>{" "}
+              — zie het effect van de verwerkte leveranciersreply.
+            </div>
+            <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden shrink-0">
+              {[
+                ["voor", "Voor reply"],
+                ["na", "Na reply"],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setWeergave(key)}
+                  className={`px-3 py-1.5 text-sm transition-colors ${
+                    weergave === key
+                      ? key === "voor"
+                        ? "bg-red-500 text-white"
+                        : "bg-emerald-500 text-white"
+                      : "bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
 
       <div className="flex items-center gap-1 border-b border-line">
@@ -167,13 +237,22 @@ export default function ProductDetail() {
           <div className="divide-y divide-slate-100">
             {items.map((r) => (
               <div
-                key={r.compliance_veld_id}
-                className="px-5 py-3 flex items-center justify-between gap-3 text-sm"
+                key={`${weergave}-${r.compliance_veld_id}`}
+                className={`px-5 py-3 flex items-center justify-between gap-3 text-sm ${
+                  r._replyNieuw
+                    ? "animate-flashGreen border-l-2 border-emerald-400"
+                    : ""
+                }`}
               >
                 <div className="min-w-0">
                   <div className="text-slate-700">
                     {r.veld_naam}
                     <span className="text-xs text-slate-400 ml-2">{r.veld_type}</span>
+                    {r._replyNieuw && (
+                      <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px] font-medium">
+                        📥 via reply
+                      </span>
+                    )}
                   </div>
                   <VeldWaarde r={r} />
                 </div>

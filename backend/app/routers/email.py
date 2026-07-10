@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, email_generator, compliance_service
+from .. import models, schemas, email_generator, mail_service, compliance_service
 from ..database import get_db
 
 router = APIRouter(prefix="/api/email", tags=["email"])
@@ -69,17 +69,31 @@ def download_bijlage(
     )
 
 
-@router.post("/verstuur", response_model=schemas.DataverzoekOut, status_code=201)
+@router.post("/verstuur", response_model=schemas.EmailVerstuurResultaat, status_code=201)
 def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get_db)):
-    """Registreert het verzonden dataverzoek + een notificatie.
+    """Verstuurt het dataverzoek als echte e-mail via SendGrid en legt het vast.
 
-    (Er is geen echte SMTP-koppeling; dit legt de verzending vast in het systeem.)
+    Zonder SENDGRID_API_KEY / DEMO_EMAIL wordt de verzending gesimuleerd, zodat
+    de functionaliteit altijd werkt.
     """
     lev = _haal_leverancier(db, data.leverancier_id)
+
+    mail = mail_service.verstuur_mail(
+        onderwerp=data.onderwerp,
+        tekst=data.tekst or "",
+        aan_naam=data.aan_naam or lev.contactpersoon,
+        aan_email=data.aan_email or lev.email,
+    )
+
+    kanaal_tekst = (
+        f"Echt verstuurd via SendGrid naar {mail['ontvanger']}."
+        if mail["kanaal"] == "sendgrid" and mail["verzonden"]
+        else f"Verzending gesimuleerd ({mail['info']})."
+    )
     verzoek = models.Dataverzoek(
         leverancier_id=lev.id,
         onderwerp=data.onderwerp,
-        bericht="Dataverzoek-e-mail gegenereerd en verstuurd vanuit PowerCompliance.",
+        bericht=f"Dataverzoek-e-mail vanuit PowerCompliance. {kanaal_tekst}",
         status="verzonden",
         deadline=data.deadline,
         aangemaakt_op=datetime.utcnow(),
@@ -88,14 +102,18 @@ def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get
     db.add(
         models.Notificatie(
             titel=f"Dataverzoek verstuurd naar {lev.naam}",
-            bericht=data.onderwerp,
+            bericht=f"{data.onderwerp} — {kanaal_tekst}",
             type="succes",
+            categorie="Dataverzoek verstuurd",
         )
     )
     db.commit()
     db.refresh(verzoek)
     compliance_service.invalideer_dashboard()
-    return verzoek
+    return schemas.EmailVerstuurResultaat(
+        dataverzoek=schemas.DataverzoekOut.model_validate(verzoek),
+        mail=schemas.MailAflevering(**mail),
+    )
 
 
 @router.get(

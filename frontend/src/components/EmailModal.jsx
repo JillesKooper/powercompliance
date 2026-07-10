@@ -18,6 +18,7 @@ export default function EmailModal({
   const [fout, setFout] = useState(null);
   const [bezigVersturen, setBezigVersturen] = useState(false);
   const [verzonden, setVerzonden] = useState(false);
+  const [aflevering, setAflevering] = useState(null);
   const [gekopieerd, setGekopieerd] = useState(false);
 
   async function genereer(huidigeTaal = taal, huidigeDeadline = deadline) {
@@ -72,13 +73,18 @@ export default function EmailModal({
   async function verstuur() {
     setBezigVersturen(true);
     try {
-      await api.verstuurEmail({
+      const r = await api.verstuurEmail({
         leverancier_id: leverancierId,
         onderwerp,
+        tekst,
+        aan_naam: data?.aan_naam || null,
+        aan_email: data?.aan_email || null,
         deadline: deadline || null,
       });
       setVerzonden(true);
-      setTimeout(onClose, 1400);
+      setAflevering(r?.mail || null);
+      // iets langer tonen zodat het afleverkanaal zichtbaar is
+      setTimeout(onClose, 2600);
     } catch (e) {
       setFout("Versturen mislukt: " + e.message);
     } finally {
@@ -224,7 +230,11 @@ export default function EmailModal({
           </Button>
           <div className="ml-auto flex items-center gap-2">
             {verzonden && (
-              <span className="text-sm text-emerald-600">Verzonden ✓</span>
+              <span className="text-sm text-emerald-600">
+                {aflevering?.kanaal === "sendgrid" && aflevering?.verzonden
+                  ? `Verzonden via SendGrid → ${aflevering.ontvanger} ✓`
+                  : "Verzonden ✓"}
+              </span>
             )}
             <Button onClick={verstuur} disabled={laden || bezigVersturen || verzonden}>
               {bezigVersturen ? "Versturen…" : "Verstuur"}

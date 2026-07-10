@@ -119,9 +119,13 @@ dataverzoeken.
 - `POST /api/import/leveranciers` — CSV/Excel-import leveranciers (multipart)
 - `POST /api/email/genereer` — genereer dataverzoek-mail (AI, claude-sonnet-4-6); optioneel `wetgeving_code` om gericht per wetgeving uit te vragen
 - `GET /api/email/bijlage/{leverancier_id}?wetgeving=CODE` — Excel met ontbrekende velden (optioneel gescoped)
-- `POST /api/email/verstuur` — registreer het verstuurde dataverzoek
+- `POST /api/email/verstuur` — verstuur het dataverzoek als **échte e-mail via SendGrid** (valt terug op gesimuleerde verzending zonder sleutel) en registreer het
 - `GET /api/email/uitvraag-wetgeving/{code}/leveranciers` — leveranciers met ontbrekende data voor een wetgeving
 - `POST /api/email/uitvraag-wetgeving` — stuur in één keer een dataverzoek naar alle (of geselecteerde) leveranciers voor die wetgeving
+- `POST /api/mail/inbound` — ontvang een inkomende reply (platte tekst); de AI parseert de waarden en vult de ontbrekende velden automatisch aan
+- `POST /api/mail/simuleer-reply` — genereer én verwerk in één klik een realistische leveranciersreply (voor de demo)
+- `GET /api/demo/status` — status van de demo-flow (gekozen leverancier + voor/na-compliance)
+- `POST /api/demo/reset` — verwijder de via reply verrijkte waarden zodat de demo opnieuw kan draaien
 
 ## E-mailgeneratie (dataverzoeken)
 
@@ -159,6 +163,38 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 Zonder sleutel werkt de functie nog steeds: de mailtekst valt dan terug op een
 nette sjabloontekst (de modal toont dat met "Sjabloon gebruikt").
+
+## E-mail demo-flow (SendGrid + reply-verwerking)
+
+De volledige demo laat zien hoe een dataverzoek écht de deur uit gaat en hoe een
+leveranciersreply automatisch verwerkt wordt.
+
+1. **Echte e-mails via SendGrid** — bij **Verstuur** gaat het dataverzoek als
+   echte e-mail via SendGrid naar een configureerbaar **demo-adres**. Zonder
+   sleutel of demo-adres wordt de verzending gesimuleerd, zodat de demo altijd
+   werkt.
+2. **Reply-verwerking** — met **📥 Simuleer leverancier reply** (op *Ontbrekende
+   data*) komt er een platte-tekst reply binnen via `POST /api/mail/inbound`. De
+   **Anthropic API** (`claude-sonnet-4-6`) parseert de reply en vult de
+   ontbrekende velden automatisch aan (met een robuuste regel-parser als
+   fallback).
+3. **Voor/Na-vergelijking** — op **Productdetail** verschijnt een **Voor/Na**-
+   schakelaar: *Voor* toont de ontbrekende velden rood, *Na* toont ze groen
+   ingevuld, met een geanimeerde overgang van de compliance-score.
+4. **Demo-modus** — op het **Dashboard** doorloopt **▶ Start demo** de hele flow
+   automatisch (mail → reply → AI-verrijking → score omhoog) met een
+   voortgangsindicator per stap.
+
+### SendGrid-configuratie
+
+Zet in `backend/.env` (zie `backend/.env.example`):
+
+```
+SENDGRID_API_KEY=SG....
+MAIL_FROM=compliance@powercompliance.nl   # geverifieerde SendGrid-afzender
+MAIL_FROM_NAAM=PowerCompliance
+DEMO_EMAIL=jij@voorbeeld.nl               # alle demo-mails gaan hierheen
+```
 
 ## Notificaties
 

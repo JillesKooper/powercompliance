@@ -14,6 +14,8 @@ from .routers import (
     overig,
     imports,
     email,
+    mail,
+    demo,
     export,
     rapportages,
     documenten,
@@ -49,6 +51,8 @@ app.include_router(producten.router)
 app.include_router(overig.router)
 app.include_router(imports.router)
 app.include_router(email.router)
+app.include_router(mail.router)
+app.include_router(demo.router)
 app.include_router(export.router)
 app.include_router(rapportages.router)
 app.include_router(documenten.router)

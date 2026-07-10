@@ -35,6 +35,26 @@ export default {
       boxShadow: {
         card: "0 1px 2px 0 rgba(0, 0, 0, 0.04), 0 1px 3px 0 rgba(0, 0, 0, 0.06)",
       },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0", transform: "translateY(4px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        flashGreen: {
+          "0%": { backgroundColor: "rgba(16, 185, 129, 0)" },
+          "30%": { backgroundColor: "rgba(16, 185, 129, 0.22)" },
+          "100%": { backgroundColor: "rgba(16, 185, 129, 0)" },
+        },
+        pulseRing: {
+          "0%, 100%": { boxShadow: "0 0 0 0 rgba(26, 115, 232, 0.35)" },
+          "50%": { boxShadow: "0 0 0 6px rgba(26, 115, 232, 0)" },
+        },
+      },
+      animation: {
+        fadeIn: "fadeIn 0.4s ease-out both",
+        flashGreen: "flashGreen 1.2s ease-out",
+        pulseRing: "pulseRing 1.6s ease-in-out infinite",
+      },
     },
   },
   plugins: [],

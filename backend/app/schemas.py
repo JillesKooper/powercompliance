@@ -265,7 +265,74 @@ class EmailGenereerResponse(BaseModel):
 class EmailVerstuurRequest(BaseModel):
     leverancier_id: int
     onderwerp: str
+    tekst: Optional[str] = None  # mailtekst; wordt echt verstuurd via SendGrid
+    aan_naam: Optional[str] = None
+    aan_email: Optional[str] = None
     deadline: Optional[date] = None
+
+
+class MailAflevering(BaseModel):
+    verzonden: bool
+    kanaal: str  # sendgrid | gesimuleerd
+    ontvanger: str
+    info: str
+    status_code: Optional[int] = None
+
+
+class EmailVerstuurResultaat(BaseModel):
+    dataverzoek: DataverzoekOut
+    mail: MailAflevering
+
+
+# ---------- Inkomende reply (mailverwerking) ----------
+class MailInboundRequest(BaseModel):
+    leverancier_id: int
+    tekst: str  # platte tekst van de inkomende reply
+    wetgeving_code: Optional[str] = None
+
+
+class SimuleerReplyRequest(BaseModel):
+    leverancier_id: int
+    wetgeving_code: Optional[str] = None
+
+
+class MailVerwerktVeld(BaseModel):
+    product_id: int
+    product_naam: str
+    compliance_veld_id: int
+    veld_naam: str
+    wetgeving_code: str
+    waarde: str
+
+
+class MailVerwerktResultaat(BaseModel):
+    leverancier_id: int
+    reply_tekst: Optional[str] = None  # de (gesimuleerde) reply die verwerkt is
+    aantal_ingevuld: int
+    aantal_producten: int
+    velden: List[MailVerwerktVeld] = []
+    ai_gebruikt: bool
+    ai_fout: Optional[str] = None
+
+
+# ---------- Demo-modus ----------
+class DemoLeverancier(BaseModel):
+    id: int
+    naam: str
+    contactpersoon: Optional[str] = None
+    email: Optional[str] = None
+
+
+class DemoStatus(BaseModel):
+    leverancier: Optional[DemoLeverancier] = None
+    aantal_producten: int = 0
+    velden_ontbrekend: int = 0  # nog ontbrekend (excl. reeds via reply verrijkt)
+    velden_via_reply: int = 0  # al ingevuld via een reply
+    compliance_voor: float = 100.0
+    compliance_na: float = 100.0
+    reply_verwerkt: bool = False
+    demo_email: Optional[str] = None
+    sendgrid_actief: bool = False
 
 
 class WetgevingUitvraagLeverancier(BaseModel):

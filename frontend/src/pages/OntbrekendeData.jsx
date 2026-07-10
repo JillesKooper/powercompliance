@@ -8,10 +8,35 @@ export default function OntbrekendeData() {
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
   const [mailLev, setMailLev] = useState(null); // {id, naam}
+  const [replyBezig, setReplyBezig] = useState(null); // leverancier_id
+  const [replyResultaat, setReplyResultaat] = useState(null);
+
+  function laad() {
+    api.ontbrekendeData().then(setItems).catch((e) => setError(e.message));
+  }
 
   useEffect(() => {
-    api.ontbrekendeData().then(setItems).catch((e) => setError(e.message));
+    laad();
   }, []);
+
+  async function simuleerReply(groep) {
+    setReplyBezig(groep.id);
+    setReplyResultaat(null);
+    try {
+      const r = await api.simuleerReply({ leverancier_id: groep.id });
+      setReplyResultaat({
+        naam: groep.naam,
+        aantal: r.aantal_ingevuld,
+        producten: r.aantal_producten,
+        ai: r.ai_gebruikt,
+      });
+      laad();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setReplyBezig(null);
+    }
+  }
 
   if (error) return <ErrorBox message={error} />;
   if (!items) return <Loading />;
@@ -58,6 +83,15 @@ export default function OntbrekendeData() {
         </div>
       </Card>
 
+      {replyResultaat && (
+        <div className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm">
+          ✅ Reply van <span className="font-semibold">{replyResultaat.naam}</span>{" "}
+          verwerkt — <span className="font-semibold">{replyResultaat.aantal}</span>{" "}
+          velden automatisch aangevuld over {replyResultaat.producten} producten{" "}
+          {replyResultaat.ai ? "(AI-parsing)" : "(regel-parser)"}.
+        </div>
+      )}
+
       {groepen.map((groep) => (
         <Card key={groep.id} className="overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
@@ -71,12 +105,23 @@ export default function OntbrekendeData() {
                 velden
               </Badge>
             </div>
-            <Button
-              variant="ghost"
-              onClick={() => setMailLev({ id: groep.id, naam: groep.naam })}
-            >
-              ✉️ E-mail genereren
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setMailLev({ id: groep.id, naam: groep.naam })}
+              >
+                ✉️ E-mail genereren
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => simuleerReply(groep)}
+                disabled={replyBezig === groep.id}
+              >
+                {replyBezig === groep.id
+                  ? "⏳ Verwerken…"
+                  : "📥 Simuleer leverancier reply"}
+              </Button>
+            </div>
           </div>
           <div className="divide-y divide-slate-100">
             {groep.producten.map((p) => (

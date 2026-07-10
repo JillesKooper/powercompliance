@@ -5,6 +5,7 @@ import { Card, StatCard, ProgressBar, Loading, ErrorBox, Button } from "../compo
 import { useNotificaties } from "../context/notificaties";
 import NotificatieModal from "../components/NotificatieModal.jsx";
 import ExportModal from "../components/ExportModal.jsx";
+import DemoModal from "../components/DemoModal.jsx";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -12,17 +13,22 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [documenten, setDocumenten] = useState(null);
   const [toonExport, setToonExport] = useState(false);
+  const [toonDemo, setToonDemo] = useState(false);
   const { items: notificaties, ongelezen, markeerAllesGelezen } =
     useNotificaties();
   const [gekozenId, setGekozenId] = useState(null);
   const gekozen = notificaties.find((n) => n.id === gekozenId) || null;
 
-  useEffect(() => {
+  function laadStats() {
     api
       .dashboard()
       .then(setStats)
       .catch((e) => setError(e.message));
     api.verlopendeDocumenten().then(setDocumenten).catch(() => {});
+  }
+
+  useEffect(() => {
+    laadStats();
   }, []);
 
   if (error) return <ErrorBox message={error} />;
@@ -39,7 +45,17 @@ export default function Dashboard() {
 
       {toonExport && <ExportModal onClose={() => setToonExport(false)} />}
 
-      <div className="flex justify-end">
+      {toonDemo && (
+        <DemoModal
+          onClose={() => {
+            setToonDemo(false);
+            laadStats();
+          }}
+        />
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Button onClick={() => setToonDemo(true)}>▶ Start demo</Button>
         <Button variant="ghost" onClick={() => setToonExport(true)}>
           ⇪ Exporteer naar PIM
         </Button>

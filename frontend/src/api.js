@@ -139,6 +139,17 @@ export const api = {
   verstuurEmail: (data) =>
     request("/email/verstuur", { method: "POST", body: JSON.stringify(data) }),
   bijlageUrl: (leverancierId) => `${BASE}/email/bijlage/${leverancierId}`,
+
+  // ---------- Inkomende mailverwerking (reply → AI-parsing) ----------
+  simuleerReply: (data) =>
+    request("/mail/simuleer-reply", { method: "POST", body: JSON.stringify(data) }),
+  mailInbound: (data) =>
+    request("/mail/inbound", { method: "POST", body: JSON.stringify(data) }),
+
+  // ---------- Demo-modus ----------
+  demoStatus: () => request("/demo/status"),
+  demoReset: () => request("/demo/reset", { method: "POST" }),
+
   wetgevingUitvraagLeveranciers: (code) =>
     request(`/email/uitvraag-wetgeving/${encodeURIComponent(code)}/leveranciers`),
   uitvraagWetgeving: (data) =>

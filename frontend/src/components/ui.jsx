@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+
 export function Card({ children, className = "", onClick, ...rest }) {
   return (
     <div
@@ -41,13 +43,44 @@ export function ProgressBar({ value }) {
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-2 rounded-full bg-hover overflow-hidden">
-        <div className={`h-full ${color}`} style={{ width: `${v}%` }} />
+        <div
+          className={`h-full ${color} transition-[width,background-color] duration-700 ease-out`}
+          style={{ width: `${v}%` }}
+        />
       </div>
       <span className="text-xs font-medium text-muted w-10 text-right">
         {v}%
       </span>
     </div>
   );
+}
+
+// Telt vloeiend naar de nieuwe waarde toe (voor de Voor/Na- en demo-animaties).
+export function AnimatedNumber({ value, decimals = 0, duration = 700 }) {
+  const [weergave, setWeergave] = useState(value ?? 0);
+  const vanRef = useRef(value ?? 0);
+
+  useEffect(() => {
+    const start = vanRef.current;
+    const eind = value ?? 0;
+    if (start === eind) {
+      setWeergave(eind);
+      return;
+    }
+    let raf;
+    const t0 = performance.now();
+    const stap = (nu) => {
+      const p = Math.min(1, (nu - t0) / duration);
+      const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+      setWeergave(start + (eind - start) * eased);
+      if (p < 1) raf = requestAnimationFrame(stap);
+      else vanRef.current = eind;
+    };
+    raf = requestAnimationFrame(stap);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+
+  return <>{weergave.toFixed(decimals)}</>;
 }
 
 export function Badge({ children, color = "slate" }) {
