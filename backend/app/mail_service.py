@@ -1,10 +1,10 @@
-"""E-maildemo: echte verzending via SendGrid + verwerking van inkomende replies.
+"""E-maildemo: echte verzending via Gmail SMTP + verwerking van inkomende replies.
 
 Dit vult het bestaande ``email_generator`` (dat de mailtekst opstelt) aan met:
 
-1. Echte verzending via SendGrid (gratis tier). Zonder ``SENDGRID_API_KEY`` of
-   ``DEMO_EMAIL`` valt de verzending terug op een *gesimuleerde* aflevering,
-   zodat de demo altijd werkt.
+1. Echte verzending via Gmail SMTP (``smtplib``, smtp.gmail.com:587, STARTTLS).
+   Zonder ``GMAIL_USER`` / ``GMAIL_APP_PASSWORD`` (of zonder ontvanger) valt de
+   verzending terug op een *gesimuleerde* aflevering, zodat de demo altijd werkt.
 2. Het genereren van een realistische, gesimuleerde leveranciersreply (platte
    tekst met de ontbrekende waarden).
 3. Het parsen van zo'n reply met de Anthropic API (model: claude-sonnet-4-6):
@@ -15,7 +15,10 @@ Dit vult het bestaande ``email_generator`` (dat de mailtekst opstelt) aan met:
 import json
 import os
 import re
+import smtplib
 from datetime import datetime
+from email.message import EmailMessage
+from email.utils import formataddr
 from typing import List, Optional, Tuple
 
 from sqlalchemy.orm import Session
@@ -24,15 +27,22 @@ from . import email_generator, models
 
 MODEL = "claude-sonnet-4-6"
 
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
+
 
 # ---------------------------------------------------------------------------
-# 1. Verzending via SendGrid
+# 1. Verzending via Gmail SMTP
 # ---------------------------------------------------------------------------
 def _mail_config() -> dict:
     return {
-        "api_key": os.environ.get("SENDGRID_API_KEY", "").strip(),
-        "from_email": os.environ.get("MAIL_FROM", "compliance@powercompliance.nl").strip(),
+        # Gmail-adres én SMTP-login; is tevens de afzender (Gmail vereist dat de
+        # afzender overeenkomt met het geauthenticeerde account).
+        "gmail_user": os.environ.get("GMAIL_USER", "").strip(),
+        # Gmail app-wachtwoord (NIET het gewone wachtwoord).
+        "gmail_app_password": os.environ.get("GMAIL_APP_PASSWORD", "").strip(),
         "from_naam": os.environ.get("MAIL_FROM_NAAM", "PowerCompliance").strip(),
+        # Optioneel: stuur alle demo-mails naar dit adres i.p.v. de leverancier.
         "demo_email": os.environ.get("DEMO_EMAIL", "").strip(),
     }
 
@@ -43,21 +53,21 @@ def verstuur_mail(
     aan_naam: Optional[str] = None,
     aan_email: Optional[str] = None,
 ) -> dict:
-    """Verstuur een e-mail via SendGrid naar het configureerbare demo-adres.
+    """Verstuur een e-mail via Gmail SMTP (smtp.gmail.com:587, STARTTLS).
 
-    Tijdens de demo gaan alle mails naar ``DEMO_EMAIL`` (niet naar het echte
-    leveranciersadres). Geeft een dict terug met de afleverstatus.
+    Als ``DEMO_EMAIL`` is ingesteld gaan alle mails naar dat adres (handig voor
+    de demo); anders naar het echte leveranciersadres. Geeft een dict met de
+    afleverstatus terug.
     """
     cfg = _mail_config()
     # De demo-ontvanger heeft voorrang; anders het echte leveranciersadres.
     ontvanger = cfg["demo_email"] or aan_email or ""
 
-    if not cfg["api_key"] or not ontvanger:
-        reden = (
-            "SENDGRID_API_KEY niet ingesteld"
-            if not cfg["api_key"]
-            else "geen ontvanger (stel DEMO_EMAIL in)"
-        )
+    if not cfg["gmail_user"] or not cfg["gmail_app_password"] or not ontvanger:
+        if not cfg["gmail_user"] or not cfg["gmail_app_password"]:
+            reden = "GMAIL_USER/GMAIL_APP_PASSWORD niet ingesteld"
+        else:
+            reden = "geen ontvanger (stel DEMO_EMAIL in)"
         return {
             "verzonden": False,
             "kanaal": "gesimuleerd",
@@ -67,28 +77,23 @@ def verstuur_mail(
         }
 
     try:
-        from sendgrid import SendGridAPIClient
-        from sendgrid.helpers.mail import Content, Email, Mail, To
+        bericht = EmailMessage()
+        bericht["Subject"] = onderwerp
+        bericht["From"] = formataddr((cfg["from_naam"], cfg["gmail_user"]))
+        bericht["To"] = formataddr((aan_naam or None, ontvanger))
+        bericht.set_content(tekst)
 
-        bericht = Mail(
-            from_email=Email(cfg["from_email"], cfg["from_naam"]),
-            to_emails=To(ontvanger, aan_naam or None),
-            subject=onderwerp,
-            plain_text_content=Content("text/plain", tekst),
-        )
-        client = SendGridAPIClient(cfg["api_key"])
-        resp = client.send(bericht)
-        ok = 200 <= resp.status_code < 300
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+            server.starttls()
+            server.login(cfg["gmail_user"], cfg["gmail_app_password"])
+            server.send_message(bericht)
+
         return {
-            "verzonden": ok,
-            "kanaal": "sendgrid",
+            "verzonden": True,
+            "kanaal": "gmail",
             "ontvanger": ontvanger,
-            "info": (
-                f"Verzonden via SendGrid naar {ontvanger}."
-                if ok
-                else f"SendGrid gaf status {resp.status_code}."
-            ),
-            "status_code": resp.status_code,
+            "info": f"Verzonden via Gmail SMTP naar {ontvanger}.",
+            "status_code": 250,
         }
     except Exception as e:  # noqa: BLE001 — nooit de flow breken op een mailfout
         return {

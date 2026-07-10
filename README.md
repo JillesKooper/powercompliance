@@ -119,7 +119,7 @@ dataverzoeken.
 - `POST /api/import/leveranciers` — CSV/Excel-import leveranciers (multipart)
 - `POST /api/email/genereer` — genereer dataverzoek-mail (AI, claude-sonnet-4-6); optioneel `wetgeving_code` om gericht per wetgeving uit te vragen
 - `GET /api/email/bijlage/{leverancier_id}?wetgeving=CODE` — Excel met ontbrekende velden (optioneel gescoped)
-- `POST /api/email/verstuur` — verstuur het dataverzoek als **échte e-mail via SendGrid** (valt terug op gesimuleerde verzending zonder sleutel) en registreer het
+- `POST /api/email/verstuur` — verstuur het dataverzoek als **échte e-mail via Gmail SMTP** (valt terug op gesimuleerde verzending zonder inloggegevens) en registreer het
 - `GET /api/email/uitvraag-wetgeving/{code}/leveranciers` — leveranciers met ontbrekende data voor een wetgeving
 - `POST /api/email/uitvraag-wetgeving` — stuur in één keer een dataverzoek naar alle (of geselecteerde) leveranciers voor die wetgeving
 - `POST /api/mail/inbound` — ontvang een inkomende reply (platte tekst); de AI parseert de waarden en vult de ontbrekende velden automatisch aan
@@ -164,15 +164,16 @@ ANTHROPIC_API_KEY=sk-ant-...
 Zonder sleutel werkt de functie nog steeds: de mailtekst valt dan terug op een
 nette sjabloontekst (de modal toont dat met "Sjabloon gebruikt").
 
-## E-mail demo-flow (SendGrid + reply-verwerking)
+## E-mail demo-flow (Gmail SMTP + reply-verwerking)
 
 De volledige demo laat zien hoe een dataverzoek écht de deur uit gaat en hoe een
 leveranciersreply automatisch verwerkt wordt.
 
-1. **Echte e-mails via SendGrid** — bij **Verstuur** gaat het dataverzoek als
-   echte e-mail via SendGrid naar een configureerbaar **demo-adres**. Zonder
-   sleutel of demo-adres wordt de verzending gesimuleerd, zodat de demo altijd
-   werkt.
+1. **Echte e-mails via Gmail SMTP** — bij **Verstuur** gaat het dataverzoek als
+   echte e-mail via Gmail (`smtp.gmail.com:587`, STARTTLS, Python's ingebouwde
+   `smtplib`). Met een optioneel **demo-adres** (`DEMO_EMAIL`) gaan alle mails
+   daarheen. Zonder Gmail-inloggegevens wordt de verzending gesimuleerd, zodat de
+   demo altijd werkt.
 2. **Reply-verwerking** — met **📥 Simuleer leverancier reply** (op *Ontbrekende
    data*) komt er een platte-tekst reply binnen via `POST /api/mail/inbound`. De
    **Anthropic API** (`claude-sonnet-4-6`) parseert de reply en vult de
@@ -185,16 +186,19 @@ leveranciersreply automatisch verwerkt wordt.
    automatisch (mail → reply → AI-verrijking → score omhoog) met een
    voortgangsindicator per stap.
 
-### SendGrid-configuratie
+### Gmail SMTP-configuratie
 
 Zet in `backend/.env` (zie `backend/.env.example`):
 
 ```
-SENDGRID_API_KEY=SG....
-MAIL_FROM=compliance@powercompliance.nl   # geverifieerde SendGrid-afzender
+GMAIL_USER=jouw.adres@gmail.com
+GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx        # Gmail app-wachtwoord (16 tekens), NIET je gewone wachtwoord
 MAIL_FROM_NAAM=PowerCompliance
-DEMO_EMAIL=jij@voorbeeld.nl               # alle demo-mails gaan hierheen
+DEMO_EMAIL=jij@voorbeeld.nl                # optioneel: alle demo-mails gaan hierheen
 ```
+
+Een app-wachtwoord maak je aan via **Google-account → Beveiliging → 2-staps­verificatie
+→ App-wachtwoorden** (2-staps­verificatie moet aan staan).
 
 ## Notificaties
 

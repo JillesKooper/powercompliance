@@ -231,8 +231,8 @@ export default function EmailModal({
           <div className="ml-auto flex items-center gap-2">
             {verzonden && (
               <span className="text-sm text-emerald-600">
-                {aflevering?.kanaal === "sendgrid" && aflevering?.verzonden
-                  ? `Verzonden via SendGrid → ${aflevering.ontvanger} ✓`
+                {aflevering?.kanaal === "gmail" && aflevering?.verzonden
+                  ? `Verzonden via Gmail → ${aflevering.ontvanger} ✓`
                   : "Verzonden ✓"}
               </span>
             )}

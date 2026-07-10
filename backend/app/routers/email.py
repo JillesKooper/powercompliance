@@ -71,9 +71,9 @@ def download_bijlage(
 
 @router.post("/verstuur", response_model=schemas.EmailVerstuurResultaat, status_code=201)
 def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get_db)):
-    """Verstuurt het dataverzoek als echte e-mail via SendGrid en legt het vast.
+    """Verstuurt het dataverzoek als echte e-mail via Gmail SMTP en legt het vast.
 
-    Zonder SENDGRID_API_KEY / DEMO_EMAIL wordt de verzending gesimuleerd, zodat
+    Zonder GMAIL_USER / GMAIL_APP_PASSWORD wordt de verzending gesimuleerd, zodat
     de functionaliteit altijd werkt.
     """
     lev = _haal_leverancier(db, data.leverancier_id)
@@ -86,8 +86,8 @@ def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get
     )
 
     kanaal_tekst = (
-        f"Echt verstuurd via SendGrid naar {mail['ontvanger']}."
-        if mail["kanaal"] == "sendgrid" and mail["verzonden"]
+        f"Echt verstuurd via Gmail SMTP naar {mail['ontvanger']}."
+        if mail["kanaal"] == "gmail" and mail["verzonden"]
         else f"Verzending gesimuleerd ({mail['info']})."
     )
     verzoek = models.Dataverzoek(

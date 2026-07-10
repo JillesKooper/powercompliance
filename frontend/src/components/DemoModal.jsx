@@ -124,9 +124,9 @@ export default function DemoModal({ onClose }) {
                   <div className="animate-fadeIn">
                     <div className="text-slate-600">“{emailInfo.onderwerp}”</div>
                     <div className="text-slate-500 mt-0.5">
-                      {emailInfo.kanaal === "sendgrid" && emailInfo.verzonden ? (
+                      {emailInfo.kanaal === "gmail" && emailInfo.verzonden ? (
                         <span className="text-emerald-600">
-                          ✅ Echt verzonden via SendGrid → {emailInfo.ontvanger}
+                          ✅ Echt verzonden via Gmail → {emailInfo.ontvanger}
                         </span>
                       ) : (
                         <span>

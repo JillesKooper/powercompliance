@@ -62,11 +62,14 @@ def _kies_demo_leverancier(db: Session):
 
 def _bouw_status(db: Session, lev: models.Leverancier) -> schemas.DemoStatus:
     cfg_demo_email = os.environ.get("DEMO_EMAIL", "").strip()
-    cfg_sendgrid = bool(os.environ.get("SENDGRID_API_KEY", "").strip())
+    cfg_gmail = bool(
+        os.environ.get("GMAIL_USER", "").strip()
+        and os.environ.get("GMAIL_APP_PASSWORD", "").strip()
+    )
 
     if lev is None:
         return schemas.DemoStatus(
-            demo_email=cfg_demo_email or None, sendgrid_actief=cfg_sendgrid
+            demo_email=cfg_demo_email or None, gmail_actief=cfg_gmail
         )
 
     pcts_voor, pcts_na = [], []
@@ -103,7 +106,7 @@ def _bouw_status(db: Session, lev: models.Leverancier) -> schemas.DemoStatus:
         compliance_na=_gem(pcts_na),
         reply_verwerkt=velden_via_reply > 0,
         demo_email=cfg_demo_email or None,
-        sendgrid_actief=cfg_sendgrid,
+        gmail_actief=cfg_gmail,
     )
 
 

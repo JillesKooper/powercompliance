@@ -265,7 +265,7 @@ class EmailGenereerResponse(BaseModel):
 class EmailVerstuurRequest(BaseModel):
     leverancier_id: int
     onderwerp: str
-    tekst: Optional[str] = None  # mailtekst; wordt echt verstuurd via SendGrid
+    tekst: Optional[str] = None  # mailtekst; wordt echt verstuurd via Gmail SMTP
     aan_naam: Optional[str] = None
     aan_email: Optional[str] = None
     deadline: Optional[date] = None
@@ -273,7 +273,7 @@ class EmailVerstuurRequest(BaseModel):
 
 class MailAflevering(BaseModel):
     verzonden: bool
-    kanaal: str  # sendgrid | gesimuleerd
+    kanaal: str  # gmail | gesimuleerd
     ontvanger: str
     info: str
     status_code: Optional[int] = None
@@ -332,7 +332,7 @@ class DemoStatus(BaseModel):
     compliance_na: float = 100.0
     reply_verwerkt: bool = False
     demo_email: Optional[str] = None
-    sendgrid_actief: bool = False
+    gmail_actief: bool = False
 
 
 class WetgevingUitvraagLeverancier(BaseModel):
