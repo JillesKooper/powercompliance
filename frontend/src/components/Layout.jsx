@@ -7,6 +7,7 @@ const NAV = [
   { to: "/leveranciers", label: "Leveranciers", icon: "🏭" },
   { to: "/ontbrekende-data", label: "Ontbrekende data", icon: "⚠️" },
   { to: "/wetgeving", label: "Wetgeving", icon: "⚖️" },
+  { to: "/sequences", label: "Sequences", icon: "🔁" },
   { to: "/rapportages", label: "Rapportages", icon: "📈" },
   { to: "/instellingen", label: "Instellingen", icon: "⚙️" },
 ];

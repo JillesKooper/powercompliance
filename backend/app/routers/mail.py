@@ -3,7 +3,7 @@ de ontbrekende compliance-velden automatisch aan met behulp van AI."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import mail_service, models, schemas
+from .. import activiteit_service, mail_service, models, schemas
 from ..database import get_db
 
 router = APIRouter(prefix="/api/mail", tags=["mail"])
@@ -36,6 +36,15 @@ def _verwerk_en_registreer(
 ) -> schemas.MailVerwerktResultaat:
     resultaat = mail_service.verwerk_reply(db, lev, reply_tekst, wetgeving_code)
 
+    # Reply-ontvangst altijd op de tijdlijn zetten (ook als er 0 velden matchten).
+    activiteit_service.log_activiteit(
+        db,
+        lev.id,
+        activiteit_service.REPLY_ONTVANGEN,
+        f"Reply ontvangen van {lev.naam}",
+        detail=reply_tekst,
+    )
+
     if resultaat["aantal_ingevuld"] > 0:
         _markeer_dataverzoeken_ontvangen(db, lev.id)
         db.add(
@@ -52,7 +61,23 @@ def _verwerk_en_registreer(
                 entiteit_id=lev.id,
             )
         )
-        db.commit()
+        detail = "\n".join(
+            f"• [{v['product_naam']}] {v['veld_naam']} = {v['waarde']}"
+            for v in resultaat["velden"]
+        )
+        activiteit_service.log_activiteit(
+            db,
+            lev.id,
+            activiteit_service.DATA_AANGEVULD,
+            (
+                f"{resultaat['aantal_ingevuld']} velden aangevuld over "
+                f"{resultaat['aantal_producten']} producten "
+                + ("(AI-parsing)" if resultaat["ai_gebruikt"] else "(regel-parser)")
+            ),
+            detail=detail,
+        )
+
+    db.commit()
 
     return schemas.MailVerwerktResultaat(
         leverancier_id=lev.id,

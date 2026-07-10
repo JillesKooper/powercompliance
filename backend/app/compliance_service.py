@@ -9,8 +9,11 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from . import compliance, models
+from . import activiteit_service, compliance, models
 from .database import SessionLocal
+
+# statussen die als "echt" tellen voor het loggen van een statuswijziging
+_ECHTE_STATUSSEN = {"compliant", "gedeeltelijk", "incompleet"}
 
 # ---------- dashboard-cache ----------
 _dashboard_cache = {"data": None, "geldig": False}
@@ -28,14 +31,41 @@ def bepaal_status(aantal_ontbrekend: int, pct: float) -> str:
     return "incompleet"
 
 
+STATUS_LABELS = {
+    "compliant": "compliant",
+    "gedeeltelijk": "gedeeltelijk compliant",
+    "incompleet": "incompleet",
+}
+
+
 def herbereken_product(db: Session, product: models.Product) -> None:
+    oude_status = product.compliance_status
     stats = compliance.product_compliance(db, product)
-    product.compliance_percentage = stats["compliance_percentage"]
-    product.aantal_ontbrekend = stats["aantal_ontbrekend"]
-    product.compliance_status = bepaal_status(
+    nieuwe_status = bepaal_status(
         stats["aantal_ontbrekend"], stats["compliance_percentage"]
     )
+    product.compliance_percentage = stats["compliance_percentage"]
+    product.aantal_ontbrekend = stats["aantal_ontbrekend"]
+    product.compliance_status = nieuwe_status
     product.compliance_bijgewerkt = datetime.utcnow()
+
+    # Registreer een echte statuswijziging op de leverancier-tijdlijn (niet bij
+    # de eerste berekening vanaf "onbekend", om ruis te voorkomen).
+    if (
+        oude_status in _ECHTE_STATUSSEN
+        and nieuwe_status != oude_status
+        and product.leverancier_id
+    ):
+        activiteit_service.log_activiteit(
+            db,
+            product.leverancier_id,
+            activiteit_service.STATUS_GEWIJZIGD,
+            (
+                f"'{product.naam}': compliance {STATUS_LABELS.get(oude_status, oude_status)}"
+                f" → {STATUS_LABELS.get(nieuwe_status, nieuwe_status)}"
+                f" ({stats['compliance_percentage']}%)"
+            ),
+        )
 
 
 # ---------- BackgroundTask-varianten (eigen sessie) ----------

@@ -16,10 +16,12 @@ from .routers import (
     email,
     mail,
     demo,
+    sequences,
     export,
     rapportages,
     documenten,
 )
+from . import scheduler
 
 Base.metadata.create_all(bind=engine)
 
@@ -53,9 +55,21 @@ app.include_router(imports.router)
 app.include_router(email.router)
 app.include_router(mail.router)
 app.include_router(demo.router)
+app.include_router(sequences.router)
 app.include_router(export.router)
 app.include_router(rapportages.router)
 app.include_router(documenten.router)
+
+
+@app.on_event("startup")
+def _start_scheduler():
+    # Dagelijkse sequence-scheduler starten (faalt stil als APScheduler ontbreekt).
+    scheduler.start_scheduler()
+
+
+@app.on_event("shutdown")
+def _stop_scheduler():
+    scheduler.shutdown_scheduler()
 
 
 @app.get("/api/health")

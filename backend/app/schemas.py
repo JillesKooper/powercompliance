@@ -514,3 +514,85 @@ class RapportagesData(BaseModel):
     scorecards: List[LeverancierScorecard] = []
     risico: List[RisicoLeverancier] = []
     trend: List[TrendPunt] = []
+
+
+# ---------- Interactiehistorie (activiteit) ----------
+class ActiviteitOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    leverancier_id: int
+    type: str  # mail_verstuurd | reply_ontvangen | data_aangevuld | status_gewijzigd | notificatie
+    omschrijving: str
+    detail: Optional[str] = None
+    aangemaakt_op: datetime
+
+
+# ---------- Sequences / reminders ----------
+class SequenceStapIn(BaseModel):
+    volgorde: int = 0
+    wachttijd_dagen: int = 7
+    actie: str = "mail_versturen"
+    conditie: str = "data_ontbreekt"  # altijd | data_ontbreekt | geen_reply
+
+
+class SequenceStapOut(SequenceStapIn):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+
+class SequenceBase(BaseModel):
+    naam: str
+    beschrijving: Optional[str] = None
+    trigger_type: str = "leverancier"  # leverancier | wetgeving
+    wetgeving_code: Optional[str] = None
+    actief: bool = False
+
+
+class SequenceCreate(SequenceBase):
+    stappen: List[SequenceStapIn] = []
+
+
+class SequenceUpdate(BaseModel):
+    naam: Optional[str] = None
+    beschrijving: Optional[str] = None
+    trigger_type: Optional[str] = None
+    wetgeving_code: Optional[str] = None
+    actief: Optional[bool] = None
+    stappen: Optional[List[SequenceStapIn]] = None  # aanwezig = volledig vervangen
+
+
+class SequenceInschrijvingOut(BaseModel):
+    id: int
+    leverancier_id: int
+    leverancier_naam: str
+    status: str  # actief | voltooid | gestopt
+    huidige_stap: int  # aantal doorlopen stappen (= index volgende stap)
+    aantal_stappen: int
+    aantal_ontbrekend: int
+    laatste_actie_op: Optional[datetime] = None
+    gestart_op: datetime
+    voltooid_op: Optional[datetime] = None
+
+
+class SequenceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    naam: str
+    beschrijving: Optional[str] = None
+    trigger_type: str
+    wetgeving_code: Optional[str] = None
+    actief: bool
+    aangemaakt_op: datetime
+    stappen: List[SequenceStapOut] = []
+    aantal_inschrijvingen: int = 0
+    aantal_actief: int = 0
+
+
+class SequenceDetail(SequenceOut):
+    inschrijvingen: List[SequenceInschrijvingOut] = []
+
+
+class SchedulerResultaat(BaseModel):
+    tijdstip: str
+    aantal_acties: int
+    acties: List[dict] = []

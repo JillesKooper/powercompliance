@@ -69,6 +69,16 @@ class Leverancier(Base):
     dataverzoeken = relationship(
         "Dataverzoek", back_populates="leverancier", cascade="all, delete-orphan"
     )
+    activiteiten = relationship(
+        "LeverancierActiviteit",
+        back_populates="leverancier",
+        cascade="all, delete-orphan",
+    )
+    sequence_inschrijvingen = relationship(
+        "SequenceInschrijving",
+        back_populates="leverancier",
+        cascade="all, delete-orphan",
+    )
 
 
 class Product(Base):
@@ -284,3 +294,96 @@ class Notificatie(Base):
     entiteit_type = Column(String, nullable=True)
     entiteit_id = Column(Integer, nullable=True)
     aangemaakt_op = Column(DateTime, default=datetime.utcnow)
+
+
+class LeverancierActiviteit(Base):
+    """Interactiehistorie per leverancier (tijdlijn).
+
+    Legt elke interactie vast: verstuurde mails, ontvangen replies, aangevulde
+    data en compliance-statuswijzigingen.
+    """
+
+    __tablename__ = "leverancier_activiteiten"
+
+    id = Column(Integer, primary_key=True, index=True)
+    leverancier_id = Column(
+        Integer, ForeignKey("leveranciers.id"), nullable=False, index=True
+    )
+    # type: mail_verstuurd | reply_ontvangen | data_aangevuld | status_gewijzigd | notificatie
+    type = Column(String, nullable=False, index=True)
+    omschrijving = Column(String, nullable=False)
+    detail = Column(Text, nullable=True)  # bv. de volledige mail-/replytekst
+    aangemaakt_op = Column(DateTime, default=datetime.utcnow, index=True)
+
+    leverancier = relationship("Leverancier", back_populates="activiteiten")
+
+
+class Sequence(Base):
+    """Een geautomatiseerde reeks herinneringsstappen (mail-cadans).
+
+    Trigger bepaalt op welke leveranciers de sequence van toepassing is: alle
+    leveranciers met ontbrekende data ("leverancier") of leveranciers met
+    ontbrekende data voor één wetgeving ("wetgeving").
+    """
+
+    __tablename__ = "sequences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    naam = Column(String, nullable=False)
+    beschrijving = Column(Text, nullable=True)
+    trigger_type = Column(String, default="leverancier")  # leverancier | wetgeving
+    wetgeving_code = Column(String, nullable=True)  # bij trigger_type == "wetgeving"
+    actief = Column(Boolean, default=False)
+    aangemaakt_op = Column(DateTime, default=datetime.utcnow)
+
+    stappen = relationship(
+        "SequenceStap",
+        back_populates="sequence",
+        cascade="all, delete-orphan",
+        order_by="SequenceStap.volgorde",
+    )
+    inschrijvingen = relationship(
+        "SequenceInschrijving",
+        back_populates="sequence",
+        cascade="all, delete-orphan",
+    )
+
+
+class SequenceStap(Base):
+    __tablename__ = "sequence_stappen"
+
+    id = Column(Integer, primary_key=True, index=True)
+    sequence_id = Column(Integer, ForeignKey("sequences.id"), nullable=False, index=True)
+    volgorde = Column(Integer, default=0)  # stapnummer (0-gebaseerd)
+    wachttijd_dagen = Column(Integer, default=7)  # dagen na de vorige stap/inschrijving
+    actie = Column(String, default="mail_versturen")  # mail_versturen
+    # conditie: altijd | data_ontbreekt | geen_reply
+    conditie = Column(String, default="data_ontbreekt")
+
+    sequence = relationship("Sequence", back_populates="stappen")
+
+
+class SequenceInschrijving(Base):
+    """Deelname van één leverancier aan een sequence, met de huidige stap."""
+
+    __tablename__ = "sequence_inschrijvingen"
+    __table_args__ = (
+        UniqueConstraint("sequence_id", "leverancier_id", name="uq_sequence_leverancier"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    sequence_id = Column(Integer, ForeignKey("sequences.id"), nullable=False, index=True)
+    leverancier_id = Column(
+        Integer, ForeignKey("leveranciers.id"), nullable=False, index=True
+    )
+    status = Column(String, default="actief")  # actief | voltooid | gestopt
+    # aantal reeds uitgevoerde stappen (= index van de volgende stap)
+    huidige_stap = Column(Integer, default=0)
+    laatste_actie_op = Column(DateTime, default=datetime.utcnow)  # start of laatste stap
+    gestart_op = Column(DateTime, default=datetime.utcnow)
+    voltooid_op = Column(DateTime, nullable=True)
+
+    sequence = relationship("Sequence", back_populates="inschrijvingen")
+    leverancier = relationship(
+        "Leverancier", back_populates="sequence_inschrijvingen"
+    )

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -56,6 +56,21 @@ def haal_leverancier(leverancier_id: int, db: Session = Depends(get_db)):
     if not lev:
         raise HTTPException(status_code=404, detail="Leverancier niet gevonden")
     return lev
+
+
+@router.get(
+    "/{leverancier_id}/activiteit", response_model=List[schemas.ActiviteitOut]
+)
+def leverancier_activiteit(leverancier_id: int, db: Session = Depends(get_db)):
+    """Interactiehistorie (tijdlijn) van deze leverancier, nieuwste eerst."""
+    if not db.get(models.Leverancier, leverancier_id):
+        raise HTTPException(status_code=404, detail="Leverancier niet gevonden")
+    return (
+        db.query(models.LeverancierActiviteit)
+        .filter(models.LeverancierActiviteit.leverancier_id == leverancier_id)
+        .order_by(models.LeverancierActiviteit.aangemaakt_op.desc())
+        .all()
+    )
 
 
 @router.post("", response_model=schemas.LeverancierOut, status_code=201)

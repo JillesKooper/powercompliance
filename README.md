@@ -126,6 +126,10 @@ dataverzoeken.
 - `POST /api/mail/simuleer-reply` — genereer én verwerk in één klik een realistische leveranciersreply (voor de demo)
 - `GET /api/demo/status` — status van de demo-flow (gekozen leverancier + voor/na-compliance)
 - `POST /api/demo/reset` — verwijder de via reply verrijkte waarden zodat de demo opnieuw kan draaien
+- `GET /api/leveranciers/{id}/activiteit` — interactiehistorie (tijdlijn) van een leverancier
+- `GET/POST /api/sequences`, `GET/PUT/DELETE /api/sequences/{id}` — beheer van herinneringsreeksen
+- `POST /api/sequences/{id}/actief` — sequence activeren/deactiveren
+- `POST /api/sequences/run-scheduler` — draai de dagelijkse sequence-tick handmatig
 
 ## E-mailgeneratie (dataverzoeken)
 
@@ -199,6 +203,35 @@ DEMO_EMAIL=jij@voorbeeld.nl                # optioneel: alle demo-mails gaan hie
 
 Een app-wachtwoord maak je aan via **Google-account → Beveiliging → 2-staps­verificatie
 → App-wachtwoorden** (2-staps­verificatie moet aan staan).
+
+## Interactiehistorie per leverancier
+
+Op de **leverancierdetailpagina** toont de tab **Activiteit** een tijdlijn met alle
+interacties: verstuurde dataverzoeken, ontvangen replies, automatisch aangevulde
+data en compliance-statuswijzigingen. Elk item toont datum/tijd, het type, een
+korte omschrijving en — waar van toepassing — de volledige mail-/replytekst
+uitklapbaar. Activiteiten worden automatisch vastgelegd (tabel
+`leverancier_activiteiten`) bij het versturen van een dataverzoek, het ontvangen
+en verwerken van een reply en bij een echte compliance-statuswijziging.
+
+## Sequences / reminders
+
+De pagina **Sequences** beheert geautomatiseerde herinneringsreeksen.
+
+- Een sequence heeft een **naam**, **beschrijving**, **trigger** (per leverancier of
+  per wetgeving) en een reeks **stappen**.
+- Elke stap heeft een **wachttijd** (dagen na de vorige stap), een **actie** (mail
+  versturen) en een **conditie** (*alleen als data nog ontbreekt* / *alleen als geen
+  reply ontvangen* / *altijd*).
+- Beheerders maken sequences aan, bewerken ze en zetten ze aan/uit. Passende
+  leveranciers (met ontbrekende data binnen de scope) worden automatisch
+  ingeschreven; per sequence zie je welke leveranciers in welke stap zitten.
+- Een sequence **stopt automatisch** zodra alle data van een leverancier is
+  aangeleverd.
+- Een **scheduler** (APScheduler) draait dagelijks (08:00 UTC) en voert de stappen
+  uit die aan de beurt zijn: hij verstuurt de mail via **Gmail SMTP** en registreert
+  de activiteit op de tijdlijn. Met **“Scheduler nu draaien”** (of
+  `POST /api/sequences/run-scheduler`) voer je de tick direct uit — handig voor de demo.
 
 ## Notificaties
 

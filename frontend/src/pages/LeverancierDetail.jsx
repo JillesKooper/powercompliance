@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
 import { Card, ProgressBar, Badge, Loading, ErrorBox } from "../components/ui";
+import ActiviteitTijdlijn from "../components/ActiviteitTijdlijn.jsx";
 
 export default function LeverancierDetail() {
   const { id } = useParams();
@@ -9,11 +10,13 @@ export default function LeverancierDetail() {
   const [producten, setProducten] = useState(null);
   const [documenten, setDocumenten] = useState(null);
   const [error, setError] = useState(null);
+  const [tab, setTab] = useState("overzicht");
 
   useEffect(() => {
     setLev(null);
     setProducten(null);
     setDocumenten(null);
+    setTab("overzicht");
     Promise.all([
       api.leverancier(id),
       api.producten({ leverancier_id: id, per_page: 1000 }),
@@ -77,6 +80,34 @@ export default function LeverancierDetail() {
         </div>
       </Card>
 
+      {/* tabs */}
+      <div className="flex items-center gap-1 border-b border-line">
+        {[
+          ["overzicht", "Overzicht"],
+          ["activiteit", "Activiteit"],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === key
+                ? "border-brand-500 text-ink"
+                : "border-transparent text-muted hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "activiteit" && (
+        <Card className="p-5">
+          <ActiviteitTijdlijn leverancierId={id} />
+        </Card>
+      )}
+
+      {tab === "overzicht" && (
+      <>
       <Card>
         <div className="px-5 py-3 border-b border-slate-200 font-semibold text-slate-800">
           Producten van deze leverancier
@@ -164,6 +195,8 @@ export default function LeverancierDetail() {
           )}
         </div>
       </Card>
+      </>
+      )}
     </div>
   );
 }

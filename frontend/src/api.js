@@ -81,6 +81,7 @@ export const api = {
     return request(`/leveranciers${qs ? `?${qs}` : ""}`);
   },
   leverancier: (id) => request(`/leveranciers/${id}`),
+  leverancierActiviteit: (id) => request(`/leveranciers/${id}/activiteit`),
   maakLeverancier: (data) =>
     request("/leveranciers", { method: "POST", body: JSON.stringify(data) }),
   wijzigLeverancier: (id, data) =>
@@ -149,6 +150,21 @@ export const api = {
   // ---------- Demo-modus ----------
   demoStatus: () => request("/demo/status"),
   demoReset: () => request("/demo/reset", { method: "POST" }),
+
+  // ---------- Sequences / reminders ----------
+  sequences: () => request("/sequences"),
+  sequence: (id) => request(`/sequences/${id}`),
+  maakSequence: (data) =>
+    request("/sequences", { method: "POST", body: JSON.stringify(data) }),
+  wijzigSequence: (id, data) =>
+    request(`/sequences/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  zetSequenceActief: (id, actief) =>
+    request(`/sequences/${id}/actief`, {
+      method: "POST",
+      body: JSON.stringify({ actief }),
+    }),
+  verwijderSequence: (id) => request(`/sequences/${id}`, { method: "DELETE" }),
+  runScheduler: () => request("/sequences/run-scheduler", { method: "POST" }),
 
   wetgevingUitvraagLeveranciers: (code) =>
     request(`/email/uitvraag-wetgeving/${encodeURIComponent(code)}/leveranciers`),

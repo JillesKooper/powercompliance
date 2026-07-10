@@ -5,7 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, email_generator, mail_service, compliance_service
+from .. import (
+    models,
+    schemas,
+    email_generator,
+    mail_service,
+    compliance_service,
+    activiteit_service,
+)
 from ..database import get_db
 
 router = APIRouter(prefix="/api/email", tags=["email"])
@@ -107,6 +114,13 @@ def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get
             categorie="Dataverzoek verstuurd",
         )
     )
+    activiteit_service.log_activiteit(
+        db,
+        lev.id,
+        activiteit_service.MAIL_VERSTUURD,
+        f"Dataverzoek verstuurd — {data.onderwerp}",
+        detail=(data.tekst or "") + f"\n\n[{kanaal_tekst}]",
+    )
     db.commit()
     db.refresh(verzoek)
     compliance_service.invalideer_dashboard()
@@ -158,6 +172,12 @@ def uitvraag_wetgeving(
                 status="verzonden",
                 deadline=data.deadline,
             )
+        )
+        activiteit_service.log_activiteit(
+            db,
+            lev.id,
+            activiteit_service.MAIL_VERSTUURD,
+            f"Dataverzoek verstuurd ({data.wetgeving_code}) — {onderwerp}",
         )
         verstuurd.append({"id": lev.id, "naam": lev.naam, "onderwerp": onderwerp})
 
