@@ -41,26 +41,15 @@ def verzamel_ontbrekend(
     per_product = []
     per_wet = defaultdict(set)
     for product in leverancier.producten:
-        # Alle compliance-velden die op dit product van toepassing zijn (relevante,
-        # actieve wetgeving op basis van de categorie).
-        velden = compliance.velden_voor_product(db, product)
-        # De velden die al een niet-lege waarde hebben (waarde IS NOT NULL en niet
-        # leeg), ongeacht de ingevuld-vlag. Een veld is UITSLUITEND 'ontbrekend'
-        # als er GEEN ProductComplianceWaarde met een niet-lege waarde bestaat
-        # (waarde IS NULL of de rij bestaat niet voor dit product).
-        met_waarde = compliance.veld_ids_met_waarde(db, product.id)
-        ontbrekend = [v for v in velden if v.id not in met_waarde]
+        # Ontbrekende velden = velden zonder (niet-lege) waarde voor dit product,
+        # bepaald via de LEFT JOIN-query in compliance.ontbrekende_velden_voor_product.
+        ontbrekend = compliance.ontbrekende_velden_voor_product(db, product)
         if wetgeving_code:
             ontbrekend = [
                 v
                 for v in ontbrekend
                 if v.wetgeving and v.wetgeving.code == wetgeving_code
             ]
-        log.debug(
-            "product %r (id=%s): %d velden van toepassing, %d met waarde, %d ontbrekend%s",
-            product.naam, product.id, len(velden), len(met_waarde), len(ontbrekend),
-            f" (scope {wetgeving_code})" if wetgeving_code else "",
-        )
         if ontbrekend:
             per_product.append((product, ontbrekend))
             for v in ontbrekend:

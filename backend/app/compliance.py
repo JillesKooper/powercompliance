@@ -8,11 +8,15 @@ van een relevante, actieve wetgeving zijn van toepassing op het product.
 Een veld 'ontbreekt' wanneer er geen ProductComplianceWaarde bestaat met
 ingevuld=True voor dat product/veld.
 """
+import logging
 from typing import List
 
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from . import models
+
+log = logging.getLogger(__name__)
 
 
 def relevante_wetgeving_voor_product(
@@ -49,29 +53,6 @@ def ingevulde_veld_ids(db: Session, product_id: int) -> set:
     return {r[0] for r in rijen}
 
 
-def veld_ids_met_waarde(db: Session, product_id: int) -> set:
-    """Veld-ids die voor dit product al een niet-lege waarde hebben.
-
-    Kijkt puur naar de opgeslagen ``waarde`` (NIET NULL en niet leeg na strippen),
-    ongeacht de ``ingevuld``-vlag. Wordt gebruikt om te bepalen welke velden nog
-    daadwerkelijk uitgevraagd moeten worden in een dataverzoek: een veld met een
-    (eventueel nog niet geverifieerde) waarde is niet 'ontbrekend' en hoeft niet
-    opnieuw uitgevraagd te worden.
-    """
-    rijen = (
-        db.query(
-            models.ProductComplianceWaarde.compliance_veld_id,
-            models.ProductComplianceWaarde.waarde,
-        )
-        .filter(
-            models.ProductComplianceWaarde.product_id == product_id,
-            models.ProductComplianceWaarde.waarde.isnot(None),
-        )
-        .all()
-    )
-    return {vid for vid, waarde in rijen if str(waarde).strip() != ""}
-
-
 def product_compliance(db: Session, product: models.Product) -> dict:
     """Geef tellingen + percentage terug voor één product."""
     velden = velden_voor_product(db, product)
@@ -91,9 +72,55 @@ def product_compliance(db: Session, product: models.Product) -> dict:
 def ontbrekende_velden_voor_product(
     db: Session, product: models.Product
 ) -> List[models.ComplianceVeld]:
-    velden = velden_voor_product(db, product)
-    ingevuld = ingevulde_veld_ids(db, product.id)
-    return [v for v in velden if v.id not in ingevuld]
+    """Alle compliance-velden die voor dit product ontbreken.
+
+    Een veld is 'ontbrekend' als er GEEN ProductComplianceWaarde met een niet-lege
+    waarde bestaat voor dit specifieke product (de rij ontbreekt, of waarde is NULL
+    of leeg). Dit wordt met één LEFT JOIN bepaald, equivalent aan:
+
+        SELECT cv.* FROM compliance_velden cv
+        LEFT JOIN product_compliance_waarden pcw
+          ON pcw.compliance_veld_id = cv.id AND pcw.product_id = :pid
+        WHERE cv.wetgeving_id IN (<relevante, actieve wetgeving van dit product>)
+          AND (pcw.id IS NULL OR pcw.waarde IS NULL OR TRIM(pcw.waarde) = '')
+
+    Alleen velden van de relevante, actieve wetgeving (op basis van de categorie)
+    tellen mee. Reeds ingevulde velden — ook automatisch gescrapte, nog niet
+    geverifieerde waarden — worden dus nooit als ontbrekend teruggegeven.
+    """
+    wet_ids = [w.id for w in relevante_wetgeving_voor_product(db, product)]
+    if not wet_ids:
+        return []
+
+    cv = models.ComplianceVeld
+    pcw = models.ProductComplianceWaarde
+    # VOOR filteren: alle van toepassing zijnde velden (voor debuglogging).
+    alle_velden = (
+        db.query(cv).filter(cv.wetgeving_id.in_(wet_ids)).order_by(cv.id).all()
+    )
+    # NA filteren: LEFT JOIN op de waarde-rij van DIT product; houd alleen velden
+    # zonder (niet-lege) waarde over.
+    ontbrekend = (
+        db.query(cv)
+        .outerjoin(
+            pcw,
+            and_(pcw.compliance_veld_id == cv.id, pcw.product_id == product.id),
+        )
+        .filter(cv.wetgeving_id.in_(wet_ids))
+        .filter(or_(pcw.id.is_(None), pcw.waarde.is_(None), func.trim(pcw.waarde) == ""))
+        .order_by(cv.id)
+        .all()
+    )
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug(
+            "product %r (id=%s) VOOR filteren: %d velden %s",
+            product.naam, product.id, len(alle_velden), [v.naam for v in alle_velden],
+        )
+        log.debug(
+            "product %r (id=%s) NA filteren: %d ontbrekend %s",
+            product.naam, product.id, len(ontbrekend), [v.naam for v in ontbrekend],
+        )
+    return ontbrekend
 
 
 def wetgeving_stats(db: Session, wetgeving: models.Wetgeving) -> dict:
