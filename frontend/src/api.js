@@ -140,6 +140,13 @@ export const api = {
   verstuurEmail: (data) =>
     request("/email/verstuur", { method: "POST", body: JSON.stringify(data) }),
   bijlageUrl: (leverancierId) => `${BASE}/email/bijlage/${leverancierId}`,
+  // Download de Excel-bijlage als blob via de API-basis (werkt ook cross-origin
+  // in productie, waar een kaal /api-pad naar de frontend-host zou wijzen).
+  downloadBijlage: (leverancierId, wetgeving = null) =>
+    download(
+      `/email/bijlage/${leverancierId}` +
+        (wetgeving ? `?wetgeving=${encodeURIComponent(wetgeving)}` : "")
+    ),
 
   // ---------- Inkomende mailverwerking (reply → AI-parsing) ----------
   simuleerReply: (data) =>

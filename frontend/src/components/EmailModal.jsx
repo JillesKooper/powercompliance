@@ -182,13 +182,19 @@ export default function EmailModal({
                   />
                 </Rij>
                 <Rij label="Bijlage">
-                  <a
-                    href={data.bijlage_url}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await api.downloadBijlage(leverancierId, wetgevingCode);
+                      } catch (e) {
+                        setFout("Bijlage downloaden mislukt: " + e.message);
+                      }
+                    }}
                     className="inline-flex items-center gap-1 text-brand-700 hover:underline"
-                    download
                   >
                     📎 {data.bestandsnaam}
-                  </a>
+                  </button>
                 </Rij>
               </div>
 
