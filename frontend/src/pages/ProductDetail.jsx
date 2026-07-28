@@ -106,8 +106,10 @@ export default function ProductDetail() {
         <EmailModal
           leverancierId={product.leverancier.id}
           leverancierNaam={product.leverancier.naam}
-          wetgevingCode={mailCode}
-          wetgevingNaam={mailCode}
+          wetgevingCode={mailCode === "*" ? null : mailCode}
+          wetgevingNaam={mailCode === "*" ? null : mailCode}
+          productId={product.id}
+          productNaam={product.naam}
           onClose={() => setMailCode(null)}
         />
       )}
@@ -117,9 +119,16 @@ export default function ProductDetail() {
           ← Terug naar producten
         </Link>
         {product.aantal_ontbrekend > 0 && (
-          <Button variant="ghost" onClick={startScrape}>
-            🔎 Scrape ontbrekende data
-          </Button>
+          <div className="flex items-center gap-2">
+            {product.leverancier && (
+              <Button variant="ghost" onClick={() => setMailCode("*")}>
+                ✉️ Uitvraag voor dit product
+              </Button>
+            )}
+            <Button variant="ghost" onClick={startScrape}>
+              🔎 Scrape ontbrekende data
+            </Button>
+          </div>
         )}
       </div>
 
@@ -230,7 +239,7 @@ export default function ProductDetail() {
             </div>
             {heeftOntbrekend && product.leverancier && (
               <Button variant="ghost" onClick={() => setMailCode(code)}>
-                ✉️ Uitvragen bij leverancier
+                ✉️ Uitvragen ({code})
               </Button>
             )}
           </div>

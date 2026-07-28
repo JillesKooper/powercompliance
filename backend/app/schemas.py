@@ -245,6 +245,7 @@ class EmailGenereerRequest(BaseModel):
     taal: str = "nl"  # nl | en
     deadline: Optional[date] = None
     wetgeving_code: Optional[str] = None  # gericht uitvragen per wetgeving
+    product_id: Optional[int] = None  # gericht uitvragen voor 1 product
 
 
 class EmailGenereerResponse(BaseModel):
@@ -262,6 +263,10 @@ class EmailGenereerResponse(BaseModel):
     taal: str
     ai_gebruikt: bool
     ai_fout: Optional[str] = None
+    # scope van de uitvraag: "product" | "wetgeving" | "leverancier"
+    scope: str = "leverancier"
+    product_id: Optional[int] = None
+    product_naam: Optional[str] = None
 
 
 class EmailVerstuurRequest(BaseModel):
@@ -271,6 +276,9 @@ class EmailVerstuurRequest(BaseModel):
     aan_naam: Optional[str] = None
     aan_email: Optional[str] = None
     deadline: Optional[date] = None
+    # scope voor de mee te sturen Excel-bijlage
+    wetgeving_code: Optional[str] = None
+    product_id: Optional[int] = None
 
 
 class MailAflevering(BaseModel):

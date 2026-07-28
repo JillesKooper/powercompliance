@@ -7,6 +7,8 @@ export default function EmailModal({
   leverancierNaam,
   wetgevingCode = null,
   wetgevingNaam = null,
+  productId = null,
+  productNaam = null,
   onClose,
 }) {
   const [taal, setTaal] = useState("nl");
@@ -30,6 +32,7 @@ export default function EmailModal({
         taal: huidigeTaal,
         deadline: huidigeDeadline || null,
         wetgeving_code: wetgevingCode,
+        product_id: productId,
       });
       setData(r);
       setOnderwerp(r.onderwerp);
@@ -80,6 +83,8 @@ export default function EmailModal({
         aan_naam: data?.aan_naam || null,
         aan_email: data?.aan_email || null,
         deadline: deadline || null,
+        wetgeving_code: wetgevingCode,
+        product_id: productId,
       });
       setVerzonden(true);
       setAflevering(r?.mail || null);
@@ -104,6 +109,15 @@ export default function EmailModal({
             <div className="text-xs text-slate-400">
               {leverancierNaam}
               {wetgevingNaam ? ` · ${wetgevingNaam}` : ""}
+            </div>
+            <div className="mt-1">
+              <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[11px] font-medium">
+                {productId
+                  ? `📦 Uitvraag voor 1 product${productNaam ? `: ${productNaam}` : ""}`
+                  : wetgevingCode
+                  ? `⚖️ Uitvraag voor wetgeving ${wetgevingCode} (alle producten)`
+                  : "🏭 Uitvraag voor alle producten van deze leverancier"}
+              </span>
             </div>
           </div>
           <button
@@ -186,7 +200,11 @@ export default function EmailModal({
                     type="button"
                     onClick={async () => {
                       try {
-                        await api.downloadBijlage(leverancierId, wetgevingCode);
+                        await api.downloadBijlage(
+                          leverancierId,
+                          wetgevingCode,
+                          productId
+                        );
                       } catch (e) {
                         setFout("Bijlage downloaden mislukt: " + e.message);
                       }

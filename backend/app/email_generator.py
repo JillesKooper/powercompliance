@@ -28,19 +28,28 @@ MODEL = "claude-sonnet-4-6"
 
 # ---------- data verzamelen ----------
 def verzamel_ontbrekend(
-    db: Session, leverancier: models.Leverancier, wetgeving_code: Optional[str] = None
+    db: Session,
+    leverancier: models.Leverancier,
+    wetgeving_code: Optional[str] = None,
+    product_id: Optional[int] = None,
 ):
     """Geef (per_product, per_wetgeving) terug.
 
     per_product: lijst van (product, [ComplianceVeld]) met ontbrekende velden.
     per_wetgeving: dict wetgeving_code -> set van veldnamen.
 
-    Met wetgeving_code worden alleen de ontbrekende velden van die ene wetgeving
-    meegenomen (gericht uitvragen).
+    Scoping:
+    - ``product_id``: beperk tot dat ene product (uitvraag voor 1 product).
+    - ``wetgeving_code``: alleen ontbrekende velden van die ene wetgeving.
+    - geen van beide: alle ontbrekende velden over alle producten van de leverancier.
     """
     per_product = []
     per_wet = defaultdict(set)
-    for product in leverancier.producten:
+    # Bij product-scope alleen dat product bekijken (mits het van deze leverancier is).
+    producten = leverancier.producten
+    if product_id is not None:
+        producten = [p for p in producten if p.id == product_id]
+    for product in producten:
         # Ontbrekende velden = velden zonder (niet-lege) waarde voor dit product,
         # bepaald via de LEFT JOIN-query in compliance.ontbrekende_velden_voor_product.
         ontbrekend = compliance.ontbrekende_velden_voor_product(db, product)
@@ -57,8 +66,8 @@ def verzamel_ontbrekend(
                 per_wet[code].add(v.naam)
     totaal = sum(len(v) for _, v in per_product)
     log.info(
-        "verzamel_ontbrekend(leverancier=%r, scope=%s): %d producten met samen %d ontbrekende velden",
-        leverancier.naam, wetgeving_code, len(per_product), totaal,
+        "verzamel_ontbrekend(leverancier=%r, wetgeving=%s, product_id=%s): %d producten met samen %d ontbrekende velden",
+        leverancier.naam, wetgeving_code, product_id, len(per_product), totaal,
     )
     return per_product, dict(per_wet)
 
@@ -88,25 +97,35 @@ def portaal_link(leverancier: models.Leverancier) -> str:
     return f"{PORTAAL_BASIS}/{leverancier.id}/aanleveren"
 
 
+def _veilige_naam(tekst: str, fallback: str) -> str:
+    return "".join(c if c.isalnum() else "_" for c in tekst).strip("_") or fallback
+
+
 def bijlage_naam(
-    leverancier: models.Leverancier, wetgeving_code: Optional[str] = None
+    leverancier: models.Leverancier,
+    wetgeving_code: Optional[str] = None,
+    product: Optional[models.Product] = None,
 ) -> str:
-    veilig = "".join(
-        c if c.isalnum() else "_" for c in leverancier.naam
-    ).strip("_") or str(leverancier.id)
+    veilig = _veilige_naam(leverancier.naam, str(leverancier.id))
+    delen = ["ontbrekende_data", veilig]
+    if product is not None:
+        delen.append(_veilige_naam(product.artikelnummer or product.naam, f"p{product.id}"))
     if wetgeving_code:
-        return f"ontbrekende_data_{veilig}_{wetgeving_code}.xlsx"
-    return f"ontbrekende_data_{veilig}.xlsx"
+        delen.append(wetgeving_code)
+    return "_".join(delen) + ".xlsx"
 
 
 # ---------- Excel-bijlage ----------
 def bouw_excel(
-    db: Session, leverancier: models.Leverancier, wetgeving_code: Optional[str] = None
+    db: Session,
+    leverancier: models.Leverancier,
+    wetgeving_code: Optional[str] = None,
+    product_id: Optional[int] = None,
 ) -> io.BytesIO:
     from openpyxl import Workbook
     from openpyxl.styles import Font
 
-    per_product, _ = verzamel_ontbrekend(db, leverancier, wetgeving_code)
+    per_product, _ = verzamel_ontbrekend(db, leverancier, wetgeving_code, product_id)
     wb = Workbook()
     ws = wb.active
     ws.title = "Ontbrekende data"
@@ -144,18 +163,21 @@ def bouw_excel(
     buf.seek(0)
     aantal_regels = sum(len(velden) for _, velden in per_product)
     log.info(
-        "bouw_excel(leverancier=%r, scope=%s): %d datarijen, %d bytes",
-        leverancier.naam, wetgeving_code, aantal_regels, buf.getbuffer().nbytes,
+        "bouw_excel(leverancier=%r, wetgeving=%s, product_id=%s): %d datarijen, %d bytes",
+        leverancier.naam, wetgeving_code, product_id, aantal_regels, buf.getbuffer().nbytes,
     )
     return buf
 
 
 def bouw_excel_bytes(
-    db: Session, leverancier: models.Leverancier, wetgeving_code: Optional[str] = None
+    db: Session,
+    leverancier: models.Leverancier,
+    wetgeving_code: Optional[str] = None,
+    product_id: Optional[int] = None,
 ) -> bytes:
     """Zoals bouw_excel, maar geeft de rauwe bytes terug — handig om als
     e-mailbijlage mee te sturen."""
-    return bouw_excel(db, leverancier, wetgeving_code).getvalue()
+    return bouw_excel(db, leverancier, wetgeving_code, product_id).getvalue()
 
 
 # ---------- onderwerp ----------
@@ -164,17 +186,17 @@ def maak_onderwerp(
     per_wet: dict,
     taal: str,
     deadline: Optional[date] = None,
+    product: Optional[models.Product] = None,
 ) -> str:
-    """Onderwerp met leverancier + wetgeving + (optioneel) deadline."""
+    """Onderwerp met leverancier (+ product) + wetgeving + (optioneel) deadline."""
     codes = ", ".join(sorted(per_wet.keys())) if per_wet else ""
+    onderwerp_van = leverancier.naam
+    if product is not None:
+        onderwerp_van = f"{leverancier.naam} – {product.naam}"
     if taal == "en":
-        s = f"{leverancier.naam} – missing product compliance data"
-        if codes:
-            s += f" ({codes})"
-        if deadline:
-            s += f" – deadline {deadline.isoformat()}"
-        return s
-    s = f"{leverancier.naam} – ontbrekende productcompliance-data"
+        s = f"{onderwerp_van} – missing product compliance data"
+    else:
+        s = f"{onderwerp_van} – ontbrekende productcompliance-data"
     if codes:
         s += f" ({codes})"
     if deadline:

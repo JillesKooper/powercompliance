@@ -25,15 +25,40 @@ def _haal_leverancier(db: Session, leverancier_id: int) -> models.Leverancier:
     return lev
 
 
+def _haal_product(
+    db: Session, leverancier: models.Leverancier, product_id: Optional[int]
+) -> Optional[models.Product]:
+    """Valideer dat het product bestaat én bij deze leverancier hoort."""
+    if product_id is None:
+        return None
+    product = db.get(models.Product, product_id)
+    if not product or product.leverancier_id != leverancier.id:
+        raise HTTPException(
+            status_code=404, detail="Product niet gevonden bij deze leverancier"
+        )
+    return product
+
+
 @router.post("/genereer", response_model=schemas.EmailGenereerResponse)
 def genereer_email(data: schemas.EmailGenereerRequest, db: Session = Depends(get_db)):
     lev = _haal_leverancier(db, data.leverancier_id)
     taal = "en" if data.taal == "en" else "nl"
     code = data.wetgeving_code or None
+    product = _haal_product(db, lev, data.product_id)
 
-    per_product, per_wet = email_generator.verzamel_ontbrekend(db, lev, code)
+    per_product, per_wet = email_generator.verzamel_ontbrekend(
+        db, lev, code, data.product_id
+    )
     aantal_producten = len(per_product)
     aantal_velden = sum(len(velden) for _, velden in per_product)
+
+    # bepaal de scope (product > wetgeving > leverancier) voor de frontend
+    if product is not None:
+        scope = "product"
+    elif code:
+        scope = "wetgeving"
+    else:
+        scope = "leverancier"
 
     link = email_generator.portaal_link(lev)
     tekst, ai_gebruikt, ai_fout = email_generator.genereer_tekst(
@@ -41,34 +66,48 @@ def genereer_email(data: schemas.EmailGenereerRequest, db: Session = Depends(get
     )
 
     bijlage_url = f"/api/email/bijlage/{lev.id}"
+    params = []
     if code:
-        bijlage_url += f"?wetgeving={code}"
+        params.append(f"wetgeving={code}")
+    if product is not None:
+        params.append(f"product={product.id}")
+    if params:
+        bijlage_url += "?" + "&".join(params)
 
     return schemas.EmailGenereerResponse(
         leverancier_id=lev.id,
         aan_naam=lev.contactpersoon,
         aan_email=lev.email,
         cc=email_generator.CC_ADRES,
-        onderwerp=email_generator.maak_onderwerp(lev, per_wet, taal, data.deadline),
+        onderwerp=email_generator.maak_onderwerp(
+            lev, per_wet, taal, data.deadline, product
+        ),
         tekst=tekst,
         portaal_link=link,
-        bestandsnaam=email_generator.bijlage_naam(lev, code),
+        bestandsnaam=email_generator.bijlage_naam(lev, code, product),
         bijlage_url=bijlage_url,
         aantal_velden=aantal_velden,
         aantal_producten=aantal_producten,
         taal=taal,
         ai_gebruikt=ai_gebruikt,
         ai_fout=ai_fout,
+        scope=scope,
+        product_id=product.id if product else None,
+        product_naam=product.naam if product else None,
     )
 
 
 @router.get("/bijlage/{leverancier_id}")
 def download_bijlage(
-    leverancier_id: int, wetgeving: Optional[str] = None, db: Session = Depends(get_db)
+    leverancier_id: int,
+    wetgeving: Optional[str] = None,
+    product: Optional[int] = None,
+    db: Session = Depends(get_db),
 ):
     lev = _haal_leverancier(db, leverancier_id)
-    buf = email_generator.bouw_excel(db, lev, wetgeving)
-    naam = email_generator.bijlage_naam(lev, wetgeving)
+    product_obj = _haal_product(db, lev, product)
+    buf = email_generator.bouw_excel(db, lev, wetgeving, product)
+    naam = email_generator.bijlage_naam(lev, wetgeving, product_obj)
     return StreamingResponse(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -84,10 +123,14 @@ def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get
     de functionaliteit altijd werkt.
     """
     lev = _haal_leverancier(db, data.leverancier_id)
+    product = _haal_product(db, lev, data.product_id)
 
-    # Excel-bijlage met de exacte ontbrekende velden meesturen.
-    bijlage = email_generator.bouw_excel_bytes(db, lev)
-    bijlage_naam = email_generator.bijlage_naam(lev)
+    # Excel-bijlage met de exacte ontbrekende velden meesturen, in dezelfde scope
+    # (1 product / 1 wetgeving / hele leverancier) als de gegenereerde mail.
+    bijlage = email_generator.bouw_excel_bytes(
+        db, lev, data.wetgeving_code, data.product_id
+    )
+    bijlage_naam = email_generator.bijlage_naam(lev, data.wetgeving_code, product)
 
     mail = mail_service.verstuur_mail(
         onderwerp=data.onderwerp,
