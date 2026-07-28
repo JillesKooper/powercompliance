@@ -39,6 +39,12 @@ def verzamel_ontbrekend(
     per_wet = defaultdict(set)
     for product in leverancier.producten:
         ontbrekend = compliance.ontbrekende_velden_voor_product(db, product)
+        # Vraag uitsluitend velden uit die daadwerkelijk geen waarde hebben
+        # (waarde IS NULL of leeg). Velden met een reeds ingevulde/gescrapte
+        # waarde — ook als die nog niet geverifieerd is (ingevuld=False) — worden
+        # NIET opnieuw uitgevraagd.
+        met_waarde = compliance.veld_ids_met_waarde(db, product.id)
+        ontbrekend = [v for v in ontbrekend if v.id not in met_waarde]
         if wetgeving_code:
             ontbrekend = [
                 v

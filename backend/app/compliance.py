@@ -49,6 +49,29 @@ def ingevulde_veld_ids(db: Session, product_id: int) -> set:
     return {r[0] for r in rijen}
 
 
+def veld_ids_met_waarde(db: Session, product_id: int) -> set:
+    """Veld-ids die voor dit product al een niet-lege waarde hebben.
+
+    Kijkt puur naar de opgeslagen ``waarde`` (NIET NULL en niet leeg na strippen),
+    ongeacht de ``ingevuld``-vlag. Wordt gebruikt om te bepalen welke velden nog
+    daadwerkelijk uitgevraagd moeten worden in een dataverzoek: een veld met een
+    (eventueel nog niet geverifieerde) waarde is niet 'ontbrekend' en hoeft niet
+    opnieuw uitgevraagd te worden.
+    """
+    rijen = (
+        db.query(
+            models.ProductComplianceWaarde.compliance_veld_id,
+            models.ProductComplianceWaarde.waarde,
+        )
+        .filter(
+            models.ProductComplianceWaarde.product_id == product_id,
+            models.ProductComplianceWaarde.waarde.isnot(None),
+        )
+        .all()
+    )
+    return {vid for vid, waarde in rijen if str(waarde).strip() != ""}
+
+
 def product_compliance(db: Session, product: models.Product) -> dict:
     """Geef tellingen + percentage terug voor één product."""
     velden = velden_voor_product(db, product)
