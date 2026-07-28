@@ -304,7 +304,24 @@ LEVERANCIERS = [
     ("Visser Trading B.V.", "Anouk Visser", "a.visser@vissertrading.nl", "NL"),
     ("De Groot Groothandel", "Thomas de Groot", "thomas@degrootgroothandel.nl", "NL"),
     ("Mulder Industriële Supplies", "Ellen Mulder", "e.mulder@mulder-supplies.nl", "NL"),
+    ("Koper Handel Jilles", "Jilles Kooper", "jilles@koperhandel.nl", "NL"),
 ]
+
+# Extra elektronicaproducten voor "Koper Handel Jilles". Deze leverancier krijgt
+# bewust veel ontbrekende data: elk product mist 3–5 verplichte velden,
+# verspreid over PPWR, Batterijverordening, REACH/CLP, GPSR en ErP.
+KOPER_PRODUCTEN = [
+    "Ledlamp E27 9W", "Slimme Stekker WiFi", "Zonnepaneel 400W", "Omvormer 3kW",
+    "Thuisbatterij 5kWh", "Draagbaar Powerstation 300W", "E-bike Accu 500Wh",
+    "Robotstofzuiger Pro", "Luchtreiniger HEPA", "Espressomachine Deluxe",
+    "Föhn 2200W", "Elektrische Tandenborstel", "Draadloze Oordopjes ANC",
+    "Smartwatch Sport", "Actiecamera 4K", "Gaming Toetsenbord RGB",
+    "Ventilator Staand DC", "Warmtepompdroger 8kg",
+]
+
+# Wetgevingen waarover de ontbrekende velden van Koper Handel Jilles worden
+# verspreid (alle relevant voor de categorie Elektronica).
+KOPER_MISSING_WETGEVINGEN = ["PPWR", "BATTERIJ", "REACH", "GPSR", "ERP"]
 
 # productnamen per categorie (samen 50)
 PRODUCTEN_PER_CAT = {
@@ -520,6 +537,50 @@ def seed():
                     )
                 )
 
+        # ------------------------------------------------------------------
+        # Leverancier met veel ontbrekende data: "Koper Handel Jilles".
+        # ≥15 elektronicaproducten met elk 3–5 ontbrekende verplichte velden,
+        # verspreid over PPWR, Batterijverordening, REACH/CLP, GPSR en ErP.
+        # ------------------------------------------------------------------
+        koper = next(l for l in leveranciers if l.naam == "Koper Handel Jilles")
+        koper_velden = sorted(cat_to_velden.get("Elektronica", []), key=lambda v: v.id)
+        koper_prod_objs = []
+        for i, naam in enumerate(KOPER_PRODUCTEN):
+            p = models.Product(
+                naam=naam,
+                artikelnummer=f"ART-2{i:03d}",
+                ean=f"88{i:011d}",
+                categorie_id=cat_map["Elektronica"].id,
+                leverancier_id=koper.id,
+            )
+            db.add(p)
+            koper_prod_objs.append(p)
+        db.flush()
+
+        for i, product in enumerate(koper_prod_objs):
+            # 3–5 ontbrekende velden, elk uit een andere wetgeving zodat de
+            # ontbrekende data over meerdere verordeningen verspreid is.
+            aantal_missend = 3 + (i % 3)  # 3, 4 of 5
+            missend = set()
+            for j in range(aantal_missend):
+                code = KOPER_MISSING_WETGEVINGEN[(i + j) % len(KOPER_MISSING_WETGEVINGEN)]
+                velden_van_wet = wetcode_to_velden[code]
+                veld = velden_van_wet[(i + j) % len(velden_van_wet)]
+                missend.add(veld.sleutel)
+            for veld in koper_velden:
+                if veld.sleutel in missend:
+                    continue  # dit veld bewust leeg laten
+                db.add(
+                    models.ProductComplianceWaarde(
+                        product_id=product.id,
+                        compliance_veld_id=veld.id,
+                        waarde=_voorbeeld_waarde(veld, product),
+                        ingevuld=True,
+                    )
+                )
+        prod_objs.extend((p, "Elektronica") for p in koper_prod_objs)
+        telling["incompleet"] += len(koper_prod_objs)
+
         # wetgeving standaard AAN als er producten onder vallen
         product_cat_namen = {cat for _, cat in prod_objs}
         for code, w in wet_map.items():
@@ -615,6 +676,8 @@ def seed():
         print(f"  {db.query(models.Product).count()} producten "
               f"(compliant: {telling['compliant']}, gedeeltelijk: {telling['partial']}, "
               f"incompleet: {telling['incompleet']})")
+        print(f"  + 'Koper Handel Jilles': {len(koper_prod_objs)} elektronicaproducten "
+              f"met elk 3–5 ontbrekende velden over PPWR/Batterij/REACH/GPSR/ErP")
     finally:
         db.close()
 
