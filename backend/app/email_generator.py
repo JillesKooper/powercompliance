@@ -292,6 +292,170 @@ Met vriendelijke groet,
 Het Compliance-team"""
 
 
+# ---------- Placeholders & sjablonen (voor sequence-stap mailinhoud) ----------
+# Placeholders die de beheerder in een eigen stap-mailtekst/onderwerp mag
+# gebruiken; ze worden bij verzending én in de preview per leverancier ingevuld.
+PLACEHOLDERS = [
+    "{aanhef}",
+    "{leverancier}",
+    "{contactpersoon}",
+    "{ontbrekende_data}",
+    "{portaal_link}",
+    "{aantal_velden}",
+    "{aantal_producten}",
+]
+
+
+def placeholder_waarden(
+    leverancier: Optional[models.Leverancier],
+    per_wet: dict,
+    link: str,
+    aantal_velden: int,
+    aantal_producten: int,
+    taal: str = "nl",
+) -> dict:
+    """Concrete waarden voor de placeholders van een sequence-stap."""
+    contact = leverancier.contactpersoon if leverancier else None
+    naam = leverancier.naam if leverancier else "Voorbeeld Leverancier B.V."
+    if taal == "en":
+        aanhef = f"Dear {contact}," if contact else "Dear Sir/Madam,"
+        onbekend = "Sir/Madam"
+    else:
+        aanhef = f"Beste {contact}," if contact else "Geachte heer/mevrouw,"
+        onbekend = "heer/mevrouw"
+    return {
+        "aanhef": aanhef,
+        "leverancier": naam,
+        "contactpersoon": contact or onbekend,
+        "ontbrekende_data": _samenvatting_tekst(per_wet),
+        "portaal_link": link,
+        "aantal_velden": str(aantal_velden),
+        "aantal_producten": str(aantal_producten),
+    }
+
+
+def render_sjabloon(tekst: str, waarden: dict) -> str:
+    """Vervang {placeholder}-tokens in tekst. Onbekende tokens blijven staan."""
+    if not tekst:
+        return tekst
+    for sleutel, waarde in waarden.items():
+        tekst = tekst.replace("{" + sleutel + "}", waarde or "")
+    return tekst
+
+
+def voorbeeld_context(db: Session, wetgeving_code: Optional[str] = None):
+    """Zoek een representatieve leverancier met ontbrekende data voor preview/
+    generatie. Geeft (leverancier|None, per_wet, aantal_velden, aantal_producten).
+
+    Zonder kandidaat wordt een fictief voorbeeld teruggegeven zodat de preview
+    altijd iets toont."""
+    leveranciers = db.query(models.Leverancier).order_by(models.Leverancier.naam).all()
+    for lev in leveranciers:
+        per_product, per_wet = verzamel_ontbrekend(db, lev, wetgeving_code)
+        if per_product:
+            aantal_velden = sum(len(v) for _, v in per_product)
+            return lev, per_wet, aantal_velden, len(per_product)
+    # fictief voorbeeld
+    code = wetgeving_code or "PPWR"
+    per_wet = {code: {"Voorbeeldveld A", "Voorbeeldveld B"}}
+    return None, per_wet, 2, 1
+
+
+def _sjabloon_fallback(taal: str) -> str:
+    """Herbruikbaar mailsjabloon met placeholders (fallback zonder AI)."""
+    if taal == "en":
+        return (
+            "{aanhef}\n\n"
+            "To keep our shared product range compliant with the relevant EU "
+            "regulations, we are still missing some product data from you. The "
+            "missing fields, grouped by legislation, are:\n\n"
+            "{ontbrekende_data}\n\n"
+            "A spreadsheet listing the exact missing fields is attached to this email.\n\n"
+            "You can deliver the data in either of two ways:\n"
+            "1. Reply to this email with the data as plain text.\n"
+            "2. Upload the data via our portal: {portaal_link}\n\n"
+            "Thank you in advance for your cooperation.\n\n"
+            "Kind regards,\nThe Compliance Team"
+        )
+    return (
+        "{aanhef}\n\n"
+        "Om ons gezamenlijke productassortiment te laten voldoen aan de relevante "
+        "EU-wetgeving, ontbreekt bij ons nog een aantal productgegevens van uw kant. "
+        "De ontbrekende velden, gegroepeerd per wetgeving, zijn:\n\n"
+        "{ontbrekende_data}\n\n"
+        "In de bijlage van deze e-mail vindt u een overzicht (Excel) met de exacte "
+        "ontbrekende velden.\n\n"
+        "U kunt de data op twee manieren aanleveren:\n"
+        "1. Reageer op deze e-mail met de gegevens als platte tekst.\n"
+        "2. Upload de gegevens via ons portaal: {portaal_link}\n\n"
+        "Alvast hartelijk dank voor uw medewerking.\n\n"
+        "Met vriendelijke groet,\nHet Compliance-team"
+    )
+
+
+def _sjabloon_onderwerp(wetgeving_code: Optional[str], taal: str) -> str:
+    scope = f" ({wetgeving_code})" if wetgeving_code else ""
+    if taal == "en":
+        return "{leverancier} – missing product compliance data" + scope
+    return "{leverancier} – ontbrekende productcompliance-data" + scope
+
+
+def genereer_sjabloon(wetgeving_code: Optional[str], taal: str):
+    """Genereer een herbruikbaar mailSJABLOON met placeholders via de Anthropic
+    API. Geeft (onderwerp, tekst, ai_gebruikt, ai_fout) terug. Valt terug op een
+    net sjabloon zonder API-sleutel of bij een fout."""
+    onderwerp = _sjabloon_onderwerp(wetgeving_code, taal)
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return (
+            onderwerp,
+            _sjabloon_fallback(taal),
+            False,
+            "ANTHROPIC_API_KEY niet ingesteld — sjabloontekst gebruikt.",
+        )
+    scope_zin = (
+        f" over de wetgeving {wetgeving_code}" if wetgeving_code else " over EU-compliancedata"
+    )
+    if taal == "en":
+        scope_zin = f" about {wetgeving_code}" if wetgeving_code else " about EU compliance data"
+        prompt = f"""Write a REUSABLE email TEMPLATE in ENGLISH for a recurring data request to suppliers{scope_zin}.
+Use EXACTLY these placeholder tokens verbatim (do not translate, keep the curly braces) at the appropriate spots:
+- {{aanhef}}  (will be replaced by e.g. "Dear Jan,")
+- {{ontbrekende_data}}  (a list of missing fields grouped per regulation)
+- {{portaal_link}}  (a link to the supplier portal)
+
+Requirements: briefly explain why the data is needed, mention that an Excel attachment lists the exact missing fields, offer two delivery options (reply as plain text, or upload via {{portaal_link}}), keep it concise and friendly, and sign off as "The Compliance Team". Return only the template body text."""
+    else:
+        prompt = f"""Schrijf een HERBRUIKBAAR e-mailSJABLOON in het NEDERLANDS voor een terugkerend dataverzoek aan leveranciers{scope_zin}.
+Gebruik EXACT deze placeholder-tokens letterlijk (niet vertalen, accolades behouden) op de juiste plek:
+- {{aanhef}}  (wordt vervangen door bv. "Beste Jan,")
+- {{ontbrekende_data}}  (een lijst met ontbrekende velden gegroepeerd per wetgeving)
+- {{portaal_link}}  (een link naar het leveranciersportaal)
+
+Eisen: leg kort uit waarom de data nodig is, vermeld dat een Excel-bijlage de exacte ontbrekende velden bevat, bied twee aanleverwijzen (reageren als platte tekst, of uploaden via {{portaal_link}}), houd het beknopt en vriendelijk, en onderteken met "Het Compliance-team". Geef alleen de sjabloontekst terug."""
+    try:
+        import anthropic
+
+        client = anthropic.Anthropic(api_key=api_key)
+        resp = client.messages.create(
+            model=MODEL,
+            max_tokens=1500,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        tekst = "".join(b.text for b in resp.content if b.type == "text").strip()
+        if not tekst:
+            raise ValueError("Leeg antwoord van de API")
+        return onderwerp, tekst, True, None
+    except Exception as e:  # noqa: BLE001
+        return (
+            onderwerp,
+            _sjabloon_fallback(taal),
+            False,
+            f"AI-generatie mislukt ({type(e).__name__}): {e}",
+        )
+
+
 def genereer_tekst(
     leverancier: models.Leverancier,
     per_wet: dict,

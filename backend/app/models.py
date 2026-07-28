@@ -59,6 +59,7 @@ class Leverancier(Base):
     contactpersoon = Column(String, nullable=True)
     email = Column(String, nullable=True)
     telefoon = Column(String, nullable=True)
+    adres = Column(String, nullable=True)
     land = Column(String, nullable=True, default="NL")
     actief = Column(Boolean, default=True)
     aangemaakt_op = Column(DateTime, default=datetime.utcnow)
@@ -359,6 +360,11 @@ class SequenceStap(Base):
     actie = Column(String, default="mail_versturen")  # mail_versturen
     # conditie: altijd | data_ontbreekt | geen_reply
     conditie = Column(String, default="data_ontbreekt")
+    # optionele, door de beheerder ingestelde mailinhoud voor deze stap.
+    # Leeg = de mail wordt bij verzending automatisch (AI/sjabloon) gegenereerd.
+    # Ondersteunt placeholders zoals {aanhef}, {ontbrekende_data}, {portaal_link}.
+    onderwerp = Column(String, nullable=True)
+    mailtekst = Column(Text, nullable=True)
 
     sequence = relationship("Sequence", back_populates="stappen")
 

@@ -71,6 +71,8 @@ def _zet_stappen(db: Session, seq: models.Sequence, stappen: List[schemas.Sequen
                 wachttijd_dagen=max(0, s.wachttijd_dagen),
                 actie=s.actie,
                 conditie=s.conditie,
+                onderwerp=(s.onderwerp or None),
+                mailtekst=(s.mailtekst or None),
             )
         )
 
@@ -160,3 +162,29 @@ def verwijder_sequence(sequence_id: int, db: Session = Depends(get_db)):
 def run_scheduler(db: Session = Depends(get_db)):
     """Draai de dagelijkse sequence-tick nú (handig voor de demo/test)."""
     return sequence_service.tick(db)
+
+
+@router.post("/genereer-mail", response_model=schemas.SequenceMailResultaat)
+def genereer_mail(
+    data: schemas.SequenceMailGenereerRequest, db: Session = Depends(get_db)
+):
+    """Genereer (via AI) een herbruikbaar mailsjabloon voor een sequence-stap."""
+    return sequence_service.genereer_stap_mail(db, data.wetgeving_code, data.taal)
+
+
+@router.post("/preview-mail", response_model=schemas.SequenceMailResultaat)
+def preview_mail(
+    data: schemas.SequenceMailPreviewRequest, db: Session = Depends(get_db)
+):
+    """Toon een preview van de stap-mail zoals de leverancier hem ontvangt."""
+    return sequence_service.preview_stap_mail(
+        db, data.wetgeving_code, data.onderwerp, data.mailtekst, data.taal
+    )
+
+
+@router.post("/{sequence_id}/nu-uitvragen", response_model=schemas.SchedulerResultaat)
+def nu_uitvragen(sequence_id: int, db: Session = Depends(get_db)):
+    """Stuur nu direct de eerstvolgende stap naar alle actieve leveranciers van
+    deze sequence (wachttijd wordt genegeerd)."""
+    seq = _haal(db, sequence_id)
+    return sequence_service.voer_sequence_nu_uit(db, seq)

@@ -113,10 +113,22 @@ def _verstuur_stap_mail(
     aantal_producten = len(per_product)
     aantal_velden = sum(len(velden) for _, velden in per_product)
     link = email_generator.portaal_link(lev)
-    onderwerp = email_generator.maak_onderwerp(lev, per_wet, "nl", None)
-    tekst, ai_gebruikt, _ = email_generator.genereer_tekst(
-        lev, per_wet, None, "nl", link, aantal_velden, aantal_producten
+
+    # Eigen, door de beheerder ingestelde mailinhoud heeft voorrang; anders wordt
+    # de mail automatisch (AI/sjabloon) gegenereerd. Placeholders worden ingevuld.
+    waarden = email_generator.placeholder_waarden(
+        lev, per_wet, link, aantal_velden, aantal_producten
     )
+    if stap.onderwerp:
+        onderwerp = email_generator.render_sjabloon(stap.onderwerp, waarden)
+    else:
+        onderwerp = email_generator.maak_onderwerp(lev, per_wet, "nl", None)
+    if stap.mailtekst:
+        tekst = email_generator.render_sjabloon(stap.mailtekst, waarden)
+    else:
+        tekst, _, _ = email_generator.genereer_tekst(
+            lev, per_wet, None, "nl", link, aantal_velden, aantal_producten
+        )
 
     mail = mail_service.verstuur_mail(
         onderwerp=onderwerp,
@@ -151,6 +163,77 @@ def _verstuur_stap_mail(
 # ---------------------------------------------------------------------------
 # de dagelijkse tick
 # ---------------------------------------------------------------------------
+def _verwerk_inschrijving(
+    db: Session,
+    seq: models.Sequence,
+    stappen: List[models.SequenceStap],
+    inschrijving: models.SequenceInschrijving,
+    nu: datetime,
+    negeer_wachttijd: bool = False,
+) -> Optional[dict]:
+    """Verwerk één inschrijving. Geeft een actie-dict terug of None (niets gedaan).
+
+    Met ``negeer_wachttijd=True`` wordt de eerstvolgende stap direct uitgevoerd
+    (voor de knop 'Nu uitvragen').
+    """
+    if inschrijving.status != "actief":
+        return None
+    lev = inschrijving.leverancier
+    ontbrekend = aantal_ontbrekend(db, lev, seq)
+
+    # auto-stop: alle data aangeleverd
+    if ontbrekend == 0:
+        inschrijving.status = "voltooid"
+        inschrijving.voltooid_op = nu
+        return {
+            "sequence": seq.naam,
+            "leverancier": lev.naam,
+            "actie": "voltooid",
+            "info": "Alle data aangeleverd — sequence gestopt.",
+        }
+
+    # alle stappen doorlopen?
+    if inschrijving.huidige_stap >= len(stappen):
+        inschrijving.status = "voltooid"
+        inschrijving.voltooid_op = nu
+        return {
+            "sequence": seq.naam,
+            "leverancier": lev.naam,
+            "actie": "voltooid",
+            "info": "Laatste stap doorlopen.",
+        }
+
+    stap = stappen[inschrijving.huidige_stap]
+    if not negeer_wachttijd:
+        due = inschrijving.laatste_actie_op + timedelta(days=stap.wachttijd_dagen)
+        if nu < due:
+            return None  # wachttijd nog niet verstreken
+
+    stapnr = stap.volgorde + 1
+    if not _conditie_geldt(db, seq, stap, inschrijving, ontbrekend):
+        inschrijving.huidige_stap += 1
+        inschrijving.laatste_actie_op = nu
+        return {
+            "sequence": seq.naam,
+            "leverancier": lev.naam,
+            "actie": "overgeslagen",
+            "info": f"Stap {stapnr} overgeslagen (conditie '{stap.conditie}').",
+        }
+
+    resultaat = _verstuur_stap_mail(db, seq, stap, lev)
+    inschrijving.huidige_stap += 1
+    inschrijving.laatste_actie_op = nu
+    return {
+        "sequence": seq.naam,
+        "leverancier": lev.naam,
+        "actie": "mail_verstuurd",
+        "info": (
+            f"Stap {stapnr}: {'verzonden via ' + resultaat['kanaal'] if resultaat['verzonden'] else 'gesimuleerd'}"
+            f" — {resultaat['onderwerp']}"
+        ),
+    }
+
+
 def tick(db: Optional[Session] = None, nu: Optional[datetime] = None) -> dict:
     """Voer alle openstaande sequence-stappen uit die aan de beurt zijn."""
     eigen_sessie = db is None
@@ -169,79 +252,106 @@ def tick(db: Optional[Session] = None, nu: Optional[datetime] = None) -> dict:
         for seq in sequences:
             stappen = sorted(seq.stappen, key=lambda s: s.volgorde)
             for inschrijving in seq.inschrijvingen:
-                if inschrijving.status != "actief":
-                    continue
-                lev = inschrijving.leverancier
-                ontbrekend = aantal_ontbrekend(db, lev, seq)
-
-                # auto-stop: alle data aangeleverd
-                if ontbrekend == 0:
-                    inschrijving.status = "voltooid"
-                    inschrijving.voltooid_op = nu
-                    acties.append(
-                        {
-                            "sequence": seq.naam,
-                            "leverancier": lev.naam,
-                            "actie": "voltooid",
-                            "info": "Alle data aangeleverd — sequence gestopt.",
-                        }
-                    )
-                    continue
-
-                # alle stappen doorlopen?
-                if inschrijving.huidige_stap >= len(stappen):
-                    inschrijving.status = "voltooid"
-                    inschrijving.voltooid_op = nu
-                    acties.append(
-                        {
-                            "sequence": seq.naam,
-                            "leverancier": lev.naam,
-                            "actie": "voltooid",
-                            "info": "Laatste stap doorlopen.",
-                        }
-                    )
-                    continue
-
-                stap = stappen[inschrijving.huidige_stap]
-                due = inschrijving.laatste_actie_op + timedelta(
-                    days=stap.wachttijd_dagen
-                )
-                if nu < due:
-                    continue  # wachttijd nog niet verstreken
-
-                stapnr = stap.volgorde + 1
-                if not _conditie_geldt(db, seq, stap, inschrijving, ontbrekend):
-                    # conditie niet vervuld: stap overslaan en doorschuiven
-                    inschrijving.huidige_stap += 1
-                    inschrijving.laatste_actie_op = nu
-                    acties.append(
-                        {
-                            "sequence": seq.naam,
-                            "leverancier": lev.naam,
-                            "actie": "overgeslagen",
-                            "info": f"Stap {stapnr} overgeslagen (conditie '{stap.conditie}').",
-                        }
-                    )
-                    continue
-
-                resultaat = _verstuur_stap_mail(db, seq, stap, lev)
-                inschrijving.huidige_stap += 1
-                inschrijving.laatste_actie_op = nu
-                acties.append(
-                    {
-                        "sequence": seq.naam,
-                        "leverancier": lev.naam,
-                        "actie": "mail_verstuurd",
-                        "info": (
-                            f"Stap {stapnr}: {'verzonden via ' + resultaat['kanaal'] if resultaat['verzonden'] else 'gesimuleerd'}"
-                            f" — {resultaat['onderwerp']}"
-                        ),
-                    }
-                )
+                actie = _verwerk_inschrijving(db, seq, stappen, inschrijving, nu)
+                if actie:
+                    acties.append(actie)
 
         db.commit()
     finally:
         if eigen_sessie:
             db.close()
 
+    return {"tijdstip": nu.isoformat(), "aantal_acties": len(acties), "acties": acties}
+
+
+# ---------------------------------------------------------------------------
+# mailinhoud: genereren + preview (voor de sequence-editor)
+# ---------------------------------------------------------------------------
+def genereer_stap_mail(db: Session, wetgeving_code: Optional[str], taal: str = "nl") -> dict:
+    """Genereer een herbruikbaar mailsjabloon (onderwerp + tekst met placeholders)
+    dat de beheerder als startpunt voor een stap kan gebruiken/aanpassen."""
+    onderwerp, tekst, ai_gebruikt, ai_fout = email_generator.genereer_sjabloon(
+        wetgeving_code, taal
+    )
+    lev, _, _, _ = email_generator.voorbeeld_context(db, wetgeving_code)
+    return {
+        "onderwerp": onderwerp,
+        "tekst": tekst,
+        "leverancier_naam": lev.naam if lev else "Voorbeeld Leverancier B.V.",
+        "aan_email": lev.email if lev else None,
+        "voorbeeld": lev is None,
+        "ai_gebruikt": ai_gebruikt,
+        "ai_fout": ai_fout,
+        "placeholders": email_generator.PLACEHOLDERS,
+    }
+
+
+def preview_stap_mail(
+    db: Session,
+    wetgeving_code: Optional[str],
+    onderwerp: Optional[str],
+    mailtekst: Optional[str],
+    taal: str = "nl",
+) -> dict:
+    """Render de mail zoals de leverancier hem zou ontvangen, op basis van een
+    representatieve leverancier met ontbrekende data. Eigen onderwerp/tekst
+    worden met placeholders ingevuld; leeg = automatisch gegenereerd."""
+    lev, per_wet, aantal_velden, aantal_producten = email_generator.voorbeeld_context(
+        db, wetgeving_code
+    )
+    link = email_generator.portaal_link(lev) if lev else email_generator.PORTAAL_BASIS + "/0/aanleveren"
+    waarden = email_generator.placeholder_waarden(
+        lev, per_wet, link, aantal_velden, aantal_producten, taal
+    )
+
+    ai_gebruikt, ai_fout = False, None
+    if onderwerp:
+        onderwerp_uit = email_generator.render_sjabloon(onderwerp, waarden)
+    else:
+        onderwerp_uit = (
+            email_generator.render_sjabloon(
+                email_generator._sjabloon_onderwerp(wetgeving_code, taal), waarden
+            )
+        )
+    if mailtekst:
+        tekst_uit = email_generator.render_sjabloon(mailtekst, waarden)
+    elif lev:
+        tekst_uit, ai_gebruikt, ai_fout = email_generator.genereer_tekst(
+            lev, per_wet, None, taal, link, aantal_velden, aantal_producten
+        )
+    else:
+        tekst_uit = email_generator.render_sjabloon(
+            email_generator._sjabloon_fallback(taal), waarden
+        )
+
+    return {
+        "onderwerp": onderwerp_uit,
+        "tekst": tekst_uit,
+        "leverancier_naam": lev.naam if lev else "Voorbeeld Leverancier B.V.",
+        "aan_email": lev.email if lev else None,
+        "voorbeeld": lev is None,
+        "ai_gebruikt": ai_gebruikt,
+        "ai_fout": ai_fout,
+        "placeholders": email_generator.PLACEHOLDERS,
+    }
+
+
+def voer_sequence_nu_uit(db: Session, seq: models.Sequence, nu: Optional[datetime] = None) -> dict:
+    """Zet de sequence direct in gang: stuur nu de eerstvolgende stap naar alle
+    actieve leveranciers (wachttijd wordt genegeerd). Activeert de sequence indien nodig."""
+    nu = nu or datetime.utcnow()
+    if not seq.actief:
+        seq.actief = True
+    synchroniseer_inschrijvingen(db, seq)
+    db.commit()
+
+    stappen = sorted(seq.stappen, key=lambda s: s.volgorde)
+    acties: List[dict] = []
+    for inschrijving in seq.inschrijvingen:
+        actie = _verwerk_inschrijving(
+            db, seq, stappen, inschrijving, nu, negeer_wachttijd=True
+        )
+        if actie:
+            acties.append(actie)
+    db.commit()
     return {"tijdstip": nu.isoformat(), "aantal_acties": len(acties), "acties": acties}

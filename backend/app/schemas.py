@@ -23,6 +23,7 @@ class LeverancierBase(BaseModel):
     contactpersoon: Optional[str] = None
     email: Optional[str] = None
     telefoon: Optional[str] = None
+    adres: Optional[str] = None
     land: Optional[str] = "NL"
     actief: bool = True
 
@@ -36,6 +37,7 @@ class LeverancierUpdate(BaseModel):
     contactpersoon: Optional[str] = None
     email: Optional[str] = None
     telefoon: Optional[str] = None
+    adres: Optional[str] = None
     land: Optional[str] = None
     actief: Optional[bool] = None
 
@@ -533,6 +535,9 @@ class SequenceStapIn(BaseModel):
     wachttijd_dagen: int = 7
     actie: str = "mail_versturen"
     conditie: str = "data_ontbreekt"  # altijd | data_ontbreekt | geen_reply
+    # optionele eigen mailinhoud; leeg = automatisch genereren bij verzending
+    onderwerp: Optional[str] = None
+    mailtekst: Optional[str] = None
 
 
 class SequenceStapOut(SequenceStapIn):
@@ -596,3 +601,27 @@ class SchedulerResultaat(BaseModel):
     tijdstip: str
     aantal_acties: int
     acties: List[dict] = []
+
+
+# ---------- Sequence mailinhoud (genereren + preview) ----------
+class SequenceMailGenereerRequest(BaseModel):
+    wetgeving_code: Optional[str] = None  # scope; None = alle wetgeving
+    taal: str = "nl"
+
+
+class SequenceMailPreviewRequest(BaseModel):
+    wetgeving_code: Optional[str] = None
+    onderwerp: Optional[str] = None  # leeg = automatisch onderwerp
+    mailtekst: Optional[str] = None  # leeg = automatisch (AI/sjabloon) genereren
+    taal: str = "nl"
+
+
+class SequenceMailResultaat(BaseModel):
+    onderwerp: str
+    tekst: str
+    leverancier_naam: str  # de leverancier waarop de preview is gebaseerd
+    aan_email: Optional[str] = None
+    voorbeeld: bool = False  # True = fictief voorbeeld (geen echte kandidaat gevonden)
+    ai_gebruikt: bool = False
+    ai_fout: Optional[str] = None
+    placeholders: List[str] = []  # beschikbare placeholders voor eigen tekst

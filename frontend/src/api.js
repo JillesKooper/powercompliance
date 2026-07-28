@@ -167,6 +167,16 @@ export const api = {
   runScheduler: () => request("/sequences/run-scheduler", { method: "POST" }),
   nuUitvragen: (id) =>
     request(`/sequences/${id}/nu-uitvragen`, { method: "POST" }),
+  sequenceGenereerMail: (data) =>
+    request("/sequences/genereer-mail", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  sequencePreviewMail: (data) =>
+    request("/sequences/preview-mail", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
   wetgevingUitvraagLeveranciers: (code) =>
     request(`/email/uitvraag-wetgeving/${encodeURIComponent(code)}/leveranciers`),

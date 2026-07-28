@@ -293,18 +293,19 @@ WET_INFO = {
     ),
 }
 
+# (naam, contactpersoon, email, telefoon, adres, land)
 LEVERANCIERS = [
-    ("Van der Berg Elektronica B.V.", "Jan van der Berg", "j.vandenberg@vdberg-elektro.nl", "NL"),
-    ("Koninklijke Jansen Chemie N.V.", "Petra Jansen", "p.jansen@jansenchemie.nl", "NL"),
-    ("Bouwgroep De Vries", "Mark de Vries", "info@bouwgroepdevries.nl", "NL"),
-    ("GreenPack Verpakkingen B.V.", "Lisa Bakker", "lisa@greenpack.nl", "NL"),
-    ("Textielhandel Bakker & Zonen", "Henk Bakker", "verkoop@bakkertextiel.nl", "NL"),
-    ("Meubelfabriek Hendriks", "Sophie Hendriks", "s.hendriks@meubelhendriks.nl", "NL"),
-    ("Smit Foods Nederland B.V.", "Karel Smit", "k.smit@smitfoods.nl", "NL"),
-    ("Visser Trading B.V.", "Anouk Visser", "a.visser@vissertrading.nl", "NL"),
-    ("De Groot Groothandel", "Thomas de Groot", "thomas@degrootgroothandel.nl", "NL"),
-    ("Mulder Industriële Supplies", "Ellen Mulder", "e.mulder@mulder-supplies.nl", "NL"),
-    ("Koper Handel Jilles", "Jilles Kooper", "jilles@koperhandel.nl", "NL"),
+    ("Van der Berg Elektronica B.V.", "Jan van der Berg", "j.vandenberg@vdberg-elektro.nl", "010-2345678", "Industrieweg 12, 3044 AS Rotterdam", "NL"),
+    ("Koninklijke Jansen Chemie N.V.", "Petra Jansen", "p.jansen@jansenchemie.nl", "040-7654321", "Chemiepark 5, 5651 GH Eindhoven", "NL"),
+    ("Bouwgroep De Vries", "Mark de Vries", "info@bouwgroepdevries.nl", "030-1122334", "Betonlaan 88, 3542 AD Utrecht", "NL"),
+    ("GreenPack Verpakkingen B.V.", "Lisa Bakker", "lisa@greenpack.nl", "020-9988776", "Kartonstraat 3, 1043 AN Amsterdam", "NL"),
+    ("Textielhandel Bakker & Zonen", "Henk Bakker", "verkoop@bakkertextiel.nl", "013-4455667", "Weverijplein 21, 5041 EA Tilburg", "NL"),
+    ("Meubelfabriek Hendriks", "Sophie Hendriks", "s.hendriks@meubelhendriks.nl", "0499-556677", "Houtweg 47, 5688 KL Oirschot", "NL"),
+    ("Smit Foods Nederland B.V.", "Karel Smit", "k.smit@smitfoods.nl", "0345-778899", "Voedselstraat 9, 4001 LK Tiel", "NL"),
+    ("Visser Trading B.V.", "Anouk Visser", "a.visser@vissertrading.nl", "058-2233445", "Havenkade 14, 8861 NL Harlingen", "NL"),
+    ("De Groot Groothandel", "Thomas de Groot", "thomas@degrootgroothandel.nl", "073-6677889", "Groothandelweg 30, 5222 AR 's-Hertogenbosch", "NL"),
+    ("Mulder Industriële Supplies", "Ellen Mulder", "e.mulder@mulder-supplies.nl", "038-3344556", "Fabrieksstraat 7, 8011 CV Zwolle", "NL"),
+    ("Koper Handel Jilles", "Jilles Kooper", "jilles@koperhandel.nl", "071-5566778", "Koperslagerstraat 2, 2312 HN Leiden", "NL"),
 ]
 
 # Extra elektronicaproducten voor "Koper Handel Jilles". Deze leverancier krijgt
@@ -480,9 +481,10 @@ def seed():
 
         # leveranciers
         leveranciers = []
-        for naam, contact, email, land in LEVERANCIERS:
+        for naam, contact, email, telefoon, adres, land in LEVERANCIERS:
             lev = models.Leverancier(
-                naam=naam, contactpersoon=contact, email=email, land=land, actief=True
+                naam=naam, contactpersoon=contact, email=email,
+                telefoon=telefoon, adres=adres, land=land, actief=True,
             )
             db.add(lev)
             leveranciers.append(lev)

@@ -267,7 +267,13 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
   );
 }
 
-const LEGE_STAP = { wachttijd_dagen: 7, actie: "mail_versturen", conditie: "data_ontbreekt" };
+const LEGE_STAP = {
+  wachttijd_dagen: 7,
+  actie: "mail_versturen",
+  conditie: "data_ontbreekt",
+  onderwerp: "",
+  mailtekst: "",
+};
 
 function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
   const bestaand = sequence && sequence.id;
@@ -282,6 +288,8 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
           wachttijd_dagen: s.wachttijd_dagen,
           actie: s.actie,
           conditie: s.conditie,
+          onderwerp: s.onderwerp || "",
+          mailtekst: s.mailtekst || "",
         }))
       : [{ ...LEGE_STAP, wachttijd_dagen: 0 }]
   );
@@ -322,6 +330,8 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
         wachttijd_dagen: Number(s.wachttijd_dagen) || 0,
         actie: "mail_versturen",
         conditie: s.conditie,
+        onderwerp: (s.onderwerp || "").trim() || null,
+        mailtekst: (s.mailtekst || "").trim() || null,
       })),
     };
     try {
@@ -444,41 +454,15 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
             </div>
             <div className="space-y-2">
               {stappen.map((s, i) => (
-                <div
+                <StapRij
                   key={i}
-                  className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                >
-                  <span className="font-medium text-slate-500 w-14">Stap {i + 1}</span>
-                  <span className="text-slate-400">na</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={s.wachttijd_dagen}
-                    onChange={(e) => wijzigStap(i, "wachttijd_dagen", e.target.value)}
-                    className="w-16 rounded-md border border-slate-300 px-2 py-1"
-                  />
-                  <span className="text-slate-400">dagen · mail versturen</span>
-                  <select
-                    value={s.conditie}
-                    onChange={(e) => wijzigStap(i, "conditie", e.target.value)}
-                    className="flex-1 rounded-md border border-slate-300 px-2 py-1 min-w-0"
-                  >
-                    {Object.entries(CONDITIES).map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                  {stappen.length > 1 && (
-                    <button
-                      onClick={() => verwijderStap(i)}
-                      className="text-slate-400 hover:text-red-600"
-                      title="Verwijder stap"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
+                  index={i}
+                  stap={s}
+                  aantalStappen={stappen.length}
+                  wetgevingCode={triggerType === "wetgeving" ? wetgevingCode : null}
+                  onWijzig={(veld, waarde) => wijzigStap(i, veld, waarde)}
+                  onVerwijder={() => verwijderStap(i)}
+                />
               ))}
             </div>
           </div>
@@ -492,6 +476,186 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
             {bezig ? "Opslaan…" : "Opslaan"}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwijder }) {
+  const [open, setOpen] = useState(false);
+  const [bezigAI, setBezigAI] = useState(false);
+  const [preview, setPreview] = useState(null); // {onderwerp, tekst, ...} of null
+  const [bezigPreview, setBezigPreview] = useState(false);
+  const [fout, setFout] = useState(null);
+
+  const eigenInhoud = Boolean((stap.onderwerp || "").trim() || (stap.mailtekst || "").trim());
+
+  async function genereerAI() {
+    setBezigAI(true);
+    setFout(null);
+    try {
+      const r = await api.sequenceGenereerMail({ wetgeving_code: wetgevingCode || null });
+      onWijzig("onderwerp", r.onderwerp || "");
+      onWijzig("mailtekst", r.tekst || "");
+      if (r.ai_fout) setFout(`AI niet gebruikt: ${r.ai_fout}`);
+    } catch (e) {
+      setFout(e.message);
+    } finally {
+      setBezigAI(false);
+    }
+  }
+
+  async function toonPreview() {
+    setBezigPreview(true);
+    setFout(null);
+    try {
+      const r = await api.sequencePreviewMail({
+        wetgeving_code: wetgevingCode || null,
+        onderwerp: (stap.onderwerp || "").trim() || null,
+        mailtekst: (stap.mailtekst || "").trim() || null,
+      });
+      setPreview(r);
+    } catch (e) {
+      setFout(e.message);
+    } finally {
+      setBezigPreview(false);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-slate-200 text-sm">
+      <div className="flex items-center gap-2 px-3 py-2">
+        <span className="font-medium text-slate-500 w-14">Stap {index + 1}</span>
+        <span className="text-slate-400">na</span>
+        <input
+          type="number"
+          min="0"
+          value={stap.wachttijd_dagen}
+          onChange={(e) => onWijzig("wachttijd_dagen", e.target.value)}
+          className="w-16 rounded-md border border-slate-300 px-2 py-1"
+        />
+        <span className="text-slate-400">dagen · mail versturen</span>
+        <select
+          value={stap.conditie}
+          onChange={(e) => onWijzig("conditie", e.target.value)}
+          className="flex-1 rounded-md border border-slate-300 px-2 py-1 min-w-0"
+        >
+          {Object.entries(CONDITIES).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
+        </select>
+        {aantalStappen > 1 && (
+          <button
+            onClick={onVerwijder}
+            className="text-slate-400 hover:text-red-600"
+            title="Verwijder stap"
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+      <div className="px-3 pb-2">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="text-xs text-brand-600 hover:underline"
+        >
+          {open ? "▲ Verberg mailinhoud" : "▼ Mailinhoud"}
+          {!open && eigenInhoud && (
+            <span className="ml-1 text-slate-400">(eigen tekst ingesteld)</span>
+          )}
+          {!open && !eigenInhoud && (
+            <span className="ml-1 text-slate-400">(automatisch genereren)</span>
+          )}
+        </button>
+
+        {open && (
+          <div className="mt-2 space-y-3 rounded-lg bg-slate-50 border border-slate-100 p-3">
+            {fout && (
+              <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-xs">
+                {fout}
+              </div>
+            )}
+            <p className="text-xs text-slate-500">
+              Laat leeg om de mail automatisch te laten genereren (AI/sjabloon), of
+              stel hier een eigen onderwerp en tekst in. Placeholders:{" "}
+              <code className="text-brand-700">{"{aanhef}"}</code>,{" "}
+              <code className="text-brand-700">{"{ontbrekende_data}"}</code>,{" "}
+              <code className="text-brand-700">{"{portaal_link}"}</code>,{" "}
+              <code className="text-brand-700">{"{leverancier}"}</code>.
+            </p>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                Onderwerp
+              </label>
+              <input
+                value={stap.onderwerp || ""}
+                onChange={(e) => onWijzig("onderwerp", e.target.value)}
+                className="input"
+                placeholder="Automatisch (bv. {leverancier} – ontbrekende productcompliance-data)"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                Mailtekst
+              </label>
+              <textarea
+                value={stap.mailtekst || ""}
+                onChange={(e) => onWijzig("mailtekst", e.target.value)}
+                rows={8}
+                className="input font-mono text-xs leading-relaxed"
+                placeholder="Laat leeg om automatisch te genereren, of typ hier je eigen mailtekst met placeholders…"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="ghost" onClick={genereerAI} disabled={bezigAI}>
+                {bezigAI ? "Genereren…" : "✨ Genereer met AI"}
+              </Button>
+              <Button variant="ghost" onClick={toonPreview} disabled={bezigPreview}>
+                {bezigPreview ? "Laden…" : "👁 Preview"}
+              </Button>
+              {(stap.onderwerp || stap.mailtekst) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onWijzig("onderwerp", "");
+                    onWijzig("mailtekst", "");
+                    setPreview(null);
+                  }}
+                  className="text-xs text-slate-400 hover:text-red-600"
+                >
+                  Wissen
+                </button>
+              )}
+            </div>
+
+            {preview && (
+              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+                <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 text-xs text-slate-500">
+                  Preview voor{" "}
+                  <span className="font-medium text-slate-700">
+                    {preview.leverancier_naam}
+                  </span>
+                  {preview.aan_email ? ` <${preview.aan_email}>` : ""}
+                  {preview.voorbeeld && " (fictief voorbeeld)"}
+                  {preview.ai_gebruikt && " · AI-gegenereerd"}
+                </div>
+                <div className="px-3 py-2 border-b border-slate-100 text-sm">
+                  <span className="text-slate-400">Onderwerp: </span>
+                  <span className="font-medium text-slate-800">{preview.onderwerp}</span>
+                </div>
+                <pre className="px-3 py-3 text-xs text-slate-700 whitespace-pre-wrap font-sans max-h-72 overflow-auto">
+                  {preview.tekst}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
