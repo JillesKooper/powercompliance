@@ -5,7 +5,6 @@ import { Card, StatCard, ProgressBar, Loading, ErrorBox, Button } from "../compo
 import { useNotificaties } from "../context/notificaties";
 import NotificatieModal from "../components/NotificatieModal.jsx";
 import ExportModal from "../components/ExportModal.jsx";
-import DemoModal from "../components/DemoModal.jsx";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -13,7 +12,6 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [documenten, setDocumenten] = useState(null);
   const [toonExport, setToonExport] = useState(false);
-  const [toonDemo, setToonDemo] = useState(false);
   const { items: notificaties, ongelezen, markeerAllesGelezen } =
     useNotificaties();
   const [gekozenId, setGekozenId] = useState(null);
@@ -45,17 +43,7 @@ export default function Dashboard() {
 
       {toonExport && <ExportModal onClose={() => setToonExport(false)} />}
 
-      {toonDemo && (
-        <DemoModal
-          onClose={() => {
-            setToonDemo(false);
-            laadStats();
-          }}
-        />
-      )}
-
       <div className="flex justify-end gap-2">
-        <Button onClick={() => setToonDemo(true)}>▶ Start demo</Button>
         <Button variant="ghost" onClick={() => setToonExport(true)}>
           ⇪ Exporteer naar PIM
         </Button>

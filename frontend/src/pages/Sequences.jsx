@@ -15,6 +15,8 @@ export default function Sequences() {
   const [bewerken, setBewerken] = useState(null); // sequence-object of {} voor nieuw
   const [schedulerResultaat, setSchedulerResultaat] = useState(null);
   const [schedulerBezig, setSchedulerBezig] = useState(false);
+  const [uitvraagMelding, setUitvraagMelding] = useState(null);
+  const [uitvraagBezigId, setUitvraagBezigId] = useState(null);
 
   function laad() {
     api.sequences().then(setItems).catch((e) => setError(e.message));
@@ -36,6 +38,29 @@ export default function Sequences() {
       setError(e.message);
     } finally {
       setSchedulerBezig(false);
+    }
+  }
+
+  async function nuUitvragen(seq) {
+    setUitvraagBezigId(seq.id);
+    setUitvraagMelding(null);
+    try {
+      const r = await api.nuUitvragen(seq.id);
+      const aantal =
+        r?.aantal_verstuurd ??
+        r?.aantal_mails ??
+        r?.aantal ??
+        r?.aantal_acties ??
+        0;
+      setUitvraagMelding({
+        naam: seq.naam,
+        tekst: `${aantal} mail${aantal === 1 ? "" : "s"} verstuurd voor "${seq.naam}".`,
+      });
+      laad();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setUitvraagBezigId(null);
     }
   }
 
@@ -98,6 +123,12 @@ export default function Sequences() {
         </div>
       )}
 
+      {uitvraagMelding && (
+        <div className="rounded-lg bg-green-50 border border-green-100 text-green-800 px-4 py-3 text-sm">
+          ✅ {uitvraagMelding.tekst}
+        </div>
+      )}
+
       {items.length === 0 ? (
         <Card className="p-10 text-center text-slate-500">
           Nog geen sequences. Maak er één aan om automatische herinneringen te sturen.
@@ -107,6 +138,8 @@ export default function Sequences() {
           <SequenceKaart
             key={seq.id}
             seq={seq}
+            uitvraagBezig={uitvraagBezigId === seq.id}
+            onNuUitvragen={() => nuUitvragen(seq)}
             onToggle={() => toggle(seq)}
             onBewerk={() => setBewerken(seq)}
             onVerwijder={() => verwijder(seq)}
@@ -117,7 +150,7 @@ export default function Sequences() {
   );
 }
 
-function SequenceKaart({ seq, onToggle, onBewerk, onVerwijder }) {
+function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, onVerwijder }) {
   const [detail, setDetail] = useState(null);
   const [open, setOpen] = useState(false);
 
@@ -157,6 +190,9 @@ function SequenceKaart({ seq, onToggle, onBewerk, onVerwijder }) {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <Button onClick={onNuUitvragen} disabled={uitvraagBezig}>
+            {uitvraagBezig ? "Bezig…" : "📤 Nu uitvragen"}
+          </Button>
           <Button variant="ghost" onClick={onToggle}>
             {seq.actief ? "Deactiveer" : "Activeer"}
           </Button>

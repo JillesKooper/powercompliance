@@ -165,6 +165,8 @@ export const api = {
     }),
   verwijderSequence: (id) => request(`/sequences/${id}`, { method: "DELETE" }),
   runScheduler: () => request("/sequences/run-scheduler", { method: "POST" }),
+  nuUitvragen: (id) =>
+    request(`/sequences/${id}/nu-uitvragen`, { method: "POST" }),
 
   wetgevingUitvraagLeveranciers: (code) =>
     request(`/email/uitvraag-wetgeving/${encodeURIComponent(code)}/leveranciers`),
