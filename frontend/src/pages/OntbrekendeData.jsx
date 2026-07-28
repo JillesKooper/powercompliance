@@ -7,7 +7,8 @@ import EmailModal from "../components/EmailModal.jsx";
 export default function OntbrekendeData() {
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
-  const [mailLev, setMailLev] = useState(null); // {id, naam}
+  // {leverancierId, leverancierNaam, productId?, productNaam?}
+  const [mail, setMail] = useState(null);
   const [replyBezig, setReplyBezig] = useState(null); // leverancier_id
   const [replyResultaat, setReplyResultaat] = useState(null);
 
@@ -66,11 +67,13 @@ export default function OntbrekendeData() {
 
   return (
     <div className="space-y-6">
-      {mailLev && (
+      {mail && (
         <EmailModal
-          leverancierId={mailLev.id}
-          leverancierNaam={mailLev.naam}
-          onClose={() => setMailLev(null)}
+          leverancierId={mail.leverancierId}
+          leverancierNaam={mail.leverancierNaam}
+          productId={mail.productId || null}
+          productNaam={mail.productNaam || null}
+          onClose={() => setMail(null)}
         />
       )}
 
@@ -108,9 +111,14 @@ export default function OntbrekendeData() {
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                onClick={() => setMailLev({ id: groep.id, naam: groep.naam })}
+                onClick={() =>
+                  setMail({
+                    leverancierId: groep.id,
+                    leverancierNaam: groep.naam,
+                  })
+                }
               >
-                ✉️ E-mail genereren
+                ✉️ E-mail (alle producten)
               </Button>
               <Button
                 variant="ghost"
@@ -136,6 +144,19 @@ export default function OntbrekendeData() {
                   <span className="text-xs text-slate-400">
                     {p.artikelnummer}
                   </span>
+                  <button
+                    onClick={() =>
+                      setMail({
+                        leverancierId: groep.id,
+                        leverancierNaam: groep.naam,
+                        productId: p.product_id,
+                        productNaam: p.product_naam,
+                      })
+                    }
+                    className="ml-auto shrink-0 text-xs text-brand-600 hover:underline"
+                  >
+                    ✉️ Uitvraag voor dit product
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {p.ontbrekende_velden.map((v) => (
