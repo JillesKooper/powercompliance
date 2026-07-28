@@ -85,11 +85,17 @@ def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get
     """
     lev = _haal_leverancier(db, data.leverancier_id)
 
+    # Excel-bijlage met de exacte ontbrekende velden meesturen.
+    bijlage = email_generator.bouw_excel_bytes(db, lev)
+    bijlage_naam = email_generator.bijlage_naam(lev)
+
     mail = mail_service.verstuur_mail(
         onderwerp=data.onderwerp,
         tekst=data.tekst or "",
         aan_naam=data.aan_naam or lev.contactpersoon,
         aan_email=data.aan_email or lev.email,
+        bijlage=bijlage,
+        bijlage_naam=bijlage_naam,
     )
 
     kanaal_tekst = (

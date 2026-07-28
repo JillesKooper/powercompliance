@@ -130,11 +130,17 @@ def _verstuur_stap_mail(
             lev, per_wet, None, "nl", link, aantal_velden, aantal_producten
         )
 
+    # Excel-bijlage met de ontbrekende velden (binnen de scope) meesturen.
+    bijlage = email_generator.bouw_excel_bytes(db, lev, code)
+    bijlage_naam = email_generator.bijlage_naam(lev, code)
+
     mail = mail_service.verstuur_mail(
         onderwerp=onderwerp,
         tekst=tekst,
         aan_naam=lev.contactpersoon,
         aan_email=lev.email,
+        bijlage=bijlage,
+        bijlage_naam=bijlage_naam,
     )
     kanaal_tekst = (
         f"Echt verstuurd via Gmail SMTP naar {mail['ontvanger']}."

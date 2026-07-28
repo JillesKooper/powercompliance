@@ -13,6 +13,7 @@ Dit vult het bestaande ``email_generator`` (dat de mailtekst opstelt) aan met:
    regel-parser.
 """
 import json
+import logging
 import os
 import re
 import smtplib
@@ -25,10 +26,15 @@ from sqlalchemy.orm import Session
 
 from . import email_generator, models
 
+log = logging.getLogger(__name__)
+
 MODEL = "claude-sonnet-4-6"
 
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
+
+# MIME-type voor een .xlsx-bestand (Office Open XML spreadsheet)
+XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 # ---------------------------------------------------------------------------
@@ -47,32 +53,63 @@ def _mail_config() -> dict:
     }
 
 
+def _voeg_bijlage_toe(
+    bericht: EmailMessage, bijlage: Optional[bytes], bijlage_naam: Optional[str]
+) -> bool:
+    """Voeg (indien aanwezig) de Excel-bijlage toe aan het bericht.
+
+    Geeft True terug als er een bijlage is toegevoegd. De bytes worden als
+    losstaande binaire payload meegestuurd met het juiste xlsx-MIME-type, zodat
+    mailclients het bestand correct herkennen en kunnen openen.
+    """
+    if not bijlage or not bijlage_naam:
+        return False
+    maintype, subtype = XLSX_MIME.split("/", 1)
+    bericht.add_attachment(
+        bijlage, maintype=maintype, subtype=subtype, filename=bijlage_naam
+    )
+    log.info("Bijlage toegevoegd: %s (%d bytes)", bijlage_naam, len(bijlage))
+    return True
+
+
 def verstuur_mail(
     onderwerp: str,
     tekst: str,
     aan_naam: Optional[str] = None,
     aan_email: Optional[str] = None,
+    bijlage: Optional[bytes] = None,
+    bijlage_naam: Optional[str] = None,
 ) -> dict:
     """Verstuur een e-mail via Gmail SMTP (smtp.gmail.com:587, STARTTLS).
 
     Als ``DEMO_EMAIL`` is ingesteld gaan alle mails naar dat adres (handig voor
-    de demo); anders naar het echte leveranciersadres. Geeft een dict met de
-    afleverstatus terug.
+    de demo); anders naar het echte leveranciersadres. Een optionele Excel-bijlage
+    (``bijlage`` als bytes + ``bijlage_naam``) wordt correct meegestuurd. Geeft een
+    dict met de afleverstatus terug.
     """
     cfg = _mail_config()
     # De demo-ontvanger heeft voorrang; anders het echte leveranciersadres.
     ontvanger = cfg["demo_email"] or aan_email or ""
+    heeft_bijlage = bool(bijlage and bijlage_naam)
+    bijlage_info = (
+        f" met bijlage {bijlage_naam} ({len(bijlage)} bytes)" if heeft_bijlage else " zonder bijlage"
+    )
+    log.info(
+        "verstuur_mail: onderwerp=%r ontvanger=%r%s", onderwerp, ontvanger or "—", bijlage_info
+    )
 
     if not cfg["gmail_user"] or not cfg["gmail_app_password"] or not ontvanger:
         if not cfg["gmail_user"] or not cfg["gmail_app_password"]:
             reden = "GMAIL_USER/GMAIL_APP_PASSWORD niet ingesteld"
         else:
             reden = "geen ontvanger (stel DEMO_EMAIL in)"
+        log.info("verstuur_mail: verzending gesimuleerd — %s", reden)
         return {
             "verzonden": False,
             "kanaal": "gesimuleerd",
             "ontvanger": ontvanger or "—",
-            "info": f"Gesimuleerde verzending — {reden}.",
+            "info": f"Gesimuleerde verzending — {reden}."
+            + (f" Bijlage {bijlage_naam} zou zijn meegestuurd." if heeft_bijlage else ""),
             "status_code": None,
         }
 
@@ -82,20 +119,24 @@ def verstuur_mail(
         bericht["From"] = formataddr((cfg["from_naam"], cfg["gmail_user"]))
         bericht["To"] = formataddr((aan_naam or None, ontvanger))
         bericht.set_content(tekst)
+        _voeg_bijlage_toe(bericht, bijlage, bijlage_naam)
 
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
             server.starttls()
             server.login(cfg["gmail_user"], cfg["gmail_app_password"])
             server.send_message(bericht)
 
+        log.info("verstuur_mail: verzonden via Gmail SMTP naar %s%s", ontvanger, bijlage_info)
         return {
             "verzonden": True,
             "kanaal": "gmail",
             "ontvanger": ontvanger,
-            "info": f"Verzonden via Gmail SMTP naar {ontvanger}.",
+            "info": f"Verzonden via Gmail SMTP naar {ontvanger}"
+            + (f" (met bijlage {bijlage_naam})." if heeft_bijlage else "."),
             "status_code": 250,
         }
     except Exception as e:  # noqa: BLE001 — nooit de flow breken op een mailfout
+        log.warning("verstuur_mail: verzending mislukt: %s: %s", type(e).__name__, e)
         return {
             "verzonden": False,
             "kanaal": "gesimuleerd",

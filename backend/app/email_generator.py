@@ -9,6 +9,7 @@
   werkt.
 """
 import io
+import logging
 import os
 from collections import defaultdict
 from datetime import date
@@ -17,6 +18,8 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from . import models, compliance
+
+log = logging.getLogger(__name__)
 
 CC_ADRES = "compliance@uwbedrijf.nl"
 PORTAAL_BASIS = "https://portaal.powercompliance.nl/leverancier"
@@ -38,24 +41,36 @@ def verzamel_ontbrekend(
     per_product = []
     per_wet = defaultdict(set)
     for product in leverancier.producten:
-        ontbrekend = compliance.ontbrekende_velden_voor_product(db, product)
-        # Vraag uitsluitend velden uit die daadwerkelijk geen waarde hebben
-        # (waarde IS NULL of leeg). Velden met een reeds ingevulde/gescrapte
-        # waarde — ook als die nog niet geverifieerd is (ingevuld=False) — worden
-        # NIET opnieuw uitgevraagd.
+        # Alle compliance-velden die op dit product van toepassing zijn (relevante,
+        # actieve wetgeving op basis van de categorie).
+        velden = compliance.velden_voor_product(db, product)
+        # De velden die al een niet-lege waarde hebben (waarde IS NOT NULL en niet
+        # leeg), ongeacht de ingevuld-vlag. Een veld is UITSLUITEND 'ontbrekend'
+        # als er GEEN ProductComplianceWaarde met een niet-lege waarde bestaat
+        # (waarde IS NULL of de rij bestaat niet voor dit product).
         met_waarde = compliance.veld_ids_met_waarde(db, product.id)
-        ontbrekend = [v for v in ontbrekend if v.id not in met_waarde]
+        ontbrekend = [v for v in velden if v.id not in met_waarde]
         if wetgeving_code:
             ontbrekend = [
                 v
                 for v in ontbrekend
                 if v.wetgeving and v.wetgeving.code == wetgeving_code
             ]
+        log.debug(
+            "product %r (id=%s): %d velden van toepassing, %d met waarde, %d ontbrekend%s",
+            product.naam, product.id, len(velden), len(met_waarde), len(ontbrekend),
+            f" (scope {wetgeving_code})" if wetgeving_code else "",
+        )
         if ontbrekend:
             per_product.append((product, ontbrekend))
             for v in ontbrekend:
                 code = v.wetgeving.code if v.wetgeving else "—"
                 per_wet[code].add(v.naam)
+    totaal = sum(len(v) for _, v in per_product)
+    log.info(
+        "verzamel_ontbrekend(leverancier=%r, scope=%s): %d producten met samen %d ontbrekende velden",
+        leverancier.naam, wetgeving_code, len(per_product), totaal,
+    )
     return per_product, dict(per_wet)
 
 
@@ -138,7 +153,20 @@ def bouw_excel(
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)
+    aantal_regels = sum(len(velden) for _, velden in per_product)
+    log.info(
+        "bouw_excel(leverancier=%r, scope=%s): %d datarijen, %d bytes",
+        leverancier.naam, wetgeving_code, aantal_regels, buf.getbuffer().nbytes,
+    )
     return buf
+
+
+def bouw_excel_bytes(
+    db: Session, leverancier: models.Leverancier, wetgeving_code: Optional[str] = None
+) -> bytes:
+    """Zoals bouw_excel, maar geeft de rauwe bytes terug — handig om als
+    e-mailbijlage mee te sturen."""
+    return bouw_excel(db, leverancier, wetgeving_code).getvalue()
 
 
 # ---------- onderwerp ----------
