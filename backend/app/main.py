@@ -25,6 +25,33 @@ from . import scheduler
 
 Base.metadata.create_all(bind=engine)
 
+
+def _migreer_notificatie_kolommen():
+    """Voeg de i18n-kolommen (sleutel, params) toe aan bestaande databases.
+
+    ``create_all`` maakt alleen ontbrekende TABELLEN aan, geen ontbrekende
+    kolommen. Deze idempotente mini-migratie voegt de kolommen toe als ze nog
+    niet bestaan, zodat bestaande installaties blijven werken."""
+    from sqlalchemy import inspect, text
+
+    try:
+        insp = inspect(engine)
+        bestaande = {c["name"] for c in insp.get_columns("notificaties")}
+    except Exception:
+        return
+    toe_te_voegen = [c for c in ("sleutel", "params") if c not in bestaande]
+    with engine.begin() as conn:
+        for kolom in toe_te_voegen:
+            try:
+                conn.execute(
+                    text(f"ALTER TABLE notificaties ADD COLUMN {kolom} VARCHAR")
+                )
+            except Exception:
+                pass
+
+
+_migreer_notificatie_kolommen()
+
 app = FastAPI(
     title="PowerCompliance API",
     description="Compliance management platform voor groothandels.",

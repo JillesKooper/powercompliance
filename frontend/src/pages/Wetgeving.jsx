@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
+import {
+  wetgevingNaam,
+  wetgevingBeschrijving,
+  wetgevingSamenvatting,
+} from "../i18n/dataVertaling";
 import { Card, Badge, Loading, ErrorBox, Button } from "../components/ui";
 import BulkEmailModal from "../components/BulkEmailModal.jsx";
 
@@ -20,7 +25,7 @@ const STATUS_SLEUTEL = {
 
 export default function Wetgeving() {
   const location = useLocation();
-  const { t } = useTaal();
+  const { t, taal } = useTaal();
   const [wetten, setWetten] = useState(null);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(null);
@@ -85,10 +90,12 @@ export default function Wetgeving() {
                   </span>
                 )}
               </div>
-              <div className="text-sm text-slate-600 mt-0.5">{w.naam}</div>
+              <div className="text-sm text-slate-600 mt-0.5">
+                {wetgevingNaam(w.code, w.naam, taal)}
+              </div>
               {w.samenvatting && (
                 <p className="text-sm text-slate-500 mt-2 leading-relaxed max-w-3xl">
-                  {w.samenvatting}
+                  {wetgevingSamenvatting(w.code, w.samenvatting, taal)}
                 </p>
               )}
             </div>
@@ -127,7 +134,7 @@ export default function Wetgeving() {
             <div className="px-5 pb-5 border-t border-slate-100">
               {w.beschrijving && (
                 <p className="text-sm text-slate-500 mt-3 mb-4 leading-relaxed">
-                  {w.beschrijving}
+                  {wetgevingBeschrijving(w.code, w.beschrijving, taal)}
                 </p>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

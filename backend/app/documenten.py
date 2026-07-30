@@ -12,7 +12,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from . import models, schemas
+from . import models, schemas, notificatie_teksten
 
 # backend/uploads/ — relatief t.o.v. de projectmap van de backend
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
@@ -104,20 +104,27 @@ def maak_verloop_notificatie(db: Session, doc: models.ProductDocument) -> None:
     product = doc.product
     pnaam = product.naam if product else "product"
     if status == "verlopen":
-        titel = f"Document verlopen: {type_label}"
-        bericht = f"Het document '{doc.originele_naam}' van {pnaam} is verlopen."
+        sleutel = "document_verlopen"
+        params = {
+            "type_label": type_label,
+            "document": doc.originele_naam,
+            "product": pnaam,
+        }
         ntype = "fout"
     else:
-        titel = f"Document verloopt binnenkort: {type_label}"
-        bericht = (
-            f"Het document '{doc.originele_naam}' van {pnaam} verloopt over "
-            f"{dagen} dagen ({doc.verloopdatum.isoformat()})."
-        )
+        sleutel = "document_verloopt_binnenkort"
+        params = {
+            "type_label": type_label,
+            "document": doc.originele_naam,
+            "product": pnaam,
+            "dagen": dagen,
+            "datum": doc.verloopdatum.isoformat(),
+        }
         ntype = "waarschuwing"
     db.add(
-        models.Notificatie(
-            titel=titel,
-            bericht=bericht,
+        notificatie_teksten.maak(
+            sleutel,
+            params,
             type=ntype,
             categorie="Document verloopt",
             entiteit_type="product",

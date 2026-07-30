@@ -13,7 +13,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 
 from .database import Base, SessionLocal, engine
-from . import models, compliance_service
+from . import models, compliance_service, notificatie_teksten
 
 
 def reset_db():
@@ -619,45 +619,39 @@ def seed():
         leverancier0 = leveranciers[0]
         db.add_all(
             [
-                models.Notificatie(
-                    titel="EUDR wordt binnenkort van kracht",
-                    bericht=(
-                        "De EU-ontbossingsverordening geldt vanaf eind 2025. Controleer "
-                        "herkomst en due-diligence voor hout-, papier- en voedingsproducten."
-                    ),
+                notificatie_teksten.maak(
+                    "eudr_aankomend",
+                    {},
                     type="waarschuwing",
                     categorie="Aankomende wetgeving",
                 ),
-                models.Notificatie(
-                    titel=f"Nieuwe data ontvangen voor {choco.naam}",
-                    bericht="De leverancier heeft de EUDR-herkomstdata aangeleverd.",
+                notificatie_teksten.maak(
+                    "nieuwe_data_eudr",
+                    {"product": choco.naam},
                     type="succes",
                     categorie="Nieuwe data ontvangen",
                     entiteit_type="product",
                     entiteit_id=choco.id,
                 ),
-                models.Notificatie(
-                    titel="Deadline dataverzoek nadert",
-                    bericht=(
-                        f"Het dataverzoek aan {leverancier0.naam} voor PPWR-data verloopt "
-                        "binnen 7 dagen."
-                    ),
+                notificatie_teksten.maak(
+                    "deadline_nadert",
+                    {"leverancier": leverancier0.naam},
                     type="waarschuwing",
                     categorie="Deadline nadert",
                     entiteit_type="dataverzoek",
                     entiteit_id=leverancier0.id,
                 ),
-                models.Notificatie(
-                    titel=f"Twijfelachtige waarde bij {led.naam}",
-                    bericht="De opgegeven recycleerbaarheid valt buiten het bereik (0–100%).",
+                notificatie_teksten.maak(
+                    "twijfelachtige_waarde",
+                    {"product": led.naam},
                     type="fout",
                     categorie="Twijfelachtige waarde",
                     entiteit_type="product",
                     entiteit_id=led.id,
                 ),
-                models.Notificatie(
-                    titel=f"{leverancier0.naam} heeft openstaande dataverzoeken",
-                    bericht="Meerdere producten van deze leverancier missen data.",
+                notificatie_teksten.maak(
+                    "leverancier_openstaand",
+                    {"leverancier": leverancier0.naam},
                     type="info",
                     categorie="Leverancier-update",
                     entiteit_type="leverancier",

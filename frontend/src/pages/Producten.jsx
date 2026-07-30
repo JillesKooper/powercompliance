@@ -13,6 +13,7 @@ import {
 import ImportDialog from "../components/ImportDialog.jsx";
 import ExportModal from "../components/ExportModal.jsx";
 import { useTaal } from "../context/taal";
+import { categorieNaam } from "../i18n/dataVertaling";
 
 const LEEG = {
   naam: "",
@@ -23,7 +24,7 @@ const LEEG = {
 };
 
 export default function Producten() {
-  const { t } = useTaal();
+  const { t, taal } = useTaal();
   const [pagina, setPagina] = useState(null);
   const [leveranciers, setLeveranciers] = useState([]);
   const [categorieen, setCategorieen] = useState([]);
@@ -198,7 +199,7 @@ export default function Producten() {
                 <option value="">{t("producten.geenCategorie")}</option>
                 {categorieen.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.naam}
+                    {categorieNaam(c.naam, taal)}
                   </option>
                 ))}
               </select>
@@ -253,7 +254,7 @@ export default function Producten() {
                   </td>
                   <td className="px-5 py-3">
                     {p.categorie ? (
-                      <Badge color="blue">{p.categorie.naam}</Badge>
+                      <Badge color="blue">{categorieNaam(p.categorie.naam, taal)}</Badge>
                     ) : (
                       <span className="text-slate-400">—</span>
                     )}

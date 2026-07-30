@@ -3,7 +3,7 @@ de ontbrekende compliance-velden automatisch aan met behulp van AI."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import activiteit_service, mail_service, models, schemas
+from .. import activiteit_service, mail_service, models, schemas, notificatie_teksten
 from ..database import get_db
 
 router = APIRouter(prefix="/api/mail", tags=["mail"])
@@ -48,13 +48,14 @@ def _verwerk_en_registreer(
     if resultaat["aantal_ingevuld"] > 0:
         _markeer_dataverzoeken_ontvangen(db, lev.id)
         db.add(
-            models.Notificatie(
-                titel=f"Reply verwerkt van {lev.naam}",
-                bericht=(
-                    f"{resultaat['aantal_ingevuld']} velden automatisch aangevuld "
-                    f"over {resultaat['aantal_producten']} producten "
-                    + ("(AI-parsing)" if resultaat["ai_gebruikt"] else "(regel-parser)")
-                ),
+            notificatie_teksten.maak(
+                "reply_verwerkt",
+                {
+                    "leverancier": lev.naam,
+                    "aantal": resultaat["aantal_ingevuld"],
+                    "producten": resultaat["aantal_producten"],
+                    "methode": "ai" if resultaat["ai_gebruikt"] else "regel",
+                },
                 type="succes",
                 categorie="Nieuwe data ontvangen",
                 entiteit_type="leverancier",

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
+import { wetgevingNaam, categorieNaam } from "../i18n/dataVertaling";
 import { Card, Badge, Button, Loading, ProgressBar } from "../components/ui";
 
 const STATUS_KLEUR = {
@@ -57,7 +58,7 @@ function TaalKaart() {
 
 export default function Instellingen() {
   const location = useLocation();
-  const { t } = useTaal();
+  const { t, taal } = useTaal();
   const [categorieen, setCategorieen] = useState([]);
   const [dataverzoeken, setDataverzoeken] = useState(null);
   const [wetgeving, setWetgeving] = useState(null);
@@ -134,7 +135,9 @@ export default function Instellingen() {
                       <Badge color="slate">{t("instellingen.geenProducten")}</Badge>
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 truncate">{w.naam}</div>
+                  <div className="text-xs text-slate-400 truncate">
+                    {wetgevingNaam(w.code, w.naam, taal)}
+                  </div>
                 </div>
                 <div className="w-28 text-xs text-slate-500 text-right shrink-0">
                   {t("instellingen.producten", { n: w.aantal_producten })}
@@ -170,7 +173,7 @@ export default function Instellingen() {
         <div className="flex flex-wrap gap-2">
           {categorieen.map((c) => (
             <Badge key={c.id} color="blue">
-              {c.naam}
+              {categorieNaam(c.naam, taal)}
             </Badge>
           ))}
           {categorieen.length === 0 && (

@@ -126,9 +126,13 @@ export const api = {
   },
   bulkDataverzoeken: (data) =>
     request("/dataverzoeken/bulk", { method: "POST", body: JSON.stringify(data) }),
-  notificaties: () => request("/notificaties"),
-  markeerNotificatieGelezen: (id) =>
-    request(`/notificaties/${id}/gelezen`, { method: "POST" }),
+  notificaties: (taal = "nl") =>
+    request(`/notificaties${taal && taal !== "nl" ? `?taal=${taal}` : ""}`),
+  markeerNotificatieGelezen: (id, taal = "nl") =>
+    request(
+      `/notificaties/${id}/gelezen${taal && taal !== "nl" ? `?taal=${taal}` : ""}`,
+      { method: "POST" }
+    ),
   markeerAllesGelezen: () =>
     request("/notificaties/gelezen-alles", { method: "POST" }),
 

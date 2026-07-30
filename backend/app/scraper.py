@@ -18,7 +18,7 @@ import os
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from . import compliance, compliance_service, models
+from . import compliance, compliance_service, models, notificatie_teksten
 from .database import SessionLocal
 
 MODEL = "claude-sonnet-4-6"
@@ -218,12 +218,9 @@ def scrape_product_bg(product_id: int) -> None:
                 )
             )
             db.add(
-                models.Notificatie(
-                    titel=f"Scrape onvolledig voor {product.naam}",
-                    bericht=(
-                        f"{len(nog_ontbrekend)} veld(en) niet online gevonden; "
-                        "dataverzoek aangemaakt voor de leverancier."
-                    ),
+                notificatie_teksten.maak(
+                    "scrape_onvolledig",
+                    {"product": product.naam, "aantal": len(nog_ontbrekend)},
                     type="waarschuwing",
                     categorie="Scrape resultaat",
                     entiteit_type="product",

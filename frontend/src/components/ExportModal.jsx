@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
+import { categorieNaam } from "../i18n/dataVertaling";
 import { Button, Loading } from "./ui";
 
 const FORMATEN = [
@@ -165,7 +166,7 @@ export default function ExportModal({ onClose }) {
                   <option value="">{t("modals.export.alleCategorieen")}</option>
                   {opties.categorieen.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.naam}
+                      {categorieNaam(c.naam, taal)}
                     </option>
                   ))}
                 </select>

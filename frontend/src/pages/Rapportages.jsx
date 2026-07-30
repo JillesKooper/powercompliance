@@ -16,13 +16,14 @@ import {
 } from "recharts";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
+import { wetgevingNaam } from "../i18n/dataVertaling";
 import { Card, Badge, Loading, ErrorBox } from "../components/ui";
 
 const BLAUW = "#1a73e8";
 const PIE_KLEUREN = ["#1a73e8", "#34a853", "#fbbc04", "#ea4335", "#8ab4f8"];
 
 export default function Rapportages() {
-  const { t } = useTaal();
+  const { t, taal } = useTaal();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [bezig, setBezig] = useState(null); // `${soort}:${formaat}`
@@ -104,7 +105,7 @@ export default function Rapportages() {
               ]}
               rijen={data.compliance_overzicht.map((r) => [
                 <span className="font-medium text-ink">{r.code}</span>,
-                <span className="text-muted">{r.naam}</span>,
+                <span className="text-muted">{wetgevingNaam(r.code, r.naam, taal)}</span>,
                 r.aantal_producten,
                 <Badge color={r.compliance_percentage >= 80 ? "green" : "amber"}>
                   {r.compliance_percentage}%

@@ -294,6 +294,10 @@ class Notificatie(Base):
     # gerelateerde entiteit voor doorklikken: "product" | "leverancier" | "dataverzoek"
     entiteit_type = Column(String, nullable=True)
     entiteit_id = Column(Integer, nullable=True)
+    # i18n: sjabloonsleutel + ingevulde params, zodat titel/bericht bij het
+    # uitlezen in NL of EN gerenderd kunnen worden (zie notificatie_teksten.py).
+    sleutel = Column(String, nullable=True)
+    params = Column(Text, nullable=True)  # JSON-string met de sjabloonwaarden
     aangemaakt_op = Column(DateTime, default=datetime.utcnow)
 
 

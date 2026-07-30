@@ -12,6 +12,7 @@ from .. import (
     mail_service,
     compliance_service,
     activiteit_service,
+    notificatie_teksten,
 )
 from ..database import get_db
 
@@ -160,9 +161,9 @@ def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get
     )
     db.add(verzoek)
     db.add(
-        models.Notificatie(
-            titel=f"Dataverzoek verstuurd naar {lev.naam}",
-            bericht=f"{data.onderwerp} — {kanaal_tekst}",
+        notificatie_teksten.maak(
+            "dataverzoek_verstuurd",
+            {"leverancier": lev.naam, "onderwerp": data.onderwerp, "kanaal": kanaal_tekst},
             type="succes",
             categorie="Dataverzoek verstuurd",
         )
@@ -238,11 +239,15 @@ def uitvraag_wetgeving(
 
     if verstuurd:
         db.add(
-            models.Notificatie(
-                titel=f"{len(verstuurd)} dataverzoeken verstuurd voor {data.wetgeving_code}",
-                bericht="Verzonden naar: "
-                + ", ".join(v["naam"] for v in verstuurd),
+            notificatie_teksten.maak(
+                "bulk_dataverzoek_wetgeving",
+                {
+                    "aantal": len(verstuurd),
+                    "code": data.wetgeving_code,
+                    "namen": ", ".join(v["naam"] for v in verstuurd),
+                },
                 type="succes",
+                categorie="Dataverzoek verstuurd",
             )
         )
     db.commit()

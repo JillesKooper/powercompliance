@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, compliance, compliance_service
+from .. import models, schemas, compliance, compliance_service, notificatie_teksten
 from ..database import get_db
 
 router = APIRouter(prefix="/api", tags=["overig"])
@@ -164,9 +164,9 @@ def bulk_dataverzoeken(data: schemas.BulkDataverzoekRequest, db: Session = Depen
         ids.append(verzoek.id)
     if ids:
         db.add(
-            models.Notificatie(
-                titel=f"{len(ids)} dataverzoeken in bulk aangemaakt",
-                bericht=data.onderwerp,
+            notificatie_teksten.maak(
+                "bulk_dataverzoek_aangemaakt",
+                {"aantal": len(ids), "onderwerp": data.onderwerp},
                 type="succes",
                 categorie="Dataverzoek verstuurd",
             )
@@ -177,27 +177,52 @@ def bulk_dataverzoeken(data: schemas.BulkDataverzoekRequest, db: Session = Depen
 
 
 # ---------- Notificaties ----------
+def _notificatie_uit(n: models.Notificatie, taal: str) -> schemas.NotificatieOut:
+    """Bouw een NotificatieOut met titel/bericht/categorie in de gevraagde taal.
+
+    Bij taal="en" renderen we de tekst uit sleutel+params; ontbreekt de sleutel
+    (oude rij), dan blijft de opgeslagen NL-tekst staan."""
+    import json
+
+    out = schemas.NotificatieOut.model_validate(n)
+    if taal == "en" and n.sleutel:
+        try:
+            params = json.loads(n.params) if n.params else {}
+        except (TypeError, ValueError):
+            params = {}
+        vert = notificatie_teksten.render(n.sleutel, params, "en")
+        if vert:
+            out.titel = vert["titel"]
+            out.bericht = vert["bericht"]
+    out.categorie = notificatie_teksten.categorie_label(n.categorie, taal)
+    return out
+
+
 @router.get("/notificaties", response_model=List[schemas.NotificatieOut])
-def lijst_notificaties(db: Session = Depends(get_db)):
-    return (
+def lijst_notificaties(taal: str = "nl", db: Session = Depends(get_db)):
+    taal = "en" if taal == "en" else "nl"
+    rijen = (
         db.query(models.Notificatie)
         .order_by(models.Notificatie.aangemaakt_op.desc())
         .all()
     )
+    return [_notificatie_uit(n, taal) for n in rijen]
 
 
 @router.post(
     "/notificaties/{notificatie_id}/gelezen",
     response_model=schemas.NotificatieOut,
 )
-def markeer_gelezen(notificatie_id: int, db: Session = Depends(get_db)):
+def markeer_gelezen(
+    notificatie_id: int, taal: str = "nl", db: Session = Depends(get_db)
+):
     n = db.get(models.Notificatie, notificatie_id)
     if not n:
         raise HTTPException(status_code=404, detail="Notificatie niet gevonden")
     n.gelezen = True
     db.commit()
     db.refresh(n)
-    return n
+    return _notificatie_uit(n, "en" if taal == "en" else "nl")
 
 
 @router.post("/notificaties/gelezen-alles")

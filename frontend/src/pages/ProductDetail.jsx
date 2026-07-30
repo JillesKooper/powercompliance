@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
+import { categorieNaam } from "../i18n/dataVertaling";
 import {
   Card,
   ProgressBar,
@@ -15,7 +16,7 @@ import EmailModal from "../components/EmailModal.jsx";
 import ProductDocumenten from "../components/ProductDocumenten.jsx";
 
 export default function ProductDetail() {
-  const { t } = useTaal();
+  const { t, taal } = useTaal();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [regels, setRegels] = useState(null);
@@ -150,7 +151,7 @@ export default function ProductDetail() {
             </div>
             <div className="flex gap-2 mt-3">
               {product.categorie && (
-                <Badge color="blue">{product.categorie.naam}</Badge>
+                <Badge color="blue">{categorieNaam(product.categorie.naam, taal)}</Badge>
               )}
               {product.leverancier && (
                 <Link to={`/leveranciers/${product.leverancier.id}`}>

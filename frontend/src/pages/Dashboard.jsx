@@ -4,12 +4,13 @@ import { api } from "../api";
 import { Card, StatCard, ProgressBar, Loading, ErrorBox, Button } from "../components/ui";
 import { useNotificaties } from "../context/notificaties";
 import { useTaal } from "../context/taal";
+import { wetgevingNaam } from "../i18n/dataVertaling";
 import NotificatieModal from "../components/NotificatieModal.jsx";
 import ExportModal from "../components/ExportModal.jsx";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { t } = useTaal();
+  const { t, taal } = useTaal();
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
   const [documenten, setDocumenten] = useState(null);
@@ -135,7 +136,7 @@ export default function Dashboard() {
                 <div className="flex justify-between text-sm mb-1">
                   <span className="font-medium text-slate-700">{w.code}</span>
                   <span className="text-slate-400 truncate ml-4 max-w-xs">
-                    {w.naam}
+                    {wetgevingNaam(w.code, w.naam, taal)}
                   </span>
                 </div>
                 <ProgressBar value={w.percentage} />

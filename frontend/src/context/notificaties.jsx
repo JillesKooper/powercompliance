@@ -6,29 +6,35 @@ import {
   useState,
 } from "react";
 import { api } from "../api";
+import { useTaal } from "./taal";
 
 const Ctx = createContext(null);
 
 export function NotificatiesProvider({ children }) {
+  const { taal } = useTaal();
   const [items, setItems] = useState([]);
 
   const reload = useCallback(() => {
-    api.notificaties().then(setItems).catch(() => {});
-  }, []);
+    api.notificaties(taal).then(setItems).catch(() => {});
+  }, [taal]);
 
+  // herlaad bij taalwissel zodat titels/berichten mee vertalen
   useEffect(() => {
     reload();
   }, [reload]);
 
-  const markeerGelezen = useCallback(async (id) => {
-    try {
-      const bijgewerkt = await api.markeerNotificatieGelezen(id);
-      setItems((prev) => prev.map((n) => (n.id === id ? bijgewerkt : n)));
-      return bijgewerkt;
-    } catch (_) {
-      return null;
-    }
-  }, []);
+  const markeerGelezen = useCallback(
+    async (id) => {
+      try {
+        const bijgewerkt = await api.markeerNotificatieGelezen(id, taal);
+        setItems((prev) => prev.map((n) => (n.id === id ? bijgewerkt : n)));
+        return bijgewerkt;
+      } catch (_) {
+        return null;
+      }
+    },
+    [taal]
+  );
 
   const markeerAllesGelezen = useCallback(async () => {
     try {
