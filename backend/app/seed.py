@@ -589,6 +589,42 @@ def seed():
             w.actief = bool(set(wetcode_to_catnamen[code]) & product_cat_namen)
         db.flush()
 
+        # --- Data-onderbouwing voor de demo-notificaties --------------------
+        # Zorg dat de gegenereerde meldingen kloppen met de échte productdata:
+        # de "twijfelachtige waarde"- en "nieuwe data"-meldingen verwijzen naar
+        # velden die we hier expliciet zetten.
+        led = prod_objs[0][0]
+        choco = next(p for p, _ in prod_objs if p.naam.startswith("Pure Chocolade"))
+        leverancier0 = leveranciers[0]
+
+        def _zet_veldwaarde(product, sleutel, waarde, twijfelachtig=False):
+            veld = (
+                db.query(models.ComplianceVeld)
+                .filter(models.ComplianceVeld.sleutel == sleutel)
+                .first()
+            )
+            if not veld:
+                return
+            w = (
+                db.query(models.ProductComplianceWaarde)
+                .filter_by(product_id=product.id, compliance_veld_id=veld.id)
+                .first()
+            )
+            if w is None:
+                w = models.ProductComplianceWaarde(
+                    product_id=product.id, compliance_veld_id=veld.id
+                )
+                db.add(w)
+            w.waarde = waarde
+            w.ingevuld = True
+            w.twijfelachtig = twijfelachtig
+
+        # 1) Twijfelachtige waarde: recycleerbaarheid buiten 0–100% op het LED-paneel.
+        _zet_veldwaarde(led, "ppwr_recycleerbaarheid", "127", twijfelachtig=True)
+        # 2) Nieuwe EUDR-data ontvangen: herkomstland ingevuld voor de chocolade.
+        _zet_veldwaarde(choco, "eudr_herkomst", "Ghana")
+        db.flush()
+
         # gedenormaliseerde compliance-cache per product vullen
         for product, _ in prod_objs:
             compliance_service.herbereken_product(db, product)
@@ -601,7 +637,8 @@ def seed():
                     onderwerp="Ontbrekende PPWR-verpakkingsdata",
                     bericht="Graag aanleveren: verpakkingsmateriaal en recyclaatgehalte.",
                     status="verzonden",
-                    deadline=date.today() + timedelta(days=14),
+                    # binnen 7 dagen: onderbouwt de "Deadline nadert"-melding
+                    deadline=date.today() + timedelta(days=5),
                 ),
                 models.Dataverzoek(
                     leverancier_id=leveranciers[6].id,
@@ -614,9 +651,7 @@ def seed():
         )
 
         # notificaties met categorie + gerelateerde entiteit
-        led = prod_objs[0][0]
-        choco = next(p for p, _ in prod_objs if p.naam.startswith("Pure Chocolade"))
-        leverancier0 = leveranciers[0]
+        # (led / choco / leverancier0 zijn hierboven al bepaald en onderbouwd)
         db.add_all(
             [
                 notificatie_teksten.maak(

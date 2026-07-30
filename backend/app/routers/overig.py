@@ -205,15 +205,25 @@ def _notificatie_uit(n: models.Notificatie, taal: str) -> schemas.NotificatieOut
     import json
 
     out = schemas.NotificatieOut.model_validate(n)
-    if taal == "en" and n.sleutel:
-        try:
-            params = json.loads(n.params) if n.params else {}
-        except (TypeError, ValueError):
-            params = {}
-        vert = notificatie_teksten.render(n.sleutel, params, "en")
-        if vert:
-            out.titel = vert["titel"]
-            out.bericht = vert["bericht"]
+    if taal == "en":
+        sleutel = n.sleutel
+        if sleutel:
+            try:
+                params = json.loads(n.params) if n.params else {}
+            except (TypeError, ValueError):
+                params = {}
+        else:
+            # oude notificatie zonder sleutel: leid sjabloon + params af uit de tekst
+            sleutel, params = notificatie_teksten.infer(n.titel, n.bericht)
+        if sleutel:
+            vert = notificatie_teksten.render(sleutel, params, "en")
+            if vert:
+                # alleen overschrijven als het veld volledig ingevuld is (geen
+                # achtergebleven {plaatshouders}); anders de originele tekst laten
+                if vert["titel"] and "{" not in vert["titel"]:
+                    out.titel = vert["titel"]
+                if vert["bericht"] and "{" not in vert["bericht"]:
+                    out.bericht = vert["bericht"]
     out.categorie = notificatie_teksten.categorie_label(n.categorie, taal)
     return out
 

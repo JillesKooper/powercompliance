@@ -9,7 +9,8 @@ Eigennamen in de params (leverancier-, product-, documentnamen, e-mailonderwerpe
 blijven onvertaald; alleen het sjabloon-skelet wordt vertaald.
 """
 import json
-from typing import Optional
+import re
+from typing import Optional, Tuple
 
 # sleutel -> { taal -> {"titel": ..., "bericht": ...} } (str.format-sjablonen)
 TEMPLATES = {
@@ -116,11 +117,11 @@ TEMPLATES = {
     "reply_verwerkt": {
         "nl": {
             "titel": "Reply verwerkt van {leverancier}",
-            "bericht": "{aantal} velden automatisch aangevuld over {producten} producten ({methode}).",
+            "bericht": "{aantal} velden automatisch aangevuld over {producten} producten ({methode})",
         },
         "en": {
             "titel": "Reply processed from {leverancier}",
-            "bericht": "{aantal} fields filled in automatically across {producten} products ({methode}).",
+            "bericht": "{aantal} fields filled in automatically across {producten} products ({methode})",
         },
     },
     "bulk_dataverzoek_aangemaakt": {
@@ -182,14 +183,79 @@ def render(sleutel: Optional[str], params: Optional[dict], taal: str = "nl") -> 
         return None
     tekst = sjabloon.get(taal) or sjabloon["nl"]
     p = _lokaliseer_params(params or {}, taal)
-    try:
-        return {
-            "titel": tekst["titel"].format(**p),
-            "bericht": tekst["bericht"].format(**p),
-        }
-    except (KeyError, IndexError):
-        # ontbrekende param: geef het sjabloon ongewijzigd terug i.p.v. te crashen
-        return {"titel": tekst["titel"], "bericht": tekst["bericht"]}
+
+    def vul(s):
+        if s is None:
+            return None
+        # vul bekende {params}; laat onbekende plaatshouders staan (nooit crashen)
+        return re.sub(
+            r"\{(\w+)\}",
+            lambda m: str(p[m.group(1)]) if m.group(1) in p else m.group(0),
+            s,
+        )
+
+    return {"titel": vul(tekst["titel"]), "bericht": vul(tekst.get("bericht"))}
+
+
+# ---------- Reverse-match voor oude notificaties (zonder sleutel) ----------
+# Bestaande notificaties (aangemaakt vóór de i18n-sjablonen) hebben geen sleutel
+# of params. Om die tóch te kunnen vertalen, leiden we de sleutel + params af uit
+# de opgeslagen Nederlandse titel/bericht via regex-matching op de NL-sjablonen.
+def _sjabloon_naar_regex(sjabloon: str) -> "re.Pattern":
+    delen = re.split(r"(\{\w+\})", sjabloon)
+    stukken = []
+    for d in delen:
+        m = re.fullmatch(r"\{(\w+)\}", d)
+        if m:
+            stukken.append(f"(?P<{m.group(1)}>.+?)")
+        else:
+            stukken.append(re.escape(d))
+    return re.compile("^" + "".join(stukken) + "$", re.DOTALL)
+
+
+_REVERSE_INDEX = None
+
+
+def _reverse_index():
+    global _REVERSE_INDEX
+    if _REVERSE_INDEX is None:
+        _REVERSE_INDEX = []
+        for sleutel, langs in TEMPLATES.items():
+            nl = langs["nl"]
+            titel_re = _sjabloon_naar_regex(nl["titel"])
+            bericht_re = (
+                _sjabloon_naar_regex(nl["bericht"]) if nl.get("bericht") else None
+            )
+            _REVERSE_INDEX.append((sleutel, titel_re, bericht_re))
+    return _REVERSE_INDEX
+
+
+# gelokaliseerde NL enum-waarde -> (paramnaam, sleutel), voor het terugmappen
+_ENUM_REVERSE = {}
+for _pkey, _opts in _ENUM_PARAMS.items():
+    for _enumkey, _langs in _opts.items():
+        _ENUM_REVERSE[_langs["nl"]] = (_pkey, _enumkey)
+
+
+def infer(titel: Optional[str], bericht: Optional[str]) -> Tuple[Optional[str], dict]:
+    """Leid (sleutel, params) af uit een opgeslagen NL-titel/bericht. Geeft
+    (None, {}) als niets matcht."""
+    for sleutel, titel_re, bericht_re in _reverse_index():
+        m = titel_re.match(titel or "")
+        if not m:
+            continue
+        params = dict(m.groupdict())
+        if bericht_re is not None and bericht:
+            mb = bericht_re.match(bericht)
+            if mb:
+                params.update(mb.groupdict())
+        # gelokaliseerde enum-waarden terugmappen naar hun sleutel (bv. "AI-parsing" -> "ai")
+        for k, v in list(params.items()):
+            terug = _ENUM_REVERSE.get(v)
+            if terug and terug[0] == k:
+                params[k] = terug[1]
+        return sleutel, params
+    return None, {}
 
 
 def categorie_label(categorie_nl: Optional[str], taal: str = "nl") -> Optional[str]:
