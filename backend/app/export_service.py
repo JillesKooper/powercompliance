@@ -14,7 +14,7 @@ from typing import List, Optional, Tuple
 import httpx
 from sqlalchemy.orm import Session
 
-from . import compliance, models, schemas
+from . import compliance, models, schemas, veld_vertaling
 
 # Product-basisvelden die exporteerbaar zijn (sleutel -> label)
 BASIS_VELDEN = [
@@ -33,10 +33,14 @@ BASIS_VELDEN = [
 STANDAARD_VELDEN = ["artikelnummer", "naam", "ean", "leverancier", "categorie"]
 
 
-def beschikbare_velden(db: Session) -> List[schemas.ExportVeld]:
+def beschikbare_velden(db: Session, taal: str = "nl") -> List[schemas.ExportVeld]:
     """Alle exporteerbare velden: basisvelden + compliance-velden per wetgeving."""
     velden = [
-        schemas.ExportVeld(sleutel=s, label=lbl, groep="product")
+        schemas.ExportVeld(
+            sleutel=s,
+            label=veld_vertaling.basis_veld_label(s, lbl, taal),
+            groep="product",
+        )
         for s, lbl in BASIS_VELDEN
     ]
     veld_rijen = (
@@ -49,15 +53,17 @@ def beschikbare_velden(db: Session) -> List[schemas.ExportVeld]:
         code = cv.wetgeving.code if cv.wetgeving else "—"
         velden.append(
             schemas.ExportVeld(
-                sleutel=f"cf:{cv.id}", label=f"{cv.naam}", groep=code
+                sleutel=f"cf:{cv.id}",
+                label=veld_vertaling.veld_naam(cv, taal),
+                groep=code,
             )
         )
     return velden
 
 
-def export_opties(db: Session) -> schemas.ExportOpties:
+def export_opties(db: Session, taal: str = "nl") -> schemas.ExportOpties:
     return schemas.ExportOpties(
-        velden=beschikbare_velden(db),
+        velden=beschikbare_velden(db, taal),
         leveranciers=[
             {"id": l.id, "naam": l.naam}
             for l in db.query(models.Leverancier).order_by(models.Leverancier.naam).all()
@@ -73,16 +79,16 @@ def export_opties(db: Session) -> schemas.ExportOpties:
     )
 
 
-def _veld_label(db: Session, sleutel: str) -> str:
+def _veld_label(db: Session, sleutel: str, taal: str = "nl") -> str:
     if sleutel.startswith("cf:"):
         cv = db.get(models.ComplianceVeld, int(sleutel[3:]))
         if cv:
             code = cv.wetgeving.code if cv.wetgeving else "—"
-            return f"{code} · {cv.naam}"
+            return f"{code} · {veld_vertaling.veld_naam(cv, taal)}"
         return sleutel
     for s, lbl in BASIS_VELDEN:
         if s == sleutel:
-            return lbl
+            return veld_vertaling.basis_veld_label(s, lbl, taal)
     return sleutel
 
 
@@ -125,9 +131,10 @@ def bouw_rijen(
     db: Session, req: schemas.ExportRequest
 ) -> Tuple[List[str], List[List[str]], List[str]]:
     """Geef (veldsleutels, datarijen, kopregel-labels) terug."""
+    taal = "en" if getattr(req, "taal", "nl") == "en" else "nl"
     velden = req.velden or list(STANDAARD_VELDEN)
     producten = selecteer_producten(db, req)
-    labels = [_veld_label(db, s) for s in velden]
+    labels = [_veld_label(db, s, taal) for s in velden]
     rijen = []
     for p in producten:
         waarden_map = {w.compliance_veld_id: w for w in p.compliance_waarden}

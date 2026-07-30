@@ -452,6 +452,7 @@ class ExportRequest(BaseModel):
     categorie_id: Optional[int] = None
     wetgeving_code: Optional[str] = None
     alleen_compliant: bool = False  # alleen goedgekeurde/complete productdata
+    taal: str = "nl"  # nl | en — taal van de kolomkoppen/veldlabels
 
 
 class ExportLogOut(BaseModel):

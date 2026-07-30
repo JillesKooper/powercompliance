@@ -3,7 +3,14 @@ from typing import List, Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, compliance, compliance_service, notificatie_teksten
+from .. import (
+    models,
+    schemas,
+    compliance,
+    compliance_service,
+    notificatie_teksten,
+    veld_vertaling,
+)
 from ..database import get_db
 
 router = APIRouter(prefix="/api", tags=["overig"])
@@ -17,8 +24,20 @@ def lijst_categorieen(db: Session = Depends(get_db)):
 
 # ---------- Wetgeving ----------
 @router.get("/wetgeving", response_model=List[schemas.WetgevingOut])
-def lijst_wetgeving(db: Session = Depends(get_db)):
-    return db.query(models.Wetgeving).order_by(models.Wetgeving.code).all()
+def lijst_wetgeving(taal: str = "nl", db: Session = Depends(get_db)):
+    taal = "en" if taal == "en" else "nl"
+    wetten = db.query(models.Wetgeving).order_by(models.Wetgeving.code).all()
+    uit = []
+    for wet in wetten:
+        w = schemas.WetgevingOut.model_validate(wet)
+        # veldnamen + veldtypes mee vertalen (op basis van de technische sleutel)
+        for veld in w.compliance_velden:
+            veld.naam = veld_vertaling.veld_naam_via_sleutel(
+                veld.sleutel, veld.naam, taal
+            )
+            veld.veld_type = veld_vertaling.veld_type(veld.veld_type, taal)
+        uit.append(w)
+    return uit
 
 
 @router.get("/wetgeving/beheer", response_model=List[schemas.WetgevingBeheer])
@@ -74,8 +93,9 @@ def zet_wetgeving_actief(
 
 # ---------- Ontbrekende data ----------
 @router.get("/ontbrekende-data", response_model=List[schemas.OntbrekendProduct])
-def ontbrekende_data(db: Session = Depends(get_db)):
+def ontbrekende_data(taal: str = "nl", db: Session = Depends(get_db)):
     """Alle producten met minstens één ontbrekend compliance-veld."""
+    taal = "en" if taal == "en" else "nl"
     resultaat = []
     producten = db.query(models.Product).order_by(models.Product.naam).all()
     for product in producten:
@@ -92,7 +112,7 @@ def ontbrekende_data(db: Session = Depends(get_db)):
                 ontbrekende_velden=[
                     schemas.OntbrekendVeld(
                         compliance_veld_id=v.id,
-                        veld_naam=v.naam,
+                        veld_naam=veld_vertaling.veld_naam(v, taal),
                         wetgeving_code=v.wetgeving.code if v.wetgeving else "—",
                     )
                     for v in ontbrekend

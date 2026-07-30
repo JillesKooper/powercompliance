@@ -71,6 +71,21 @@ EN_VELD_NAAM = {
     "cos_pif": "Product information file (PIF)",
 }
 
+# Product-basisveldlabels (export): NL-label -> Engelse weergave, op sleutel.
+EN_BASIS_VELD = {
+    "id": "Product ID",
+    "naam": "Name",
+    "artikelnummer": "Article number",
+    "ean": "EAN",
+    "merk": "Brand",
+    "beschrijving": "Description",
+    "leverancier": "Supplier",
+    "categorie": "Category",
+    "compliance_percentage": "Compliance %",
+    "compliance_status": "Compliance status",
+    "aantal_ontbrekend": "Missing fields",
+}
+
 # veld_type -> Engelse weergave
 EN_VELD_TYPE = {
     "tekst": "text",
@@ -124,3 +139,10 @@ def veld_type(type_nl: str, taal: str = "nl") -> str:
     if taal == "en":
         return EN_VELD_TYPE.get(type_nl, type_nl)
     return type_nl
+
+
+def basis_veld_label(sleutel: str, fallback: str, taal: str = "nl") -> str:
+    """Geef het (evt. Engelse) label van een product-basisveld voor de export."""
+    if taal == "en":
+        return EN_BASIS_VELD.get(sleutel, fallback)
+    return fallback

@@ -25,7 +25,7 @@ export default function ExportModal({ onClose }) {
 
   useEffect(() => {
     api
-      .exportOpties()
+      .exportOpties(taal)
       .then((o) => {
         setOpties(o);
         // standaard: de product-basisvelden voorselecteren
@@ -39,7 +39,8 @@ export default function ExportModal({ onClose }) {
       })
       .catch((e) => setMelding({ type: "fout", tekst: e.message }));
     laadHistorie();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taal]);
 
   function laadHistorie() {
     api.exportHistorie().then((h) => setHistorie(h.slice(0, 5))).catch(() => {});
@@ -82,6 +83,7 @@ export default function ExportModal({ onClose }) {
         categorie_id: categorieId ? Number(categorieId) : null,
         wetgeving_code: wetgevingCode || null,
         alleen_compliant: alleenCompliant,
+        taal,
       });
       setMelding({
         type: "succes",

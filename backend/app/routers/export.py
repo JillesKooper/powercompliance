@@ -11,9 +11,9 @@ router = APIRouter(prefix="/api/export", tags=["export"])
 
 
 @router.get("/opties", response_model=schemas.ExportOpties)
-def export_opties(db: Session = Depends(get_db)):
+def export_opties(taal: str = "nl", db: Session = Depends(get_db)):
     """Beschikbare velden + filteropties voor de export-configuratie."""
-    return export_service.export_opties(db)
+    return export_service.export_opties(db, "en" if taal == "en" else "nl")
 
 
 @router.post("")

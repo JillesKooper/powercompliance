@@ -30,7 +30,7 @@ export default function ProductDetail() {
     try {
       const [p, r] = await Promise.all([
         api.product(id),
-        api.productCompliance(id),
+        api.productCompliance(id, taal),
       ]);
       setProduct(p);
       setRegels(r);
@@ -44,7 +44,7 @@ export default function ProductDetail() {
     setRegels(null);
     laad();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, taal]);
 
   async function startScrape() {
     setScrapeMelding(t("productDetail.scrapeGestart"));

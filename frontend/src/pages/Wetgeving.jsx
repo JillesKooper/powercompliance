@@ -32,8 +32,8 @@ export default function Wetgeving() {
   const [uitvraag, setUitvraag] = useState(null); // {code, naam}
 
   useEffect(() => {
-    api.wetgeving().then(setWetten).catch((e) => setError(e.message));
-  }, []);
+    api.wetgeving(taal).then(setWetten).catch((e) => setError(e.message));
+  }, [taal]);
 
   // vanuit het dashboard kan een wetgeving-code worden meegegeven om die
   // direct uit te vouwen en in beeld te scrollen

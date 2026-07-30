@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, compliance, compliance_service, scraper
+from .. import models, schemas, compliance, compliance_service, scraper, veld_vertaling
 from ..database import get_db
 
 router = APIRouter(prefix="/api/producten", tags=["producten"])
@@ -78,9 +78,12 @@ def haal_product(product_id: int, db: Session = Depends(get_db)):
     "/{product_id}/compliance",
     response_model=list[schemas.ProductComplianceRegel],
 )
-def product_compliance_detail(product_id: int, db: Session = Depends(get_db)):
+def product_compliance_detail(
+    product_id: int, taal: str = "nl", db: Session = Depends(get_db)
+):
     """Alle van toepassing zijnde compliance-velden voor dit product, met per veld
     de bron (handmatig / automatisch / niet gevonden / ontbreekt)."""
+    taal = "en" if taal == "en" else "nl"
     product = db.get(models.Product, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product niet gevonden")
@@ -92,9 +95,9 @@ def product_compliance_detail(product_id: int, db: Session = Depends(get_db)):
         regels.append(
             schemas.ProductComplianceRegel(
                 compliance_veld_id=v.id,
-                veld_naam=v.naam,
+                veld_naam=veld_vertaling.veld_naam(v, taal),
                 sleutel=v.sleutel,
-                veld_type=v.veld_type,
+                veld_type=veld_vertaling.veld_type(v.veld_type, taal),
                 verplicht=v.verplicht,
                 wetgeving_id=v.wetgeving_id,
                 wetgeving_code=v.wetgeving.code if v.wetgeving else "—",

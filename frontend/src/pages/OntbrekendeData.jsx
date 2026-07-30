@@ -6,7 +6,7 @@ import EmailModal from "../components/EmailModal.jsx";
 import { useTaal } from "../context/taal";
 
 export default function OntbrekendeData() {
-  const { t } = useTaal();
+  const { t, taal } = useTaal();
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
   // {leverancierId, leverancierNaam, productId?, productNaam?}
@@ -15,12 +15,13 @@ export default function OntbrekendeData() {
   const [replyResultaat, setReplyResultaat] = useState(null);
 
   function laad() {
-    api.ontbrekendeData().then(setItems).catch((e) => setError(e.message));
+    api.ontbrekendeData(taal).then(setItems).catch((e) => setError(e.message));
   }
 
   useEffect(() => {
     laad();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taal]);
 
   async function simuleerReply(groep) {
     setReplyBezig(groep.id);

@@ -96,7 +96,8 @@ export const api = {
     return request(`/producten${qs ? `?${qs}` : ""}`);
   },
   product: (id) => request(`/producten/${id}`),
-  productCompliance: (id) => request(`/producten/${id}/compliance`),
+  productCompliance: (id, taal = "nl") =>
+    request(`/producten/${id}/compliance${taal && taal !== "nl" ? `?taal=${taal}` : ""}`),
   scrapeProduct: (id) =>
     request(`/producten/${id}/scrape`, { method: "POST" }),
   verifieerWaarde: (productId, veldId) =>
@@ -110,14 +111,16 @@ export const api = {
   verwijderProduct: (id) => request(`/producten/${id}`, { method: "DELETE" }),
 
   categorieen: () => request("/categorieen"),
-  wetgeving: () => request("/wetgeving"),
+  wetgeving: (taal = "nl") =>
+    request(`/wetgeving${taal && taal !== "nl" ? `?taal=${taal}` : ""}`),
   wetgevingBeheer: () => request("/wetgeving/beheer"),
   zetWetgevingActief: (id, actief) =>
     request(`/wetgeving/${id}/actief`, {
       method: "POST",
       body: JSON.stringify({ actief }),
     }),
-  ontbrekendeData: () => request("/ontbrekende-data"),
+  ontbrekendeData: (taal = "nl") =>
+    request(`/ontbrekende-data${taal && taal !== "nl" ? `?taal=${taal}` : ""}`),
   dataverzoeken: (params = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params).filter(([, v]) => v !== "" && v != null)
@@ -201,7 +204,8 @@ export const api = {
     }),
 
   // ---------- PIM/ERP-export ----------
-  exportOpties: () => request("/export/opties"),
+  exportOpties: (taal = "nl") =>
+    request(`/export/opties${taal && taal !== "nl" ? `?taal=${taal}` : ""}`),
   exporteer: (data) =>
     download("/export", {
       method: "POST",
