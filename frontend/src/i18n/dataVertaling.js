@@ -5,6 +5,17 @@
 // Nederlandse naam. De wetgevingsCODE zelf blijft altijd onvertaald.
 // Ontbreekt een vertaling, dan valt alles terug op de originele (NL-)waarde.
 
+// Sommige wetgevingscodes zijn Nederlandse woorden i.p.v. internationale
+// acroniemen; daarvan tonen we een Engels label. De echte code-waarde blijft
+// ongewijzigd (die wordt gebruikt als sleutel/filter/bestandsnaam). Acroniemen
+// (PPWR, REACH, CSRD, CPR, GPSR, ERP, ESPR, EUDR, MDR) blijven zoals ze zijn.
+const WETGEVING_CODE_EN = {
+  BATTERIJ: "BATTERY",
+  TEXTIEL: "TEXTILE",
+  SPEELGOED: "TOY",
+  COSMETICA: "COSMETICS",
+};
+
 const WETGEVING_NAAM_EN = {
   PPWR: "Packaging and Packaging Waste Regulation",
   CSRD: "Corporate Sustainability Reporting Directive",
@@ -67,6 +78,13 @@ const CATEGORIE_EN = {
   Verpakkingen: "Packaging",
   Voedsel: "Food",
 };
+
+// Toon het (evt. Engelse) label voor een wetgevingscode. De code-waarde zelf
+// wijzigt niet — dit is puur voor weergave.
+export function wetgevingCode(code, taal) {
+  if (taal === "en" && code && WETGEVING_CODE_EN[code]) return WETGEVING_CODE_EN[code];
+  return code;
+}
 
 // Vertaal een wetgevingsnaam op basis van de code. `fallback` is de originele naam.
 export function wetgevingNaam(code, fallback, taal) {

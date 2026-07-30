@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
-import { categorieNaam } from "../i18n/dataVertaling";
+import { categorieNaam, wetgevingCode } from "../i18n/dataVertaling";
 import {
   Card,
   ProgressBar,
@@ -239,7 +239,7 @@ export default function ProductDetail() {
         <Card key={code} className="overflow-hidden">
           <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
             <div className="font-semibold text-slate-800">
-              ⚖️ {code}
+              ⚖️ {wetgevingCode(code, taal)}
               <span className="ml-2 text-xs font-normal text-slate-400">
                 {t("productDetail.ingevuldOverzicht", {
                   ingevuld: items.filter((i) => i.ingevuld).length,

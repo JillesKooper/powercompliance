@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
 import {
+  wetgevingCode,
   wetgevingNaam,
   wetgevingBeschrijving,
   wetgevingSamenvatting,
@@ -77,7 +78,9 @@ export default function Wetgeving() {
               className="flex-1 min-w-0 cursor-pointer"
             >
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-slate-800">{w.code}</span>
+                <span className="font-semibold text-slate-800">
+                  {wetgevingCode(w.code, taal)}
+                </span>
                 <Badge color={STATUS_KLEUR[w.status] || "slate"}>
                   {STATUS_SLEUTEL[w.status] ? t(STATUS_SLEUTEL[w.status]) : w.status}
                 </Badge>

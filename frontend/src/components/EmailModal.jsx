@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Button, Badge, Loading } from "./ui";
 import { useTaal } from "../context/taal";
+import { wetgevingCode as wetCodeLabel } from "../i18n/dataVertaling";
 
 export default function EmailModal({
   leverancierId,
@@ -107,7 +108,7 @@ export default function EmailModal({
           <div>
             <h2 className="font-semibold text-slate-800">
               {t("email.titel")}
-              {wetgevingCode ? ` — ${wetgevingCode}` : ""}
+              {wetgevingCode ? ` — ${wetCodeLabel(wetgevingCode, appTaal)}` : ""}
             </h2>
             <div className="text-xs text-slate-400">
               {leverancierNaam}
@@ -120,7 +121,9 @@ export default function EmailModal({
                     ? t("email.scopeProductNaam", { naam: productNaam })
                     : t("email.scopeProduct")
                   : wetgevingCode
-                  ? t("email.scopeWetgeving", { code: wetgevingCode })
+                  ? t("email.scopeWetgeving", {
+                      code: wetCodeLabel(wetgevingCode, appTaal),
+                    })
                   : t("email.scopeLeverancier")}
               </span>
             </div>

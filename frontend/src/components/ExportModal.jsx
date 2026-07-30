@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
-import { categorieNaam } from "../i18n/dataVertaling";
+import { categorieNaam, wetgevingCode } from "../i18n/dataVertaling";
 import { Button, Loading } from "./ui";
 
 const FORMATEN = [
@@ -180,7 +180,7 @@ export default function ExportModal({ onClose }) {
                   <option value="">{t("modals.export.alleWetgeving")}</option>
                   {opties.wetgeving.map((w) => (
                     <option key={w.code} value={w.code}>
-                      {w.code}
+                      {wetgevingCode(w.code, taal)}
                     </option>
                   ))}
                 </select>
@@ -214,7 +214,9 @@ export default function ExportModal({ onClose }) {
                     <div className="text-[11px] font-semibold text-muted mb-1">
                       {groep === "product"
                         ? t("modals.export.productvelden")
-                        : t("modals.export.wetgevingGroep", { groep })}
+                        : t("modals.export.wetgevingGroep", {
+                            groep: wetgevingCode(groep, taal),
+                          })}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
                       {velden.map((v) => (

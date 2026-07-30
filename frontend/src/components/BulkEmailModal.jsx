@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
+import {
+  wetgevingCode as wetCodeLabel,
+  wetgevingNaam as wetNaamLabel,
+} from "../i18n/dataVertaling";
 import { Button, Badge, Loading } from "./ui";
 import EmailModal from "./EmailModal.jsx";
 
@@ -68,9 +72,11 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div>
             <h2 className="font-semibold text-slate-800">
-              {t("email.bulkTitel", { code: wetgevingCode })}
+              {t("email.bulkTitel", { code: wetCodeLabel(wetgevingCode, appTaal) })}
             </h2>
-            <div className="text-xs text-slate-400">{wetgevingNaam}</div>
+            <div className="text-xs text-slate-400">
+              {wetNaamLabel(wetgevingCode, wetgevingNaam, appTaal)}
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -92,7 +98,7 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
               <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
                 {t("email.bulkResultaat", {
                   aantal: resultaat.aantal,
-                  code: resultaat.wetgeving_code,
+                  code: wetCodeLabel(resultaat.wetgeving_code, appTaal),
                 })}
               </div>
               <ul className="text-sm text-slate-600 space-y-1 max-h-60 overflow-auto">
@@ -108,7 +114,9 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
             <Loading />
           ) : lijst.length === 0 ? (
             <div className="text-sm text-slate-500 py-6 text-center">
-              {t("email.bulkGeenLeveranciers", { code: wetgevingCode })}
+              {t("email.bulkGeenLeveranciers", {
+                code: wetCodeLabel(wetgevingCode, appTaal),
+              })}
             </div>
           ) : (
             <>
@@ -149,7 +157,7 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
               <div className="text-sm text-slate-600">
                 {t("email.bulkAantalLeveranciers", {
                   aantal: lijst.length,
-                  code: wetgevingCode,
+                  code: wetCodeLabel(wetgevingCode, appTaal),
                 })}
               </div>
 

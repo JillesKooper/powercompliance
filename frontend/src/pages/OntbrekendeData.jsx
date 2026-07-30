@@ -4,6 +4,7 @@ import { api } from "../api";
 import { Card, Badge, Loading, ErrorBox, Button } from "../components/ui";
 import EmailModal from "../components/EmailModal.jsx";
 import { useTaal } from "../context/taal";
+import { wetgevingCode } from "../i18n/dataVertaling";
 
 export default function OntbrekendeData() {
   const { t, taal } = useTaal();
@@ -174,7 +175,9 @@ export default function OntbrekendeData() {
                       key={v.compliance_veld_id}
                       className="inline-flex items-center gap-1 rounded-md bg-red-50 text-red-700 px-2 py-1 text-xs"
                     >
-                      <span className="font-semibold">{v.wetgeving_code}</span>
+                      <span className="font-semibold">
+                        {wetgevingCode(v.wetgeving_code, taal)}
+                      </span>
                       <span className="text-red-400">·</span>
                       {v.veld_naam}
                     </span>

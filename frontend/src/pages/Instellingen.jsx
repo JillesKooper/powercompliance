@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
-import { wetgevingNaam, categorieNaam } from "../i18n/dataVertaling";
+import { wetgevingCode, wetgevingNaam, categorieNaam } from "../i18n/dataVertaling";
 import { Card, Badge, Button, Loading, ProgressBar } from "../components/ui";
 
 const STATUS_KLEUR = {
@@ -130,7 +130,9 @@ export default function Instellingen() {
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-800">{w.code}</span>
+                    <span className="font-medium text-slate-800">
+                      {wetgevingCode(w.code, taal)}
+                    </span>
                     {w.aantal_producten === 0 && (
                       <Badge color="slate">{t("instellingen.geenProducten")}</Badge>
                     )}

@@ -4,7 +4,7 @@ import { api } from "../api";
 import { Card, StatCard, ProgressBar, Loading, ErrorBox, Button } from "../components/ui";
 import { useNotificaties } from "../context/notificaties";
 import { useTaal } from "../context/taal";
-import { wetgevingNaam } from "../i18n/dataVertaling";
+import { wetgevingCode, wetgevingNaam } from "../i18n/dataVertaling";
 import NotificatieModal from "../components/NotificatieModal.jsx";
 import ExportModal from "../components/ExportModal.jsx";
 
@@ -134,7 +134,9 @@ export default function Dashboard() {
                 className="w-full text-left rounded-md -mx-2 px-2 py-2 cursor-pointer transition-colors hover:bg-hover"
               >
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium text-slate-700">{w.code}</span>
+                  <span className="font-medium text-slate-700">
+                    {wetgevingCode(w.code, taal)}
+                  </span>
                   <span className="text-slate-400 truncate ml-4 max-w-xs">
                     {wetgevingNaam(w.code, w.naam, taal)}
                   </span>

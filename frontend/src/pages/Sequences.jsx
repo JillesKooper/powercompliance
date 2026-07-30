@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Card, Badge, Button, Loading, ErrorBox } from "../components/ui";
 import { useTaal } from "../context/taal";
-import { wetgevingNaam } from "../i18n/dataVertaling";
+import { wetgevingCode, wetgevingNaam } from "../i18n/dataVertaling";
 
 const CONDITIE_KEYS = {
   data_ontbreekt: "sequences.conditie.data_ontbreekt",
@@ -449,7 +449,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
                   <option value="">{t("sequences.kiesPlaceholder")}</option>
                   {wetgeving.map((w) => (
                     <option key={w.code} value={w.code}>
-                      {w.code} — {wetgevingNaam(w.code, w.naam, taal)}
+                      {wetgevingCode(w.code, taal)} — {wetgevingNaam(w.code, w.naam, taal)}
                     </option>
                   ))}
                 </select>

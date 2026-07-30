@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
-import { wetgevingNaam } from "../i18n/dataVertaling";
+import { wetgevingCode, wetgevingNaam } from "../i18n/dataVertaling";
 import { Card, Badge, Loading, ErrorBox } from "../components/ui";
 
 const BLAUW = "#1a73e8";
@@ -85,7 +85,11 @@ export default function Rapportages() {
                   margin={{ top: 8, right: 8, bottom: 4, left: -16 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical={false} />
-                  <XAxis dataKey="code" tick={{ fontSize: 12, fill: "#666" }} />
+                  <XAxis
+                    dataKey="code"
+                    tickFormatter={(c) => wetgevingCode(c, taal)}
+                    tick={{ fontSize: 12, fill: "#666" }}
+                  />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "#666" }} />
                   <Tooltip
                     formatter={(v) => [`${v}%`, t("rapportages.compliance")]}
@@ -104,7 +108,7 @@ export default function Rapportages() {
                 t("rapportages.kopOntbrekend"),
               ]}
               rijen={data.compliance_overzicht.map((r) => [
-                <span className="font-medium text-ink">{r.code}</span>,
+                <span className="font-medium text-ink">{wetgevingCode(r.code, taal)}</span>,
                 <span className="text-muted">{wetgevingNaam(r.code, r.naam, taal)}</span>,
                 r.aantal_producten,
                 <Badge color={r.compliance_percentage >= 80 ? "green" : "amber"}>
