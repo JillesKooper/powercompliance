@@ -15,12 +15,14 @@ import {
   YAxis,
 } from "recharts";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import { Card, Badge, Loading, ErrorBox } from "../components/ui";
 
 const BLAUW = "#1a73e8";
 const PIE_KLEUREN = ["#1a73e8", "#34a853", "#fbbc04", "#ea4335", "#8ab4f8"];
 
 export default function Rapportages() {
+  const { t } = useTaal();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [bezig, setBezig] = useState(null); // `${soort}:${formaat}`
@@ -34,7 +36,7 @@ export default function Rapportages() {
     try {
       await api.exporteerRapportage(soort, formaat);
     } catch (e) {
-      alert("Export mislukt: " + e.message);
+      alert(t("rapportages.exportMislukt", { fout: e.message }));
     } finally {
       setBezig(null);
     }
@@ -42,16 +44,21 @@ export default function Rapportages() {
 
   const compleetheidVerdeling = useMemo(() => {
     if (!data) return [];
-    const buckets = { "≥ 90% compleet": 0, "60–89%": 0, "< 60%": 0 };
+    const buckets = { hoog: 0, midden: 0, laag: 0 };
     for (const s of data.scorecards) {
-      if (s.compleetheid_percentage >= 90) buckets["≥ 90% compleet"]++;
-      else if (s.compleetheid_percentage >= 60) buckets["60–89%"]++;
-      else buckets["< 60%"]++;
+      if (s.compleetheid_percentage >= 90) buckets.hoog++;
+      else if (s.compleetheid_percentage >= 60) buckets.midden++;
+      else buckets.laag++;
     }
+    const labels = {
+      hoog: t("rapportages.bucketHoog"),
+      midden: t("rapportages.bucketMidden"),
+      laag: t("rapportages.bucketLaag"),
+    };
     return Object.entries(buckets)
-      .map(([naam, waarde]) => ({ naam, waarde }))
+      .map(([sleutel, waarde]) => ({ naam: labels[sleutel], waarde }))
       .filter((b) => b.waarde > 0);
-  }, [data]);
+  }, [data, t]);
 
   if (error) return <ErrorBox message={error} />;
   if (!data) return <Loading />;
@@ -60,8 +67,8 @@ export default function Rapportages() {
     <div className="space-y-6">
       {/* a. Compliance-overzicht per wetgeving */}
       <Rapport
-        titel="Compliance per wetgeving"
-        omschrijving="Percentage compliant, aantal producten en ontbrekende velden per wetgeving."
+        titel={t("rapportages.complianceTitel")}
+        omschrijving={t("rapportages.complianceOmschrijving")}
         soort="compliance"
         bezig={bezig}
         onExport={exporteer}
@@ -80,7 +87,7 @@ export default function Rapportages() {
                   <XAxis dataKey="code" tick={{ fontSize: 12, fill: "#666" }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "#666" }} />
                   <Tooltip
-                    formatter={(v) => [`${v}%`, "Compliance"]}
+                    formatter={(v) => [`${v}%`, t("rapportages.compliance")]}
                     contentStyle={{ fontSize: 12, borderRadius: 6, border: "1px solid #e0e0e0" }}
                   />
                   <Bar dataKey="compliance_percentage" fill={BLAUW} radius={[4, 4, 0, 0]} />
@@ -88,7 +95,13 @@ export default function Rapportages() {
               </ResponsiveContainer>
             </div>
             <Tabel
-              kop={["Wetgeving", "Naam", "Producten", "Compliance", "Ontbrekend"]}
+              kop={[
+                t("rapportages.kopWetgeving"),
+                t("rapportages.kopNaam"),
+                t("rapportages.kopProducten"),
+                t("rapportages.kopCompliance"),
+                t("rapportages.kopOntbrekend"),
+              ]}
               rijen={data.compliance_overzicht.map((r) => [
                 <span className="font-medium text-ink">{r.code}</span>,
                 <span className="text-muted">{r.naam}</span>,
@@ -107,8 +120,8 @@ export default function Rapportages() {
 
       {/* b. Leveranciersscorecards */}
       <Rapport
-        titel="Leveranciersscorecards"
-        omschrijving="Compleetheid, openstaande dataverzoeken en gemiddelde responstijd per leverancier."
+        titel={t("rapportages.scorecardsTitel")}
+        omschrijving={t("rapportages.scorecardsOmschrijving")}
         soort="scorecards"
         bezig={bezig}
         onExport={exporteer}
@@ -116,7 +129,13 @@ export default function Rapportages() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Tabel
-              kop={["Leverancier", "Producten", "Compleetheid", "Open verzoeken", "Resp.tijd"]}
+              kop={[
+                t("rapportages.kopLeverancier"),
+                t("rapportages.kopProducten"),
+                t("rapportages.kopCompleetheid"),
+                t("rapportages.kopOpenVerzoeken"),
+                t("rapportages.kopResptijd"),
+              ]}
               rijen={data.scorecards.map((s) => [
                 <span className="font-medium text-ink">{s.naam}</span>,
                 s.aantal_producten,
@@ -130,13 +149,13 @@ export default function Rapportages() {
                 ),
                 s.gem_responstijd_dagen == null
                   ? <span className="text-muted">—</span>
-                  : `${s.gem_responstijd_dagen} d`,
+                  : t("rapportages.dagenKort", { n: s.gem_responstijd_dagen }),
               ])}
             />
           </div>
           <div>
             <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
-              Verdeling compleetheid
+              {t("rapportages.verdelingCompleetheid")}
             </div>
             {compleetheidVerdeling.length === 0 ? (
               <Leeg />
@@ -169,23 +188,29 @@ export default function Rapportages() {
 
       {/* c. Risicosignalering */}
       <Rapport
-        titel="Risicosignalering"
-        omschrijving="Leveranciers met een deadline binnen 30/60/90 dagen én nog ontbrekende data."
+        titel={t("rapportages.risicoTitel")}
+        omschrijving={t("rapportages.risicoOmschrijving")}
         soort="risico"
         bezig={bezig}
         onExport={exporteer}
       >
         {data.risico.length === 0 ? (
           <div className="text-sm text-muted py-4">
-            🎉 Geen leveranciers met een naderende deadline en ontbrekende data.
+            {t("rapportages.risicoLeeg")}
           </div>
         ) : (
           <Tabel
-            kop={["Leverancier", "Deadline", "Resterend", "Risico", "Ontbrekend"]}
+            kop={[
+              t("rapportages.kopLeverancier"),
+              t("rapportages.kopDeadline"),
+              t("rapportages.kopResterend"),
+              t("rapportages.kopRisico"),
+              t("rapportages.kopOntbrekend"),
+            ]}
             rijen={data.risico.map((r) => [
               <span className="font-medium text-ink">{r.naam}</span>,
               r.deadline || "—",
-              `${r.dagen_tot_deadline} dagen`,
+              t("rapportages.dagen", { n: r.dagen_tot_deadline }),
               <Badge
                 color={
                   r.risicocategorie === "30"
@@ -195,9 +220,11 @@ export default function Rapportages() {
                     : "slate"
                 }
               >
-                ≤ {r.risicocategorie} dagen
+                {t("rapportages.risicoCategorie", { cat: r.risicocategorie })}
               </Badge>,
-              <span className="text-red-600">{r.aantal_ontbrekend} velden</span>,
+              <span className="text-red-600">
+                {t("rapportages.velden", { n: r.aantal_ontbrekend })}
+              </span>,
             ])}
           />
         )}
@@ -205,8 +232,8 @@ export default function Rapportages() {
 
       {/* d. Compliance-trend over tijd */}
       <Rapport
-        titel="Compliance-trend"
-        omschrijving="Gemiddelde compliance per maand — gaat het beter of slechter?"
+        titel={t("rapportages.trendTitel")}
+        omschrijving={t("rapportages.trendOmschrijving")}
         soort="trend"
         bezig={bezig}
         onExport={exporteer}
@@ -221,7 +248,7 @@ export default function Rapportages() {
               <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#666" }} />
               <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "#666" }} />
               <Tooltip
-                formatter={(v) => [`${v}%`, "Compliance"]}
+                formatter={(v) => [`${v}%`, t("rapportages.compliance")]}
                 contentStyle={{ fontSize: 12, borderRadius: 6, border: "1px solid #e0e0e0" }}
               />
               <Line
@@ -299,5 +326,10 @@ function Tabel({ kop, rijen }) {
 }
 
 function Leeg() {
-  return <div className="text-sm text-muted py-6 text-center">Geen gegevens.</div>;
+  const { t } = useTaal();
+  return (
+    <div className="text-sm text-muted py-6 text-center">
+      {t("rapportages.geenGegevens")}
+    </div>
+  );
 }

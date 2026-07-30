@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import {
   Card,
   ProgressBar,
@@ -14,6 +15,7 @@ import EmailModal from "../components/EmailModal.jsx";
 import ProductDocumenten from "../components/ProductDocumenten.jsx";
 
 export default function ProductDetail() {
+  const { t } = useTaal();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [regels, setRegels] = useState(null);
@@ -44,17 +46,17 @@ export default function ProductDetail() {
   }, [id]);
 
   async function startScrape() {
-    setScrapeMelding("Scrapen gestart… (GS1 → Open Food Facts → fabrikant → web)");
+    setScrapeMelding(t("productDetail.scrapeGestart"));
     try {
       await api.scrapeProduct(id);
       // de scrape draait als achtergrondtaak; na een moment herladen
       setTimeout(async () => {
         await laad();
-        setScrapeMelding("Scrape voltooid — resultaten bijgewerkt.");
+        setScrapeMelding(t("productDetail.scrapeVoltooid"));
         setTimeout(() => setScrapeMelding(null), 4000);
       }, 6000);
     } catch (e) {
-      setScrapeMelding("Scrape mislukt: " + e.message);
+      setScrapeMelding(t("productDetail.scrapeMislukt", { fout: e.message }));
     }
   }
 
@@ -116,17 +118,17 @@ export default function ProductDetail() {
 
       <div className="flex items-center justify-between">
         <Link to="/producten" className="text-sm text-brand-600 hover:underline">
-          ← Terug naar producten
+          {t("productDetail.terugNaarProducten")}
         </Link>
         {product.aantal_ontbrekend > 0 && (
           <div className="flex items-center gap-2">
             {product.leverancier && (
               <Button variant="ghost" onClick={() => setMailCode("*")}>
-                ✉️ Uitvraag voor dit product
+                {t("productDetail.uitvraagVoorProduct")}
               </Button>
             )}
             <Button variant="ghost" onClick={startScrape}>
-              🔎 Scrape ontbrekende data
+              {t("productDetail.scrapeOntbrekendeData")}
             </Button>
           </div>
         )}
@@ -143,8 +145,8 @@ export default function ProductDetail() {
           <div>
             <h2 className="text-xl font-bold text-slate-800">{product.naam}</h2>
             <div className="text-sm text-slate-500 mt-1 space-x-3">
-              <span>Art.nr: {product.artikelnummer || "—"}</span>
-              <span>EAN: {product.ean || "—"}</span>
+              <span>{t("productDetail.artNr", { waarde: product.artikelnummer || "—" })}</span>
+              <span>{t("productDetail.ean", { waarde: product.ean || "—" })}</span>
             </div>
             <div className="flex gap-2 mt-3">
               {product.categorie && (
@@ -165,11 +167,13 @@ export default function ProductDetail() {
             >
               <AnimatedNumber value={pct} decimals={1} />%
             </div>
-            <div className="text-xs text-slate-400 mb-2">compliance</div>
+            <div className="text-xs text-slate-400 mb-2">{t("productDetail.compliance")}</div>
             <ProgressBar value={pct} />
             <div className="text-xs text-slate-500 mt-2">
-              {ingevuldNu}/{totaalVelden} velden ·{" "}
-              <span className="text-red-500">{ontbrekendNu} ontbreekt</span>
+              {t("productDetail.veldenOverzicht", { ingevuld: ingevuldNu, totaal: totaalVelden })}
+              <span className="text-red-500">
+                {t("productDetail.ontbreektAantal", { aantal: ontbrekendNu })}
+              </span>
             </div>
           </div>
         </div>
@@ -177,13 +181,15 @@ export default function ProductDetail() {
         {heeftReply && (
           <div className="mt-5 flex items-center justify-between gap-3 rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
             <div className="text-sm text-slate-600">
-              <span className="font-medium text-slate-800">Voor/Na-vergelijking</span>{" "}
-              — zie het effect van de verwerkte leveranciersreply.
+              <span className="font-medium text-slate-800">
+                {t("productDetail.voorNaVergelijkingTitel")}
+              </span>
+              {t("productDetail.voorNaVergelijkingUitleg")}
             </div>
             <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden shrink-0">
               {[
-                ["voor", "Voor reply"],
-                ["na", "Na reply"],
+                ["voor", t("productDetail.voorReply")],
+                ["na", t("productDetail.naReply")],
               ].map(([key, label]) => (
                 <button
                   key={key}
@@ -206,8 +212,8 @@ export default function ProductDetail() {
 
       <div className="flex items-center gap-1 border-b border-line">
         {[
-          ["compliance", "Compliance"],
-          ["documenten", "Documenten"],
+          ["compliance", t("productDetail.tabCompliance")],
+          ["documenten", t("productDetail.tabDocumenten")],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -234,12 +240,15 @@ export default function ProductDetail() {
             <div className="font-semibold text-slate-800">
               ⚖️ {code}
               <span className="ml-2 text-xs font-normal text-slate-400">
-                {items.filter((i) => i.ingevuld).length}/{items.length} ingevuld
+                {t("productDetail.ingevuldOverzicht", {
+                  ingevuld: items.filter((i) => i.ingevuld).length,
+                  totaal: items.length,
+                })}
               </span>
             </div>
             {heeftOntbrekend && product.leverancier && (
               <Button variant="ghost" onClick={() => setMailCode(code)}>
-                ✉️ Uitvragen ({code})
+                {t("productDetail.uitvragen", { code })}
               </Button>
             )}
           </div>
@@ -259,7 +268,7 @@ export default function ProductDetail() {
                     <span className="text-xs text-slate-400 ml-2">{r.veld_type}</span>
                     {r._replyNieuw && (
                       <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px] font-medium">
-                        📥 via reply
+                        {t("productDetail.viaReply")}
                       </span>
                     )}
                   </div>
@@ -277,6 +286,7 @@ export default function ProductDetail() {
 }
 
 function VeldWaarde({ r }) {
+  const { t } = useTaal();
   const automatisch = r.bron === "automatisch" || r.status === "automatisch";
   // de echte waarde komt uit `waarde` (val terug op `waarde_tekst`)
   const ruwe = r.waarde ?? r.waarde_tekst ?? null;
@@ -292,7 +302,9 @@ function VeldWaarde({ r }) {
           <span className="inline-flex items-center gap-1 font-medium text-amber-600">
             <span aria-hidden="true">⚠️</span>
             {ruwe}
-            <span className="text-xs font-normal text-amber-500">(twijfelachtig)</span>
+            <span className="text-xs font-normal text-amber-500">
+              {t("productDetail.twijfelachtig")}
+            </span>
           </span>
         ) : (
           // 1. ingevulde waarde, direct zichtbaar
@@ -306,11 +318,13 @@ function VeldWaarde({ r }) {
             rel="noopener noreferrer"
             className="text-xs text-brand-600 hover:underline"
           >
-            🔗 bron
+            {t("productDetail.bron")}
           </a>
         )}
         {automatisch && !r.bron_url && (
-          <span className="text-xs text-slate-400">automatisch gevonden</span>
+          <span className="text-xs text-slate-400">
+            {t("productDetail.automatischGevonden")}
+          </span>
         )}
       </div>
     );
@@ -324,32 +338,41 @@ function VeldWaarde({ r }) {
   // 4. ontbreekt: blijf "ontbreekt" in rood tonen
   if (r.status === "niet_gevonden_online") {
     return (
-      <div className="mt-0.5 text-sm text-slate-400">niet online gevonden</div>
+      <div className="mt-0.5 text-sm text-slate-400">
+        {t("productDetail.nietOnlineGevonden")}
+      </div>
     );
   }
-  return <div className="mt-0.5 text-sm text-red-500">ontbreekt</div>;
+  return <div className="mt-0.5 text-sm text-red-500">{t("productDetail.ontbreekt")}</div>;
 }
 
 function VeldStatus({ r, onVerifieer }) {
+  const { t } = useTaal();
   if (r.status === "ingevuld") {
     return (
-      <Badge color="green">{r.geverifieerd ? "✓ geverifieerd" : "✓ ingevuld"}</Badge>
+      <Badge color="green">
+        {r.geverifieerd
+          ? t("productDetail.geverifieerd")
+          : t("productDetail.ingevuld")}
+      </Badge>
     );
   }
   if (r.status === "automatisch") {
     return (
       <div className="flex items-center gap-2 shrink-0">
         <Badge color="amber">
-          ✨ automatisch{r.twijfelachtig ? " · twijfelachtig" : ""}
+          {r.twijfelachtig
+            ? t("productDetail.automatischTwijfelachtig")
+            : t("productDetail.automatisch")}
         </Badge>
         <Button variant="ghost" onClick={onVerifieer}>
-          Verifieer
+          {t("productDetail.verifieer")}
         </Button>
       </div>
     );
   }
   if (r.status === "niet_gevonden_online") {
-    return <Badge color="slate">niet online gevonden</Badge>;
+    return <Badge color="slate">{t("productDetail.nietOnlineGevonden")}</Badge>;
   }
-  return <Badge color="red">ontbreekt</Badge>;
+  return <Badge color="red">{t("productDetail.ontbreekt")}</Badge>;
 }

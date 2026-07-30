@@ -142,10 +142,11 @@ export const api = {
   bijlageUrl: (leverancierId) => `${BASE}/email/bijlage/${leverancierId}`,
   // Download de Excel-bijlage als blob via de API-basis (werkt ook cross-origin
   // in productie, waar een kaal /api-pad naar de frontend-host zou wijzen).
-  downloadBijlage: (leverancierId, wetgeving = null, productId = null) => {
+  downloadBijlage: (leverancierId, wetgeving = null, productId = null, taal = "nl") => {
     const qs = new URLSearchParams();
     if (wetgeving) qs.set("wetgeving", wetgeving);
     if (productId) qs.set("product", productId);
+    if (taal && taal !== "nl") qs.set("taal", taal);
     const q = qs.toString();
     return download(`/email/bijlage/${leverancierId}${q ? `?${q}` : ""}`);
   },

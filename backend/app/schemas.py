@@ -276,6 +276,7 @@ class EmailVerstuurRequest(BaseModel):
     aan_naam: Optional[str] = None
     aan_email: Optional[str] = None
     deadline: Optional[date] = None
+    taal: str = "nl"  # nl | en — bepaalt o.a. de taal van de Excel-bijlage
     # scope voor de mee te sturen Excel-bijlage
     wetgeving_code: Optional[str] = None
     product_id: Optional[int] = None

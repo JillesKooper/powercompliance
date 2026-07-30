@@ -47,7 +47,7 @@ def genereer_email(data: schemas.EmailGenereerRequest, db: Session = Depends(get
     product = _haal_product(db, lev, data.product_id)
 
     per_product, per_wet = email_generator.verzamel_ontbrekend(
-        db, lev, code, data.product_id
+        db, lev, code, data.product_id, taal
     )
     aantal_producten = len(per_product)
     aantal_velden = sum(len(velden) for _, velden in per_product)
@@ -102,11 +102,13 @@ def download_bijlage(
     leverancier_id: int,
     wetgeving: Optional[str] = None,
     product: Optional[int] = None,
+    taal: str = "nl",
     db: Session = Depends(get_db),
 ):
+    taal = "en" if taal == "en" else "nl"
     lev = _haal_leverancier(db, leverancier_id)
     product_obj = _haal_product(db, lev, product)
-    buf = email_generator.bouw_excel(db, lev, wetgeving, product)
+    buf = email_generator.bouw_excel(db, lev, wetgeving, product, taal)
     naam = email_generator.bijlage_naam(lev, wetgeving, product_obj)
     return StreamingResponse(
         buf,
@@ -124,11 +126,13 @@ def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get
     """
     lev = _haal_leverancier(db, data.leverancier_id)
     product = _haal_product(db, lev, data.product_id)
+    taal = "en" if data.taal == "en" else "nl"
 
     # Excel-bijlage met de exacte ontbrekende velden meesturen, in dezelfde scope
-    # (1 product / 1 wetgeving / hele leverancier) als de gegenereerde mail.
+    # (1 product / 1 wetgeving / hele leverancier) als de gegenereerde mail, en in
+    # dezelfde taal als de mail (Engelse veldnamen bij taal="en").
     bijlage = email_generator.bouw_excel_bytes(
-        db, lev, data.wetgeving_code, data.product_id
+        db, lev, data.wetgeving_code, data.product_id, taal
     )
     bijlage_naam = email_generator.bijlage_naam(lev, data.wetgeving_code, product)
 
@@ -211,7 +215,9 @@ def uitvraag_wetgeving(
         lev = db.get(models.Leverancier, b["id"])
         if not lev:
             continue
-        _, per_wet = email_generator.verzamel_ontbrekend(db, lev, data.wetgeving_code)
+        _, per_wet = email_generator.verzamel_ontbrekend(
+            db, lev, data.wetgeving_code, taal=taal
+        )
         onderwerp = email_generator.maak_onderwerp(lev, per_wet, taal, data.deadline)
         db.add(
             models.Dataverzoek(

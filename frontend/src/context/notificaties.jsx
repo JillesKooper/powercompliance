@@ -53,13 +53,26 @@ export function useNotificaties() {
 }
 
 // Bepaal de gerelateerde-entiteit-link voor een notificatie.
+// labelKey verwijst naar een vertaalsleutel; label blijft als NL-fallback.
 export function relatieVoor(n) {
   if (!n) return null;
   if (n.entiteit_type === "product" && n.entiteit_id)
-    return { to: `/producten/${n.entiteit_id}`, label: "Productdetail" };
+    return {
+      to: `/producten/${n.entiteit_id}`,
+      label: "Productdetail",
+      labelKey: "modals.notificatie.relProduct",
+    };
   if (n.entiteit_type === "leverancier" && n.entiteit_id)
-    return { to: `/leveranciers/${n.entiteit_id}`, label: "Leveranciersdetail" };
+    return {
+      to: `/leveranciers/${n.entiteit_id}`,
+      label: "Leveranciersdetail",
+      labelKey: "modals.notificatie.relLeverancier",
+    };
   if (n.entiteit_type === "dataverzoek")
-    return { to: "/ontbrekende-data", label: "Ontbrekende data" };
+    return {
+      to: "/ontbrekende-data",
+      label: "Ontbrekende data",
+      labelKey: "modals.notificatie.relDataverzoek",
+    };
   return null;
 }

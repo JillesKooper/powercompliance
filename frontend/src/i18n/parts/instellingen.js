@@ -1,0 +1,88 @@
+export default {
+  nl: {
+    instellingen: {
+      // Taal
+      taalTitel: "Taal / Language",
+      taalOmschrijving:
+        "Kies de taal van de interface. Je keuze wordt op dit apparaat onthouden.",
+      taalNederlands: "Nederlands",
+      taalEngels: "English",
+      // Organisatie
+      organisatie: "Organisatie",
+      organisatieOmschrijving: "Algemene gegevens van uw groothandel.",
+      bedrijfsnaam: "Bedrijfsnaam",
+      contactEmail: "Contact e-mail",
+      // Wetgevingsbeheer
+      wetgevingsbeheer: "Wetgevingsbeheer",
+      wetgevingsbeheerOmschrijving:
+        "Zet wetgeving aan of uit. Uitgeschakelde wetgeving telt niet mee in compliance-berekeningen en dataverzoeken.",
+      geenProducten: "geen producten",
+      producten: "{n} product(en)",
+      // Categorieën
+      productcategorieen: "Productcategorieën",
+      geenCategorieen: "Geen categorieën.",
+      // Dataverzoeken
+      dataverzoeken: "Dataverzoeken",
+      geenDataverzoeken: "Geen dataverzoeken.",
+      deadline: "deadline {datum}",
+      // PIM/ERP
+      pimTitel: "PIM/ERP-koppeling",
+      pimOmschrijving:
+        "Abonneer een extern systeem op export-events. Bij elke export ontvangt de opgegeven URL een POST met een JSON-samenvatting van de geëxporteerde data.",
+      webhookUrl: "Webhook-URL",
+      beschrijvingOptioneel: "Beschrijving (optioneel)",
+      abonneren: "Abonneren",
+      laatsteLevering: "laatste levering: {status}",
+      nogNietAfgeleverd: "nog niet afgeleverd",
+      exporthistorie: "Exporthistorie",
+      geenExports: "Nog geen exports uitgevoerd.",
+      kopBestand: "Bestand",
+      kopFormaat: "Formaat",
+      kopProducten: "Producten",
+      kopWebhooks: "Webhooks",
+      kopWanneer: "Wanneer",
+      afgeleverd: "{n} afgeleverd",
+      webhookVerwijderBevestig: "Webhook-abonnement verwijderen?",
+    },
+  },
+  en: {
+    instellingen: {
+      taalTitel: "Taal / Language",
+      taalOmschrijving:
+        "Choose the interface language. Your choice is remembered on this device.",
+      taalNederlands: "Nederlands",
+      taalEngels: "English",
+      organisatie: "Organization",
+      organisatieOmschrijving: "General details of your wholesale business.",
+      bedrijfsnaam: "Company name",
+      contactEmail: "Contact email",
+      wetgevingsbeheer: "Legislation management",
+      wetgevingsbeheerOmschrijving:
+        "Turn legislation on or off. Disabled legislation is not counted in compliance calculations and data requests.",
+      geenProducten: "no products",
+      producten: "{n} product(s)",
+      productcategorieen: "Product categories",
+      geenCategorieen: "No categories.",
+      dataverzoeken: "Data requests",
+      geenDataverzoeken: "No data requests.",
+      deadline: "deadline {datum}",
+      pimTitel: "PIM/ERP integration",
+      pimOmschrijving:
+        "Subscribe an external system to export events. On each export the given URL receives a POST with a JSON summary of the exported data.",
+      webhookUrl: "Webhook URL",
+      beschrijvingOptioneel: "Description (optional)",
+      abonneren: "Subscribe",
+      laatsteLevering: "last delivery: {status}",
+      nogNietAfgeleverd: "not delivered yet",
+      exporthistorie: "Export history",
+      geenExports: "No exports performed yet.",
+      kopBestand: "File",
+      kopFormaat: "Format",
+      kopProducten: "Products",
+      kopWebhooks: "Webhooks",
+      kopWanneer: "When",
+      afgeleverd: "{n} delivered",
+      webhookVerwijderBevestig: "Delete webhook subscription?",
+    },
+  },
+};

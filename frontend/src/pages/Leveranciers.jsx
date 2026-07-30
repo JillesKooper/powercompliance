@@ -11,10 +11,12 @@ import {
   Paginatie,
 } from "../components/ui";
 import ImportDialog from "../components/ImportDialog.jsx";
+import { useTaal } from "../context/taal";
 
 const LEEG = { naam: "", contactpersoon: "", email: "", telefoon: "", land: "NL" };
 
 export default function Leveranciers() {
+  const { t } = useTaal();
   const [pagina, setPagina] = useState(null);
   const [page, setPage] = useState(1);
   const [error, setError] = useState(null);
@@ -55,12 +57,12 @@ export default function Leveranciers() {
       setToonForm(false);
       laad();
     } catch (err) {
-      alert("Opslaan mislukt: " + err.message);
+      alert(t("leveranciers.opslaanMislukt", { fout: err.message }));
     }
   }
 
   async function verwijder(id) {
-    if (!confirm("Leverancier en bijbehorende producten verwijderen?")) return;
+    if (!confirm(t("leveranciers.bevestigVerwijderen"))) return;
     await api.verwijderLeverancier(id);
     laad();
   }
@@ -83,23 +85,23 @@ export default function Leveranciers() {
       <div className="flex items-center gap-3">
         {geselecteerd.size > 0 && (
           <div className="flex items-center gap-2 text-sm text-slate-600">
-            <span>{geselecteerd.size} geselecteerd</span>
+            <span>{t("leveranciers.geselecteerd", { n: geselecteerd.size })}</span>
             <Button onClick={() => setBulkOpen(true)}>
-              ✉️ Bulk-dataverzoek
+              ✉️ {t("leveranciers.bulkDataverzoek")}
             </Button>
             <button
               onClick={() => setGeselecteerd(new Set())}
               className="text-xs text-slate-400 hover:underline"
             >
-              wissen
+              {t("leveranciers.wissen")}
             </button>
           </div>
         )}
         <div className="ml-auto flex gap-3">
           <Button variant="ghost" onClick={() => setToonImport(true)}>
-            ⬆ Importeren
+            ⬆ {t("leveranciers.importeren")}
           </Button>
-          <Button onClick={() => setToonForm((v) => !v)}>+ Nieuwe leverancier</Button>
+          <Button onClick={() => setToonForm((v) => !v)}>+ {t("leveranciers.nieuweLeverancier")}</Button>
         </div>
       </div>
 
@@ -115,11 +117,11 @@ export default function Leveranciers() {
         <Card className="p-5">
           <form onSubmit={opslaan} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              ["naam", "Naam *", true],
-              ["contactpersoon", "Contactpersoon", false],
-              ["email", "E-mail", false],
-              ["telefoon", "Telefoon", false],
-              ["land", "Land", false],
+              ["naam", t("leveranciers.naam"), true],
+              ["contactpersoon", t("leveranciers.contactpersoon"), false],
+              ["email", t("leveranciers.email"), false],
+              ["telefoon", t("leveranciers.telefoon"), false],
+              ["land", t("leveranciers.land"), false],
             ].map(([key, label, req]) => (
               <label key={key} className="block">
                 <span className="block text-xs font-medium text-slate-600 mb-1">
@@ -134,9 +136,9 @@ export default function Leveranciers() {
               </label>
             ))}
             <div className="md:col-span-2 flex gap-2">
-              <Button type="submit">Opslaan</Button>
+              <Button type="submit">{t("actie.opslaan")}</Button>
               <Button type="button" variant="ghost" onClick={() => setToonForm(false)}>
-                Annuleren
+                {t("actie.annuleren")}
               </Button>
             </div>
           </form>
@@ -171,9 +173,9 @@ export default function Leveranciers() {
                     </div>
                   </div>
                   {l.actief ? (
-                    <Badge color="green">Actief</Badge>
+                    <Badge color="green">{t("leveranciers.actief")}</Badge>
                   ) : (
-                    <Badge color="slate">Inactief</Badge>
+                    <Badge color="slate">{t("leveranciers.inactief")}</Badge>
                   )}
                 </div>
                 {l.email && (
@@ -181,11 +183,11 @@ export default function Leveranciers() {
                 )}
                 <div className="mt-4">
                   <div className="flex justify-between text-xs text-slate-500 mb-1">
-                    <span>{l.aantal_producten} producten</span>
+                    <span>{t("leveranciers.aantalProducten", { n: l.aantal_producten })}</span>
                     <span>
                       {l.aantal_ontbrekend > 0
-                        ? `${l.aantal_ontbrekend} ontbrekend`
-                        : "compleet"}
+                        ? t("leveranciers.aantalOntbrekend", { n: l.aantal_ontbrekend })
+                        : t("leveranciers.compleet")}
                     </span>
                   </div>
                   <ProgressBar value={l.compliance_percentage} />
@@ -195,7 +197,7 @@ export default function Leveranciers() {
                     onClick={() => verwijder(l.id)}
                     className="text-red-500 hover:text-red-700 text-xs"
                   >
-                    Verwijderen
+                    {t("actie.verwijderen")}
                   </button>
                 </div>
               </Card>
@@ -209,7 +211,8 @@ export default function Leveranciers() {
 }
 
 function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
-  const [onderwerp, setOnderwerp] = useState("Verzoek om ontbrekende compliance-data");
+  const { t } = useTaal();
+  const [onderwerp, setOnderwerp] = useState(() => t("leveranciers.standaardOnderwerp"));
   const [bericht, setBericht] = useState("");
   const [deadline, setDeadline] = useState("");
   const [bezig, setBezig] = useState(false);
@@ -226,7 +229,7 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
       });
       setResultaat(r);
     } catch (e) {
-      alert("Mislukt: " + e.message);
+      alert(t("leveranciers.mislukt", { fout: e.message }));
     } finally {
       setBezig(false);
     }
@@ -237,7 +240,7 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <h2 className="font-semibold text-slate-800">
-            Bulk-dataverzoek ({ids.length} leveranciers)
+            {t("leveranciers.bulkTitel", { n: ids.length })}
           </h2>
           <button
             onClick={onClose}
@@ -249,13 +252,13 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
         <div className="p-6 space-y-4">
           {resultaat ? (
             <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
-              ✅ {resultaat.aantal} dataverzoek(en) aangemaakt.
+              ✅ {t("leveranciers.aangemaakt", { n: resultaat.aantal })}
             </div>
           ) : (
             <>
               <label className="block">
                 <span className="block text-xs font-medium text-slate-600 mb-1">
-                  Onderwerp
+                  {t("leveranciers.onderwerp")}
                 </span>
                 <input
                   value={onderwerp}
@@ -265,7 +268,7 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
               </label>
               <label className="block">
                 <span className="block text-xs font-medium text-slate-600 mb-1">
-                  Bericht (optioneel)
+                  {t("leveranciers.bericht")}
                 </span>
                 <textarea
                   value={bericht}
@@ -276,7 +279,7 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
               </label>
               <label className="block">
                 <span className="block text-xs font-medium text-slate-600 mb-1">
-                  Deadline
+                  {t("leveranciers.deadline")}
                 </span>
                 <input
                   type="date"
@@ -291,16 +294,18 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
         <div className="flex items-center gap-2 px-6 py-4 border-t border-slate-200">
           {resultaat ? (
             <div className="ml-auto">
-              <Button onClick={onKlaar}>Sluiten</Button>
+              <Button onClick={onKlaar}>{t("actie.sluiten")}</Button>
             </div>
           ) : (
             <>
               <Button variant="ghost" onClick={onClose}>
-                Annuleren
+                {t("actie.annuleren")}
               </Button>
               <div className="ml-auto">
                 <Button onClick={verstuur} disabled={bezig}>
-                  {bezig ? "Aanmaken…" : `Aanmaken voor ${ids.length}`}
+                  {bezig
+                    ? t("leveranciers.aanmakenBezig")
+                    : t("leveranciers.aanmakenVoor", { n: ids.length })}
                 </Button>
               </div>
             </>

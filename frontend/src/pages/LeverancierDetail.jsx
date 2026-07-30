@@ -3,8 +3,10 @@ import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
 import { Card, ProgressBar, Badge, Loading, ErrorBox, Button } from "../components/ui";
 import ActiviteitTijdlijn from "../components/ActiviteitTijdlijn.jsx";
+import { useTaal } from "../context/taal";
 
 export default function LeverancierDetail() {
+  const { t } = useTaal();
   const { id } = useParams();
   const [lev, setLev] = useState(null);
   const [producten, setProducten] = useState(null);
@@ -55,13 +57,13 @@ export default function LeverancierDetail() {
           onOpgeslagen={(bijgewerkt) => {
             setLev(bijgewerkt);
             setBewerken(false);
-            setBevestiging("Contactgegevens opgeslagen.");
+            setBevestiging(t("leverancierDetail.contactgegevensOpgeslagen"));
           }}
         />
       )}
 
       <Link to="/leveranciers" className="text-sm text-brand-600 hover:underline">
-        ← Terug naar leveranciers
+        {t("leverancierDetail.terug")}
       </Link>
 
       {bevestiging && (
@@ -95,20 +97,20 @@ export default function LeverancierDetail() {
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {lev.actief ? (
-              <Badge color="green">Actief</Badge>
+              <Badge color="green">{t("leverancierDetail.actief")}</Badge>
             ) : (
-              <Badge color="slate">Inactief</Badge>
+              <Badge color="slate">{t("leverancierDetail.inactief")}</Badge>
             )}
             <Button variant="ghost" onClick={() => setBewerken(true)}>
-              ✎ Bewerken
+              {t("leverancierDetail.bewerken")}
             </Button>
           </div>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-4">
-          <Mini label="Producten" value={producten.length} />
-          <Mini label="Ontbrekende velden" value={totaalOntbrekend} rood />
+          <Mini label={t("leverancierDetail.producten")} value={producten.length} />
+          <Mini label={t("leverancierDetail.ontbrekendeVelden")} value={totaalOntbrekend} rood />
           <div>
-            <div className="text-xs text-slate-500 mb-1">Gem. compliance</div>
+            <div className="text-xs text-slate-500 mb-1">{t("leverancierDetail.gemCompliance")}</div>
             <ProgressBar value={gem} />
           </div>
         </div>
@@ -117,8 +119,8 @@ export default function LeverancierDetail() {
       {/* tabs */}
       <div className="flex items-center gap-1 border-b border-line">
         {[
-          ["overzicht", "Overzicht"],
-          ["activiteit", "Activiteit"],
+          ["overzicht", t("leverancierDetail.tabOverzicht")],
+          ["activiteit", t("leverancierDetail.tabActiviteit")],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -144,7 +146,7 @@ export default function LeverancierDetail() {
       <>
       <Card>
         <div className="px-5 py-3 border-b border-slate-200 font-semibold text-slate-800">
-          Producten van deze leverancier
+          {t("leverancierDetail.productenVanLeverancier")}
         </div>
         <div className="divide-y divide-slate-100">
           {producten.map((p) => (
@@ -247,6 +249,7 @@ function Mini({ label, value, rood }) {
 }
 
 function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
+  const { t } = useTaal();
   const [naam, setNaam] = useState(leverancier.naam || "");
   const [contactpersoon, setContactpersoon] = useState(
     leverancier.contactpersoon || ""
@@ -259,7 +262,7 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
 
   async function opslaan() {
     if (!naam.trim()) {
-      setFout("Geef de leverancier een naam.");
+      setFout(t("leverancierDetail.geefNaam"));
       return;
     }
     setBezig(true);
@@ -284,7 +287,9 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
     <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[92vh] overflow-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-800">Contactgegevens bewerken</h2>
+          <h2 className="font-semibold text-slate-800">
+            {t("leverancierDetail.contactgegevensBewerken")}
+          </h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-700 text-xl leading-none"
@@ -299,17 +304,17 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
               {fout}
             </div>
           )}
-          <Veld label="Naam">
+          <Veld label={t("leverancierDetail.veldNaam")}>
             <input value={naam} onChange={(e) => setNaam(e.target.value)} className="input" />
           </Veld>
-          <Veld label="Contactpersoon">
+          <Veld label={t("leverancierDetail.veldContactpersoon")}>
             <input
               value={contactpersoon}
               onChange={(e) => setContactpersoon(e.target.value)}
               className="input"
             />
           </Veld>
-          <Veld label="E-mailadres">
+          <Veld label={t("leverancierDetail.veldEmail")}>
             <input
               type="email"
               value={email}
@@ -317,24 +322,24 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
               className="input"
             />
           </Veld>
-          <Veld label="Telefoonnummer">
+          <Veld label={t("leverancierDetail.veldTelefoon")}>
             <input
               value={telefoon}
               onChange={(e) => setTelefoon(e.target.value)}
               className="input"
             />
           </Veld>
-          <Veld label="Adres">
+          <Veld label={t("leverancierDetail.veldAdres")}>
             <input value={adres} onChange={(e) => setAdres(e.target.value)} className="input" />
           </Veld>
         </div>
 
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-200">
           <Button variant="ghost" onClick={onClose}>
-            Annuleren
+            {t("actie.annuleren")}
           </Button>
           <Button onClick={opslaan} disabled={bezig}>
-            {bezig ? "Opslaan…" : "Opslaan"}
+            {bezig ? t("leverancierDetail.opslaanBezig") : t("leverancierDetail.opslaan")}
           </Button>
         </div>
       </div>

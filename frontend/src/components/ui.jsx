@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTaal } from "../context/taal";
 
 export function Card({ children, className = "", onClick, ...rest }) {
   return (
@@ -101,22 +102,32 @@ export function Badge({ children, color = "slate" }) {
 }
 
 export function Loading() {
-  return <div className="text-muted text-sm py-12 text-center">Laden…</div>;
+  const { t } = useTaal();
+  return (
+    <div className="text-muted text-sm py-12 text-center">{t("ui.laden")}</div>
+  );
 }
 
 export function ErrorBox({ message }) {
+  const { t } = useTaal();
   return (
     <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
-      Fout: {message}
+      {t("ui.fout")}
+      {message}
     </div>
   );
 }
 
 export function Paginatie({ pagina, onPagina }) {
+  const { t } = useTaal();
   if (!pagina || pagina.pages <= 1) {
     return pagina ? (
       <div className="text-xs text-muted px-1 py-2">
-        {pagina.total} resultaten
+        {t("ui.resultaten", {
+          van: pagina.total ? 1 : 0,
+          tot: pagina.total,
+          totaal: pagina.total,
+        })}
       </div>
     ) : null;
   }
@@ -126,7 +137,7 @@ export function Paginatie({ pagina, onPagina }) {
   return (
     <div className="flex items-center justify-between px-1 py-3 text-sm">
       <span className="text-muted">
-        {van}–{tot} van {total}
+        {t("ui.resultaten", { van, tot, totaal: total })}
       </span>
       <div className="flex items-center gap-2">
         <button
@@ -134,7 +145,7 @@ export function Paginatie({ pagina, onPagina }) {
           disabled={page <= 1}
           className="rounded-md border border-line px-3 py-1 text-ink disabled:opacity-40 hover:bg-hover"
         >
-          ← Vorige
+          {t("ui.vorige")}
         </button>
         <span className="text-muted">
           {page} / {pages}
@@ -144,7 +155,7 @@ export function Paginatie({ pagina, onPagina }) {
           disabled={page >= pages}
           className="rounded-md border border-line px-3 py-1 text-ink disabled:opacity-40 hover:bg-hover"
         >
-          Volgende →
+          {t("ui.volgende")}
         </button>
       </div>
     </div>

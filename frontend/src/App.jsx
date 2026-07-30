@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { NotificatiesProvider } from "./context/notificaties";
+import { TaalProvider } from "./context/taal";
 import Layout from "./components/Layout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Producten from "./pages/Producten.jsx";
@@ -14,8 +15,9 @@ import Instellingen from "./pages/Instellingen.jsx";
 
 export default function App() {
   return (
-    <NotificatiesProvider>
-      <Layout>
+    <TaalProvider>
+      <NotificatiesProvider>
+        <Layout>
         <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/producten" element={<Producten />} />
@@ -28,7 +30,8 @@ export default function App() {
         <Route path="/rapportages" element={<Rapportages />} />
         <Route path="/instellingen" element={<Instellingen />} />
         </Routes>
-      </Layout>
-    </NotificatiesProvider>
+        </Layout>
+      </NotificatiesProvider>
+    </TaalProvider>
   );
 }

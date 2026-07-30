@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import { Card, Badge, Button, Loading, ProgressBar } from "../components/ui";
 
 const STATUS_KLEUR = {
@@ -10,8 +11,53 @@ const STATUS_KLEUR = {
   afgerond: "green",
 };
 
+// backend-status → vertaalsleutel voor dataverzoeken
+const STATUS_SLEUTEL = {
+  open: "status.open",
+  verzonden: "status.verzonden",
+  ontvangen: "status.ontvangen",
+  afgerond: "status.afgerond",
+};
+
+// Taalkeuze: schakelt de hele interface tussen Nederlands en Engels.
+function TaalKaart() {
+  const { taal, setTaal, t } = useTaal();
+  const opties = [
+    { code: "nl", label: t("instellingen.taalNederlands") },
+    { code: "en", label: t("instellingen.taalEngels") },
+  ];
+  return (
+    <Card className="p-6">
+      <h2 className="font-semibold text-slate-800 mb-1">
+        {t("instellingen.taalTitel")}
+      </h2>
+      <p className="text-sm text-slate-500 mb-4">
+        {t("instellingen.taalOmschrijving")}
+      </p>
+      <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
+        {opties.map((o) => (
+          <button
+            key={o.code}
+            type="button"
+            onClick={() => setTaal(o.code)}
+            aria-pressed={taal === o.code}
+            className={`px-4 py-1.5 text-sm transition-colors ${
+              taal === o.code
+                ? "bg-brand-600 text-white"
+                : "bg-white text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 export default function Instellingen() {
   const location = useLocation();
+  const { t } = useTaal();
   const [categorieen, setCategorieen] = useState([]);
   const [dataverzoeken, setDataverzoeken] = useState(null);
   const [wetgeving, setWetgeving] = useState(null);
@@ -38,21 +84,25 @@ export default function Instellingen() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <TaalKaart />
+
       <Card className="p-6">
-        <h2 className="font-semibold text-slate-800 mb-1">Organisatie</h2>
+        <h2 className="font-semibold text-slate-800 mb-1">
+          {t("instellingen.organisatie")}
+        </h2>
         <p className="text-sm text-slate-500 mb-4">
-          Algemene gegevens van uw groothandel.
+          {t("instellingen.organisatieOmschrijving")}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="block">
             <span className="block text-xs font-medium text-slate-600 mb-1">
-              Bedrijfsnaam
+              {t("instellingen.bedrijfsnaam")}
             </span>
             <input className="input" defaultValue="Mijn Groothandel B.V." />
           </label>
           <label className="block">
             <span className="block text-xs font-medium text-slate-600 mb-1">
-              Contact e-mail
+              {t("instellingen.contactEmail")}
             </span>
             <input className="input" defaultValue="gvdmond@machine-learning.company" />
           </label>
@@ -60,10 +110,11 @@ export default function Instellingen() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="font-semibold text-slate-800 mb-1">Wetgevingsbeheer</h2>
+        <h2 className="font-semibold text-slate-800 mb-1">
+          {t("instellingen.wetgevingsbeheer")}
+        </h2>
         <p className="text-sm text-slate-500 mb-4">
-          Zet wetgeving aan of uit. Uitgeschakelde wetgeving telt niet mee in
-          compliance-berekeningen en dataverzoeken.
+          {t("instellingen.wetgevingsbeheerOmschrijving")}
         </p>
         {!wetgeving ? (
           <Loading />
@@ -80,14 +131,13 @@ export default function Instellingen() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-slate-800">{w.code}</span>
                     {w.aantal_producten === 0 && (
-                      <Badge color="slate">geen producten</Badge>
+                      <Badge color="slate">{t("instellingen.geenProducten")}</Badge>
                     )}
                   </div>
                   <div className="text-xs text-slate-400 truncate">{w.naam}</div>
                 </div>
                 <div className="w-28 text-xs text-slate-500 text-right shrink-0">
-                  {w.aantal_producten} product
-                  {w.aantal_producten === 1 ? "" : "en"}
+                  {t("instellingen.producten", { n: w.aantal_producten })}
                 </div>
                 <div className="w-32 shrink-0">
                   <ProgressBar value={w.compliance_percentage} />
@@ -114,7 +164,9 @@ export default function Instellingen() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="font-semibold text-slate-800 mb-4">Productcategorieën</h2>
+        <h2 className="font-semibold text-slate-800 mb-4">
+          {t("instellingen.productcategorieen")}
+        </h2>
         <div className="flex flex-wrap gap-2">
           {categorieen.map((c) => (
             <Badge key={c.id} color="blue">
@@ -122,7 +174,9 @@ export default function Instellingen() {
             </Badge>
           ))}
           {categorieen.length === 0 && (
-            <span className="text-sm text-slate-400">Geen categorieën.</span>
+            <span className="text-sm text-slate-400">
+              {t("instellingen.geenCategorieen")}
+            </span>
           )}
         </div>
       </Card>
@@ -130,11 +184,15 @@ export default function Instellingen() {
       <ExportKoppeling />
 
       <Card className="p-6" id="dataverzoeken">
-        <h2 className="font-semibold text-slate-800 mb-4">Dataverzoeken</h2>
+        <h2 className="font-semibold text-slate-800 mb-4">
+          {t("instellingen.dataverzoeken")}
+        </h2>
         {!dataverzoeken ? (
           <Loading />
         ) : dataverzoeken.length === 0 ? (
-          <span className="text-sm text-slate-400">Geen dataverzoeken.</span>
+          <span className="text-sm text-slate-400">
+            {t("instellingen.geenDataverzoeken")}
+          </span>
         ) : (
           <div className="space-y-2">
             {dataverzoeken.map((d) => (
@@ -148,11 +206,13 @@ export default function Instellingen() {
                   </div>
                   <div className="text-xs text-slate-400">
                     {d.leverancier?.naam}
-                    {d.deadline ? ` · deadline ${d.deadline}` : ""}
+                    {d.deadline
+                      ? ` · ${t("instellingen.deadline", { datum: d.deadline })}`
+                      : ""}
                   </div>
                 </div>
                 <Badge color={STATUS_KLEUR[d.status] || "slate"}>
-                  {d.status}
+                  {STATUS_SLEUTEL[d.status] ? t(STATUS_SLEUTEL[d.status]) : d.status}
                 </Badge>
               </div>
             ))}
@@ -164,6 +224,7 @@ export default function Instellingen() {
 }
 
 function ExportKoppeling() {
+  const { t } = useTaal();
   const [webhooks, setWebhooks] = useState(null);
   const [historie, setHistorie] = useState(null);
   const [url, setUrl] = useState("");
@@ -197,22 +258,25 @@ function ExportKoppeling() {
   }
 
   async function verwijder(id) {
-    if (!confirm("Webhook-abonnement verwijderen?")) return;
+    if (!confirm(t("instellingen.webhookVerwijderBevestig"))) return;
     await api.verwijderWebhook(id);
     laad();
   }
 
   return (
     <Card className="p-6">
-      <h2 className="font-semibold text-slate-800 mb-1">PIM/ERP-koppeling</h2>
+      <h2 className="font-semibold text-slate-800 mb-1">
+        {t("instellingen.pimTitel")}
+      </h2>
       <p className="text-sm text-slate-500 mb-4">
-        Abonneer een extern systeem op export-events. Bij elke export ontvangt de
-        opgegeven URL een POST met een JSON-samenvatting van de geëxporteerde data.
+        {t("instellingen.pimOmschrijving")}
       </p>
 
       <form onSubmit={abonneer} className="flex flex-wrap items-end gap-3 mb-4">
         <label className="block flex-1 min-w-[240px]">
-          <span className="block text-xs font-medium text-muted mb-1">Webhook-URL</span>
+          <span className="block text-xs font-medium text-muted mb-1">
+            {t("instellingen.webhookUrl")}
+          </span>
           <input
             type="url"
             required
@@ -224,7 +288,7 @@ function ExportKoppeling() {
         </label>
         <label className="block flex-1 min-w-[180px]">
           <span className="block text-xs font-medium text-muted mb-1">
-            Beschrijving (optioneel)
+            {t("instellingen.beschrijvingOptioneel")}
           </span>
           <input
             value={beschrijving}
@@ -233,7 +297,7 @@ function ExportKoppeling() {
           />
         </label>
         <Button type="submit" disabled={bezig}>
-          {bezig ? "Bezig…" : "Abonneren"}
+          {bezig ? t("actie.bezig") : t("instellingen.abonneren")}
         </Button>
       </form>
       {fout && (
@@ -254,19 +318,19 @@ function ExportKoppeling() {
                 <div className="text-xs text-muted">
                   {w.beschrijving ? `${w.beschrijving} · ` : ""}
                   {w.laatste_status
-                    ? `laatste levering: ${w.laatste_status}`
-                    : "nog niet afgeleverd"}
+                    ? t("instellingen.laatsteLevering", { status: w.laatste_status })
+                    : t("instellingen.nogNietAfgeleverd")}
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <Badge color={w.actief ? "green" : "slate"}>
-                  {w.actief ? "actief" : "uit"}
+                  {w.actief ? t("status.actief") : t("status.uit")}
                 </Badge>
                 <button
                   onClick={() => verwijder(w.id)}
                   className="text-red-500 hover:text-red-700 text-xs"
                 >
-                  Verwijderen
+                  {t("actie.verwijderen")}
                 </button>
               </div>
             </div>
@@ -274,21 +338,23 @@ function ExportKoppeling() {
         </div>
       )}
 
-      <h3 className="text-sm font-semibold text-ink mb-2">Exporthistorie</h3>
+      <h3 className="text-sm font-semibold text-ink mb-2">
+        {t("instellingen.exporthistorie")}
+      </h3>
       {!historie ? (
         <Loading />
       ) : historie.length === 0 ? (
-        <div className="text-sm text-muted">Nog geen exports uitgevoerd.</div>
+        <div className="text-sm text-muted">{t("instellingen.geenExports")}</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-muted border-b border-line">
-                <th className="px-3 py-2 font-medium">Bestand</th>
-                <th className="px-3 py-2 font-medium">Formaat</th>
-                <th className="px-3 py-2 font-medium">Producten</th>
-                <th className="px-3 py-2 font-medium">Webhooks</th>
-                <th className="px-3 py-2 font-medium">Wanneer</th>
+                <th className="px-3 py-2 font-medium">{t("instellingen.kopBestand")}</th>
+                <th className="px-3 py-2 font-medium">{t("instellingen.kopFormaat")}</th>
+                <th className="px-3 py-2 font-medium">{t("instellingen.kopProducten")}</th>
+                <th className="px-3 py-2 font-medium">{t("instellingen.kopWebhooks")}</th>
+                <th className="px-3 py-2 font-medium">{t("instellingen.kopWanneer")}</th>
               </tr>
             </thead>
             <tbody>
@@ -296,7 +362,7 @@ function ExportKoppeling() {
                 let webhookInfo = "—";
                 try {
                   const r = h.webhook_resultaat ? JSON.parse(h.webhook_resultaat) : [];
-                  if (r.length) webhookInfo = `${r.length} afgeleverd`;
+                  if (r.length) webhookInfo = t("instellingen.afgeleverd", { n: r.length });
                 } catch (_) {}
                 return (
                   <tr key={h.id} className="border-b border-line/60">

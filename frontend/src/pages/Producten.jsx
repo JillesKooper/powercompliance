@@ -12,6 +12,7 @@ import {
 } from "../components/ui";
 import ImportDialog from "../components/ImportDialog.jsx";
 import ExportModal from "../components/ExportModal.jsx";
+import { useTaal } from "../context/taal";
 
 const LEEG = {
   naam: "",
@@ -22,6 +23,7 @@ const LEEG = {
 };
 
 export default function Producten() {
+  const { t } = useTaal();
   const [pagina, setPagina] = useState(null);
   const [leveranciers, setLeveranciers] = useState([]);
   const [categorieen, setCategorieen] = useState([]);
@@ -79,12 +81,12 @@ export default function Producten() {
       setToonForm(false);
       laad();
     } catch (err) {
-      alert("Opslaan mislukt: " + err.message);
+      alert(t("producten.opslaanMislukt", { msg: err.message }));
     }
   }
 
   async function verwijder(id) {
-    if (!confirm("Dit product verwijderen?")) return;
+    if (!confirm(t("producten.bevestigVerwijderen"))) return;
     await api.verwijderProduct(id);
     laad();
   }
@@ -95,7 +97,7 @@ export default function Producten() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <input
-          placeholder="Zoek op naam, artikelnr of EAN…"
+          placeholder={t("producten.zoekPlaceholder")}
           value={zoek}
           onChange={(e) => setZoek(e.target.value)}
           className="flex-1 min-w-[220px] rounded-md border border-line px-3 py-2 text-sm text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
@@ -105,7 +107,7 @@ export default function Producten() {
           onChange={(e) => setFilterLev(e.target.value)}
           className="rounded-md border border-line px-3 py-2 text-sm bg-white text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
         >
-          <option value="">Alle leveranciers</option>
+          <option value="">{t("producten.alleLeveranciers")}</option>
           {leveranciers.map((l) => (
             <option key={l.id} value={l.id}>
               {l.naam}
@@ -117,18 +119,18 @@ export default function Producten() {
           onChange={(e) => setFilterStatus(e.target.value)}
           className="rounded-md border border-line px-3 py-2 text-sm bg-white text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
         >
-          <option value="">Alle statussen</option>
-          <option value="compliant">Compliant</option>
-          <option value="gedeeltelijk">Gedeeltelijk</option>
-          <option value="incompleet">Incompleet</option>
+          <option value="">{t("producten.alleStatussen")}</option>
+          <option value="compliant">{t("producten.statusCompliant")}</option>
+          <option value="gedeeltelijk">{t("producten.statusGedeeltelijk")}</option>
+          <option value="incompleet">{t("producten.statusIncompleet")}</option>
         </select>
         <Button variant="ghost" onClick={() => setToonImport(true)}>
-          ⬆ Importeren
+          {t("producten.importeren")}
         </Button>
         <Button variant="ghost" onClick={() => setToonExport(true)}>
-          ⇪ Exporteer naar PIM
+          {t("producten.exporteerPim")}
         </Button>
-        <Button onClick={() => setToonForm((v) => !v)}>+ Nieuw product</Button>
+        <Button onClick={() => setToonForm((v) => !v)}>{t("producten.nieuwProduct")}</Button>
       </div>
 
       {toonExport && <ExportModal onClose={() => setToonExport(false)} />}
@@ -144,7 +146,7 @@ export default function Producten() {
       {toonForm && (
         <Card className="p-5">
           <form onSubmit={opslaan} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Veld label="Naam *">
+            <Veld label={t("producten.labelNaam")}>
               <input
                 required
                 value={form.naam}
@@ -152,7 +154,7 @@ export default function Producten() {
                 className="input"
               />
             </Veld>
-            <Veld label="Artikelnummer">
+            <Veld label={t("producten.labelArtikelnummer")}>
               <input
                 value={form.artikelnummer}
                 onChange={(e) =>
@@ -161,14 +163,14 @@ export default function Producten() {
                 className="input"
               />
             </Veld>
-            <Veld label="EAN">
+            <Veld label={t("producten.labelEan")}>
               <input
                 value={form.ean}
                 onChange={(e) => setForm({ ...form, ean: e.target.value })}
                 className="input"
               />
             </Veld>
-            <Veld label="Leverancier *">
+            <Veld label={t("producten.labelLeverancier")}>
               <select
                 required
                 value={form.leverancier_id}
@@ -177,7 +179,7 @@ export default function Producten() {
                 }
                 className="input bg-white"
               >
-                <option value="">Kies leverancier…</option>
+                <option value="">{t("producten.kiesLeverancier")}</option>
                 {leveranciers.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.naam}
@@ -185,7 +187,7 @@ export default function Producten() {
                 ))}
               </select>
             </Veld>
-            <Veld label="Categorie">
+            <Veld label={t("producten.labelCategorie")}>
               <select
                 value={form.categorie_id}
                 onChange={(e) =>
@@ -193,7 +195,7 @@ export default function Producten() {
                 }
                 className="input bg-white"
               >
-                <option value="">Geen categorie</option>
+                <option value="">{t("producten.geenCategorie")}</option>
                 {categorieen.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.naam}
@@ -202,13 +204,13 @@ export default function Producten() {
               </select>
             </Veld>
             <div className="md:col-span-2 flex gap-2">
-              <Button type="submit">Opslaan</Button>
+              <Button type="submit">{t("actie.opslaan")}</Button>
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => setToonForm(false)}
               >
-                Annuleren
+                {t("actie.annuleren")}
               </Button>
             </div>
           </form>
@@ -222,10 +224,10 @@ export default function Producten() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 border-b border-slate-200">
-                <th className="px-5 py-3 font-medium">Product</th>
-                <th className="px-5 py-3 font-medium">Leverancier</th>
-                <th className="px-5 py-3 font-medium">Categorie</th>
-                <th className="px-5 py-3 font-medium w-56">Compliance</th>
+                <th className="px-5 py-3 font-medium">{t("producten.kolomProduct")}</th>
+                <th className="px-5 py-3 font-medium">{t("producten.kolomLeverancier")}</th>
+                <th className="px-5 py-3 font-medium">{t("producten.kolomCategorie")}</th>
+                <th className="px-5 py-3 font-medium w-56">{t("producten.kolomCompliance")}</th>
                 <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
@@ -260,7 +262,7 @@ export default function Producten() {
                     <ProgressBar value={p.compliance_percentage} />
                     {p.aantal_ontbrekend > 0 && (
                       <div className="text-xs text-red-500 mt-1">
-                        {p.aantal_ontbrekend} veld(en) ontbreekt
+                        {t("producten.veldenOntbreken", { n: p.aantal_ontbrekend })}
                       </div>
                     )}
                   </td>
@@ -269,7 +271,7 @@ export default function Producten() {
                       onClick={() => verwijder(p.id)}
                       className="text-red-500 hover:text-red-700 text-xs"
                     >
-                      Verwijderen
+                      {t("actie.verwijderen")}
                     </button>
                   </td>
                 </tr>
@@ -277,7 +279,7 @@ export default function Producten() {
               {producten.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-5 py-10 text-center text-slate-400">
-                    Geen producten gevonden.
+                    {t("producten.geenProducten")}
                   </td>
                 </tr>
               )}

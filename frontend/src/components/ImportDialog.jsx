@@ -1,27 +1,28 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import { Button, Badge } from "./ui";
 
 const CONFIG = {
   producten: {
-    titel: "Producten importeren",
+    titelKey: "modals.import.titelProducten",
     fn: api.importProducten,
     verplicht: ["Naam", "Leverancier"],
     optioneel: ["Artikelnummer", "EAN", "Categorie", "+ compliance-kolommen"],
-    hint:
-      "Extra kolommen die overeenkomen met een compliance-veld (bv. 'Verpakkingsmateriaal') worden automatisch herkend en ingevuld.",
+    hintKey: "modals.import.hintProducten",
   },
   leveranciers: {
-    titel: "Leveranciers importeren",
+    titelKey: "modals.import.titelLeveranciers",
     fn: api.importLeveranciers,
     verplicht: ["Naam"],
     optioneel: ["Contactpersoon", "E-mail", "Telefoon", "Land"],
-    hint: "Kolomnamen worden automatisch herkend (bv. 'Company' → naam).",
+    hintKey: "modals.import.hintLeveranciers",
   },
 };
 
 export default function ImportDialog({ soort, onClose, onKlaar }) {
+  const { t } = useTaal();
   const cfg = CONFIG[soort];
   const navigate = useNavigate();
   const inputRef = useRef(null);
@@ -34,7 +35,7 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
     if (!file) return;
     const naam = file.name.toLowerCase();
     if (!naam.endsWith(".csv") && !naam.endsWith(".xlsx") && !naam.endsWith(".xlsm")) {
-      setFout("Niet-ondersteund formaat. Gebruik CSV of Excel (.xlsx).");
+      setFout(t("modals.import.formaatFout"));
       return;
     }
     setFout(null);
@@ -54,7 +55,7 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
     <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-800">{cfg.titel}</h2>
+          <h2 className="font-semibold text-slate-800">{t(cfg.titelKey)}</h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-700 text-xl leading-none"
@@ -87,11 +88,11 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
                 <div className="text-4xl mb-2">📥</div>
                 <div className="font-medium text-slate-700">
                   {bezig
-                    ? "Bezig met importeren…"
-                    : "Sleep een bestand hierheen of klik om te kiezen"}
+                    ? t("modals.import.bezig")
+                    : t("modals.import.sleepBestand")}
                 </div>
                 <div className="text-xs text-slate-400 mt-1">
-                  Ondersteund: CSV en Excel (.xlsx)
+                  {t("modals.import.ondersteund")}
                 </div>
                 <input
                   ref={inputRef}
@@ -111,7 +112,7 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
               <div className="mt-5 text-xs text-slate-500 space-y-2">
                 <div>
                   <span className="font-medium text-slate-600">
-                    Verplichte kolommen:{" "}
+                    {t("modals.import.verplichteKolommen")}
                   </span>
                   {cfg.verplicht.map((k) => (
                     <span key={k} className="mr-1">
@@ -120,14 +121,16 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
                   ))}
                 </div>
                 <div>
-                  <span className="font-medium text-slate-600">Optioneel: </span>
+                  <span className="font-medium text-slate-600">
+                    {t("modals.import.optioneel")}
+                  </span>
                   {cfg.optioneel.map((k) => (
                     <span key={k} className="mr-1">
                       <Badge color="slate">{k}</Badge>
                     </span>
                   ))}
                 </div>
-                <p className="text-slate-400 pt-1">{cfg.hint}</p>
+                <p className="text-slate-400 pt-1">{t(cfg.hintKey)}</p>
               </div>
             </>
           ) : (
@@ -147,34 +150,54 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
 }
 
 function Samenvatting({ r, onClose, onNaarOntbrekend }) {
+  const { t } = useTaal();
   const isProduct = r.type === "producten";
+  const typeLabel = isProduct
+    ? t("modals.import.typeProducten")
+    : t("modals.import.typeLeveranciers");
   return (
     <div>
       <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800 mb-4">
-        ✅ Import voltooid — <strong>{r.aantal_geimporteerd}</strong>{" "}
-        {r.type} geïmporteerd uit <em>{r.bestandsnaam}</em>.
+        ✅{" "}
+        {t("modals.import.voltooid", {
+          aantal: r.aantal_geimporteerd,
+          type: typeLabel,
+          bestand: r.bestandsnaam,
+        })}
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <Stat label="Geïmporteerd" value={r.aantal_geimporteerd} kleur="text-slate-800" />
+        <Stat
+          label={t("modals.import.statGeimporteerd")}
+          value={r.aantal_geimporteerd}
+          kleur="text-slate-800"
+        />
         {isProduct && (
           <>
-            <Stat label="Compliant" value={r.aantal_compliant} kleur="text-emerald-600" />
             <Stat
-              label="Data ontbreekt"
+              label={t("modals.import.statCompliant")}
+              value={r.aantal_compliant}
+              kleur="text-emerald-600"
+            />
+            <Stat
+              label={t("modals.import.statDataOntbreekt")}
               value={r.aantal_met_ontbrekende_data}
               kleur="text-red-600"
             />
           </>
         )}
         {!isProduct && (
-          <Stat label="Fouten" value={r.aantal_fouten} kleur="text-red-600" />
+          <Stat
+            label={t("modals.import.statFouten")}
+            value={r.aantal_fouten}
+            kleur="text-red-600"
+          />
         )}
       </div>
 
       <div className="mb-4">
         <div className="text-xs font-medium text-slate-600 mb-1">
-          Herkende kolommen
+          {t("modals.import.herkendeKolommen")}
         </div>
         <div className="space-y-1 text-xs">
           {Object.entries(r.herkende_kolommen).map(([k, v]) => (
@@ -186,7 +209,9 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
         </div>
         {r.genegeerde_kolommen.length > 0 && (
           <div className="text-xs text-slate-400 mt-2">
-            Genegeerd: {r.genegeerde_kolommen.join(", ")}
+            {t("modals.import.genegeerd", {
+              lijst: r.genegeerde_kolommen.join(", "),
+            })}
           </div>
         )}
       </div>
@@ -194,12 +219,12 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
       {r.fouten.length > 0 && (
         <div className="mb-4">
           <div className="text-xs font-medium text-red-600 mb-1">
-            {r.fouten.length} rij(en) overgeslagen
+            {t("modals.import.rijenOvergeslagen", { aantal: r.fouten.length })}
           </div>
           <ul className="text-xs text-red-600 space-y-0.5 max-h-28 overflow-auto">
             {r.fouten.map((f, i) => (
               <li key={i}>
-                rij {f.rij}: {f.bericht}
+                {t("modals.import.rijFout", { rij: f.rij, bericht: f.bericht })}
               </li>
             ))}
           </ul>
@@ -208,10 +233,12 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
 
       <div className="flex gap-2 justify-end pt-2 border-t border-slate-100">
         <Button variant="ghost" onClick={onClose}>
-          Sluiten
+          {t("actie.sluiten")}
         </Button>
         {isProduct && r.aantal_met_ontbrekende_data > 0 && (
-          <Button onClick={onNaarOntbrekend}>Naar ontbrekende data →</Button>
+          <Button onClick={onNaarOntbrekend}>
+            {t("modals.import.naarOntbrekend")}
+          </Button>
         )}
       </div>
     </div>

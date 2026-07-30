@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { Card, StatCard, ProgressBar, Loading, ErrorBox, Button } from "../components/ui";
 import { useNotificaties } from "../context/notificaties";
+import { useTaal } from "../context/taal";
 import NotificatieModal from "../components/NotificatieModal.jsx";
 import ExportModal from "../components/ExportModal.jsx";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { t } = useTaal();
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
   const [documenten, setDocumenten] = useState(null);
@@ -45,36 +47,38 @@ export default function Dashboard() {
 
       <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={() => setToonExport(true)}>
-          ⇪ Exporteer naar PIM
+          {t("dashboard.exporteerPim")}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label="Gemiddelde compliance"
+          label={t("dashboard.gemiddeldeCompliance")}
           value={`${stats.gemiddelde_compliance}%`}
           accent={stats.gemiddelde_compliance >= 80 ? "green" : "amber"}
-          sub="over alle producten"
+          sub={t("dashboard.overAlleProducten")}
           onClick={() => navigate("/producten")}
         />
         <StatCard
-          label="Ontbrekende velden"
+          label={t("dashboard.ontbrekendeVelden")}
           value={stats.aantal_ontbrekende_velden}
           accent="red"
-          sub={`${stats.aantal_producten_incompleet} producten incompleet`}
+          sub={t("dashboard.productenIncompleet", {
+            n: stats.aantal_producten_incompleet,
+          })}
           onClick={() => navigate("/ontbrekende-data")}
         />
         <StatCard
-          label="Leveranciers"
+          label={t("dashboard.leveranciers")}
           value={stats.aantal_leveranciers}
-          sub={`${stats.aantal_producten} producten`}
+          sub={t("dashboard.nProducten", { n: stats.aantal_producten })}
           onClick={() => navigate("/leveranciers")}
         />
         <StatCard
-          label="Open dataverzoeken"
+          label={t("dashboard.openDataverzoeken")}
           value={stats.open_dataverzoeken}
           accent="amber"
-          sub={`${stats.aantal_wetgeving} wetgevingen gevolgd`}
+          sub={t("dashboard.wetgevingenGevolgd", { n: stats.aantal_wetgeving })}
           onClick={() => navigate("/instellingen#dataverzoeken")}
         />
       </div>
@@ -83,20 +87,26 @@ export default function Dashboard() {
         (documenten.aantal_verlopen > 0 || documenten.aantal_binnenkort > 0) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DocumentWidget
-              titel="Verlopen documenten"
+              titel={t("dashboard.verlopenDocumenten")}
               icoon="⛔"
               kleur="red"
               items={documenten.verlopen}
-              leeg="Geen verlopen documenten."
-              metDagen={(d) => `${Math.abs(d.dagen_tot_verloop)} dagen verlopen`}
+              leeg={t("dashboard.geenVerlopenDocumenten")}
+              metDagen={(d) =>
+                t("dashboard.dagenVerlopen", {
+                  n: Math.abs(d.dagen_tot_verloop),
+                })
+              }
             />
             <DocumentWidget
-              titel="Verloopt binnenkort"
+              titel={t("dashboard.verlooptBinnenkort")}
               icoon="⏳"
               kleur="amber"
               items={documenten.verloopt_binnenkort}
-              leeg="Niets verloopt binnen 60 dagen."
-              metDagen={(d) => `nog ${d.dagen_tot_verloop} dagen`}
+              leeg={t("dashboard.nietsVerlooptBinnen60")}
+              metDagen={(d) =>
+                t("dashboard.nogNdagen", { n: d.dagen_tot_verloop })
+              }
             />
           </div>
         )}
@@ -105,13 +115,13 @@ export default function Dashboard() {
         <Card className="lg:col-span-2 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-800">
-              Compliance per wetgeving
+              {t("dashboard.compliancePerWetgeving")}
             </h2>
             <Link
               to="/wetgeving"
               className="text-sm text-brand-600 hover:underline"
             >
-              Bekijk wetgeving →
+              {t("dashboard.bekijkWetgeving")}
             </Link>
           </div>
           <div className="space-y-1">
@@ -137,7 +147,7 @@ export default function Dashboard() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-800">
-              Notificaties
+              {t("dashboard.notificaties")}
               {ongelezen > 0 && (
                 <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold">
                   {ongelezen}
@@ -149,13 +159,15 @@ export default function Dashboard() {
                 onClick={markeerAllesGelezen}
                 className="text-xs text-brand-600 hover:underline"
               >
-                Alles gelezen
+                {t("dashboard.allesGelezen")}
               </button>
             )}
           </div>
           <div className="space-y-3">
             {notificaties.length === 0 && (
-              <div className="text-sm text-slate-400">Geen notificaties.</div>
+              <div className="text-sm text-slate-400">
+                {t("dashboard.geenNotificaties")}
+              </div>
             )}
             {notificaties.map((n) => (
               <button
@@ -208,6 +220,7 @@ export default function Dashboard() {
 }
 
 function DocumentWidget({ titel, icoon, kleur, items, leeg, metDagen }) {
+  const { t } = useTaal();
   const tekstKleur = kleur === "red" ? "text-red-600" : "text-amber-600";
   return (
     <Card className="p-5">
@@ -251,7 +264,7 @@ function DocumentWidget({ titel, icoon, kleur, items, leeg, metDagen }) {
           ))}
           {items.length > 5 && (
             <div className="text-xs text-muted pt-1">
-              + {items.length - 5} meer
+              {t("dashboard.nMeer", { n: items.length - 5 })}
             </div>
           )}
         </div>

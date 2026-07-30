@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Card, Badge, Button, Loading, ErrorBox } from "../components/ui";
+import { useTaal } from "../context/taal";
 
-const CONDITIES = {
-  data_ontbreekt: "alleen als data nog ontbreekt",
-  geen_reply: "alleen als geen reply ontvangen",
-  altijd: "altijd",
+const CONDITIE_KEYS = {
+  data_ontbreekt: "sequences.conditie.data_ontbreekt",
+  geen_reply: "sequences.conditie.geen_reply",
+  altijd: "sequences.conditie.altijd",
 };
 
 export default function Sequences() {
+  const { t } = useTaal();
   const [items, setItems] = useState(null);
   const [wetgeving, setWetgeving] = useState([]);
   const [error, setError] = useState(null);
@@ -54,7 +56,7 @@ export default function Sequences() {
         0;
       setUitvraagMelding({
         naam: seq.naam,
-        tekst: `${aantal} mail${aantal === 1 ? "" : "s"} verstuurd voor "${seq.naam}".`,
+        tekst: t("sequences.uitvraagMelding", { aantal, naam: seq.naam }),
       });
       laad();
     } catch (e) {
@@ -70,7 +72,7 @@ export default function Sequences() {
   }
 
   async function verwijder(seq) {
-    if (!window.confirm(`Sequence "${seq.naam}" verwijderen?`)) return;
+    if (!window.confirm(t("sequences.verwijderBevestig", { naam: seq.naam }))) return;
     await api.verwijderSequence(seq.id);
     laad();
   }
@@ -94,22 +96,20 @@ export default function Sequences() {
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500 max-w-2xl">
-          Geautomatiseerde herinneringsreeksen. Een sequence stuurt op vaste
-          intervallen dataverzoeken en stopt zodra alle data is aangeleverd. De
-          scheduler draait dagelijks; met “Scheduler nu draaien” voer je hem meteen uit.
+          {t("sequences.intro")}
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="ghost" onClick={runScheduler} disabled={schedulerBezig}>
-            {schedulerBezig ? "Bezig…" : "▶ Scheduler nu draaien"}
+            {schedulerBezig ? t("actie.bezig") : t("sequences.schedulerNuDraaien")}
           </Button>
-          <Button onClick={() => setBewerken({})}>+ Nieuwe sequence</Button>
+          <Button onClick={() => setBewerken({})}>{t("sequences.nieuweSequence")}</Button>
         </div>
       </div>
 
       {schedulerResultaat && (
         <div className="rounded-lg bg-brand-50 border border-brand-100 text-brand-800 px-4 py-3 text-sm">
           <div className="font-medium">
-            Scheduler uitgevoerd — {schedulerResultaat.aantal_acties} actie(s).
+            {t("sequences.schedulerUitgevoerd", { aantal: schedulerResultaat.aantal_acties })}
           </div>
           {schedulerResultaat.acties.length > 0 && (
             <ul className="mt-1 space-y-0.5 text-brand-700/90 max-h-40 overflow-auto">
@@ -131,7 +131,7 @@ export default function Sequences() {
 
       {items.length === 0 ? (
         <Card className="p-10 text-center text-slate-500">
-          Nog geen sequences. Maak er één aan om automatische herinneringen te sturen.
+          {t("sequences.leeg")}
         </Card>
       ) : (
         items.map((seq) => (
@@ -151,6 +151,7 @@ export default function Sequences() {
 }
 
 function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, onVerwijder }) {
+  const { t } = useTaal();
   const [detail, setDetail] = useState(null);
   const [open, setOpen] = useState(false);
 
@@ -171,33 +172,36 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-slate-800">{seq.naam}</span>
             {seq.actief ? (
-              <Badge color="green">Actief</Badge>
+              <Badge color="green">{t("status.actief")}</Badge>
             ) : (
-              <Badge color="slate">Inactief</Badge>
+              <Badge color="slate">{t("sequences.inactief")}</Badge>
             )}
             {seq.trigger_type === "wetgeving" ? (
-              <Badge color="blue">⚖️ {seq.wetgeving_code || "wetgeving"}</Badge>
+              <Badge color="blue">⚖️ {seq.wetgeving_code || t("nav.wetgeving")}</Badge>
             ) : (
-              <Badge color="blue">🏭 per leverancier</Badge>
+              <Badge color="blue">🏭 {t("sequences.perLeverancier")}</Badge>
             )}
           </div>
           {seq.beschrijving && (
             <div className="text-sm text-slate-500 mt-1">{seq.beschrijving}</div>
           )}
           <div className="text-xs text-slate-400 mt-1">
-            {seq.stappen.length} stap{seq.stappen.length === 1 ? "" : "pen"} ·{" "}
-            {seq.aantal_actief} actieve leverancier(s) van {seq.aantal_inschrijvingen}
+            {t("sequences.stappenTelling", { aantal: seq.stappen.length })} ·{" "}
+            {t("sequences.actieveLeveranciers", {
+              actief: seq.aantal_actief,
+              totaal: seq.aantal_inschrijvingen,
+            })}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button onClick={onNuUitvragen} disabled={uitvraagBezig}>
-            {uitvraagBezig ? "Bezig…" : "📤 Nu uitvragen"}
+            {uitvraagBezig ? t("actie.bezig") : t("sequences.nuUitvragen")}
           </Button>
           <Button variant="ghost" onClick={onToggle}>
-            {seq.actief ? "Deactiveer" : "Activeer"}
+            {seq.actief ? t("sequences.deactiveer") : t("sequences.activeer")}
           </Button>
           <Button variant="ghost" onClick={onBewerk}>
-            Bewerk
+            {t("actie.bewerken")}
           </Button>
           <Button variant="danger" onClick={onVerwijder}>
             🗑
@@ -211,10 +215,11 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
           <div key={s.id} className="flex items-center gap-2">
             {i > 0 && <span className="text-slate-300">→</span>}
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs">
-              <span className="font-medium text-slate-700">Stap {i + 1}</span>
+              <span className="font-medium text-slate-700">{t("sequences.stap", { nr: i + 1 })}</span>
               <span className="text-slate-400">
                 {" "}
-                · na {s.wachttijd_dagen}d · {CONDITIES[s.conditie] || s.conditie}
+                · {t("sequences.naDagen", { dagen: s.wachttijd_dagen })} ·{" "}
+                {CONDITIE_KEYS[s.conditie] ? t(CONDITIE_KEYS[s.conditie]) : s.conditie}
               </span>
             </div>
           </div>
@@ -227,13 +232,15 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
           onClick={toggleOpen}
           className="text-xs text-brand-600 hover:underline"
         >
-          {open ? "▲ Verberg leveranciers" : "▼ Toon leveranciers in deze sequence"}
+          {open
+            ? t("sequences.verbergLeveranciers")
+            : t("sequences.toonLeveranciers")}
         </button>
         {open && (
           <div className="mt-2">
             {inschrijvingen.length === 0 ? (
               <div className="text-xs text-slate-400 py-2">
-                Nog geen leveranciers ingeschreven.
+                {t("sequences.geenInschrijvingen")}
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -245,15 +252,26 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
                     <span className="text-slate-700">{i.leverancier_naam}</span>
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="text-xs text-slate-400">
-                        stap {Math.min(i.huidige_stap + 1, i.aantal_stappen)}/
-                        {i.aantal_stappen} · {i.aantal_ontbrekend} ontbrekend
+                        {t("sequences.stapVanTotaal", {
+                          huidige: Math.min(i.huidige_stap + 1, i.aantal_stappen),
+                          totaal: i.aantal_stappen,
+                          ontbrekend: i.aantal_ontbrekend,
+                        })}
                       </span>
-                      {i.status === "actief" && <Badge color="amber">actief</Badge>}
+                      {i.status === "actief" && (
+                        <Badge color="amber">
+                          {t("sequences.inschrijvingActief")}
+                        </Badge>
+                      )}
                       {i.status === "voltooid" && (
-                        <Badge color="green">voltooid</Badge>
+                        <Badge color="green">
+                          {t("sequences.inschrijvingVoltooid")}
+                        </Badge>
                       )}
                       {i.status === "gestopt" && (
-                        <Badge color="slate">gestopt</Badge>
+                        <Badge color="slate">
+                          {t("sequences.inschrijvingGestopt")}
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -276,6 +294,7 @@ const LEGE_STAP = {
 };
 
 function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
+  const { t } = useTaal();
   const bestaand = sequence && sequence.id;
   const [naam, setNaam] = useState(sequence.naam || "");
   const [beschrijving, setBeschrijving] = useState(sequence.beschrijving || "");
@@ -310,11 +329,11 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
 
   async function opslaan() {
     if (!naam.trim()) {
-      setFout("Geef de sequence een naam.");
+      setFout(t("sequences.geefNaam"));
       return;
     }
     if (triggerType === "wetgeving" && !wetgevingCode) {
-      setFout("Kies een wetgeving voor deze trigger.");
+      setFout(t("sequences.kiesWetgeving"));
       return;
     }
     setBezig(true);
@@ -350,7 +369,9 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <h2 className="font-semibold text-slate-800">
-            {bestaand ? "Sequence bewerken" : "Nieuwe sequence"}
+            {bestaand
+              ? t("sequences.sequenceBewerken")
+              : t("sequences.nieuweSequence")}
           </h2>
           <button
             onClick={onClose}
@@ -368,35 +389,37 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Naam</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">
+              {t("sequences.veldNaam")}
+            </label>
             <input
               value={naam}
               onChange={(e) => setNaam(e.target.value)}
               className="input"
-              placeholder="bv. Herinneringsreeks ontbrekende data"
+              placeholder={t("sequences.naamPlaceholder")}
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">
-              Beschrijving
+              {t("sequences.veldBeschrijving")}
             </label>
             <input
               value={beschrijving}
               onChange={(e) => setBeschrijving(e.target.value)}
               className="input"
-              placeholder="Korte omschrijving (optioneel)"
+              placeholder={t("sequences.beschrijvingPlaceholder")}
             />
           </div>
 
           <div className="flex flex-wrap gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
-                Trigger
+                {t("sequences.trigger")}
               </label>
               <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
                 {[
-                  ["leverancier", "Per leverancier"],
-                  ["wetgeving", "Per wetgeving"],
+                  ["leverancier", t("sequences.triggerPerLeverancier")],
+                  ["wetgeving", t("sequences.triggerPerWetgeving")],
                 ].map(([key, label]) => (
                   <button
                     key={key}
@@ -415,14 +438,14 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
             {triggerType === "wetgeving" && (
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">
-                  Wetgeving
+                  {t("sequences.veldWetgeving")}
                 </label>
                 <select
                   value={wetgevingCode}
                   onChange={(e) => setWetgevingCode(e.target.value)}
                   className="input"
                 >
-                  <option value="">— kies —</option>
+                  <option value="">{t("sequences.kiesPlaceholder")}</option>
                   {wetgeving.map((w) => (
                     <option key={w.code} value={w.code}>
                       {w.code} — {w.naam}
@@ -437,19 +460,21 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
                 checked={actief}
                 onChange={(e) => setActief(e.target.checked)}
               />
-              Direct activeren
+              {t("sequences.directActiveren")}
             </label>
           </div>
 
           {/* stappen */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium text-slate-600">Stappen</label>
+              <label className="text-xs font-medium text-slate-600">
+                {t("sequences.stappen")}
+              </label>
               <button
                 onClick={voegStapToe}
                 className="text-xs text-brand-600 hover:underline"
               >
-                + Stap toevoegen
+                {t("sequences.stapToevoegen")}
               </button>
             </div>
             <div className="space-y-2">
@@ -470,10 +495,10 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
 
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-200">
           <Button variant="ghost" onClick={onClose}>
-            Annuleren
+            {t("actie.annuleren")}
           </Button>
           <Button onClick={opslaan} disabled={bezig}>
-            {bezig ? "Opslaan…" : "Opslaan"}
+            {bezig ? t("sequences.opslaanBezig") : t("sequences.opslaan")}
           </Button>
         </div>
       </div>
@@ -482,6 +507,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
 }
 
 function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwijder }) {
+  const { t } = useTaal();
   const [open, setOpen] = useState(false);
   const [bezigAI, setBezigAI] = useState(false);
   const [preview, setPreview] = useState(null); // {onderwerp, tekst, ...} of null
@@ -497,7 +523,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
       const r = await api.sequenceGenereerMail({ wetgeving_code: wetgevingCode || null });
       onWijzig("onderwerp", r.onderwerp || "");
       onWijzig("mailtekst", r.tekst || "");
-      if (r.ai_fout) setFout(`AI niet gebruikt: ${r.ai_fout}`);
+      if (r.ai_fout) setFout(t("sequences.aiNietGebruikt", { fout: r.ai_fout }));
     } catch (e) {
       setFout(e.message);
     } finally {
@@ -525,8 +551,10 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
   return (
     <div className="rounded-lg border border-slate-200 text-sm">
       <div className="flex items-center gap-2 px-3 py-2">
-        <span className="font-medium text-slate-500 w-14">Stap {index + 1}</span>
-        <span className="text-slate-400">na</span>
+        <span className="font-medium text-slate-500 w-14">
+          {t("sequences.stapNr", { nr: index + 1 })}
+        </span>
+        <span className="text-slate-400">{t("sequences.na")}</span>
         <input
           type="number"
           min="0"
@@ -534,15 +562,15 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
           onChange={(e) => onWijzig("wachttijd_dagen", e.target.value)}
           className="w-16 rounded-md border border-slate-300 px-2 py-1"
         />
-        <span className="text-slate-400">dagen · mail versturen</span>
+        <span className="text-slate-400">{t("sequences.dagenMailVersturen")}</span>
         <select
           value={stap.conditie}
           onChange={(e) => onWijzig("conditie", e.target.value)}
           className="flex-1 rounded-md border border-slate-300 px-2 py-1 min-w-0"
         >
-          {Object.entries(CONDITIES).map(([k, v]) => (
+          {Object.keys(CONDITIE_KEYS).map((k) => (
             <option key={k} value={k}>
-              {v}
+              {t(CONDITIE_KEYS[k])}
             </option>
           ))}
         </select>
@@ -550,7 +578,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
           <button
             onClick={onVerwijder}
             className="text-slate-400 hover:text-red-600"
-            title="Verwijder stap"
+            title={t("sequences.verwijderStap")}
           >
             ×
           </button>
@@ -563,12 +591,18 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
           onClick={() => setOpen((o) => !o)}
           className="text-xs text-brand-600 hover:underline"
         >
-          {open ? "▲ Verberg mailinhoud" : "▼ Mailinhoud"}
+          {open
+            ? t("sequences.verbergMailinhoud")
+            : t("sequences.toonMailinhoud")}
           {!open && eigenInhoud && (
-            <span className="ml-1 text-slate-400">(eigen tekst ingesteld)</span>
+            <span className="ml-1 text-slate-400">
+              {t("sequences.eigenTekstIngesteld")}
+            </span>
           )}
           {!open && !eigenInhoud && (
-            <span className="ml-1 text-slate-400">(automatisch genereren)</span>
+            <span className="ml-1 text-slate-400">
+              {t("sequences.automatischGenereren")}
+            </span>
           )}
         </button>
 
@@ -580,8 +614,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
               </div>
             )}
             <p className="text-xs text-slate-500">
-              Laat leeg om de mail automatisch te laten genereren (AI/sjabloon), of
-              stel hier een eigen onderwerp en tekst in. Placeholders:{" "}
+              {t("sequences.mailinhoudUitleg")}{" "}
               <code className="text-brand-700">{"{aanhef}"}</code>,{" "}
               <code className="text-brand-700">{"{ontbrekende_data}"}</code>,{" "}
               <code className="text-brand-700">{"{portaal_link}"}</code>,{" "}
@@ -590,34 +623,34 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
 
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
-                Onderwerp
+                {t("sequences.onderwerp")}
               </label>
               <input
                 value={stap.onderwerp || ""}
                 onChange={(e) => onWijzig("onderwerp", e.target.value)}
                 className="input"
-                placeholder="Automatisch (bv. {leverancier} – ontbrekende productcompliance-data)"
+                placeholder={t("sequences.onderwerpPlaceholder")}
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
-                Mailtekst
+                {t("sequences.mailtekst")}
               </label>
               <textarea
                 value={stap.mailtekst || ""}
                 onChange={(e) => onWijzig("mailtekst", e.target.value)}
                 rows={8}
                 className="input font-mono text-xs leading-relaxed"
-                placeholder="Laat leeg om automatisch te genereren, of typ hier je eigen mailtekst met placeholders…"
+                placeholder={t("sequences.mailtekstPlaceholder")}
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="ghost" onClick={genereerAI} disabled={bezigAI}>
-                {bezigAI ? "Genereren…" : "✨ Genereer met AI"}
+                {bezigAI ? t("sequences.genererenBezig") : t("sequences.genereerAi")}
               </Button>
               <Button variant="ghost" onClick={toonPreview} disabled={bezigPreview}>
-                {bezigPreview ? "Laden…" : "👁 Preview"}
+                {bezigPreview ? t("sequences.previewBezig") : t("sequences.preview")}
               </Button>
               {(stap.onderwerp || stap.mailtekst) && (
                 <button
@@ -629,7 +662,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
                   }}
                   className="text-xs text-slate-400 hover:text-red-600"
                 >
-                  Wissen
+                  {t("sequences.wissen")}
                 </button>
               )}
             </div>
@@ -637,16 +670,18 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
             {preview && (
               <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 text-xs text-slate-500">
-                  Preview voor{" "}
+                  {t("sequences.previewVoor")}{" "}
                   <span className="font-medium text-slate-700">
                     {preview.leverancier_naam}
                   </span>
                   {preview.aan_email ? ` <${preview.aan_email}>` : ""}
-                  {preview.voorbeeld && " (fictief voorbeeld)"}
-                  {preview.ai_gebruikt && " · AI-gegenereerd"}
+                  {preview.voorbeeld && t("sequences.fictiefVoorbeeld")}
+                  {preview.ai_gebruikt && t("sequences.aiGegenereerd")}
                 </div>
                 <div className="px-3 py-2 border-b border-slate-100 text-sm">
-                  <span className="text-slate-400">Onderwerp: </span>
+                  <span className="text-slate-400">
+                    {t("sequences.previewOnderwerp")}
+                  </span>
                   <span className="font-medium text-slate-800">{preview.onderwerp}</span>
                 </div>
                 <pre className="px-3 py-3 text-xs text-slate-700 whitespace-pre-wrap font-sans max-h-72 overflow-auto">

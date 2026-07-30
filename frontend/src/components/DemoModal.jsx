@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import { Button, ProgressBar, AnimatedNumber } from "./ui";
 
 const wacht = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const STAPPEN = [
-  { key: "start", titel: "Demo voorbereiden", icoon: "⚙️" },
-  { key: "mail", titel: "Dataverzoek e-mailen", icoon: "✉️" },
-  { key: "reply", titel: "Leverancier reply ontvangen", icoon: "📥" },
-  { key: "verrijk", titel: "AI verrijkt de data", icoon: "✨" },
-  { key: "score", titel: "Compliance-score omhoog", icoon: "📈" },
+  { key: "start", titelKey: "modals.demo.stapStart", icoon: "⚙️" },
+  { key: "mail", titelKey: "modals.demo.stapMail", icoon: "✉️" },
+  { key: "reply", titelKey: "modals.demo.stapReply", icoon: "📥" },
+  { key: "verrijk", titelKey: "modals.demo.stapVerrijk", icoon: "✨" },
+  { key: "score", titelKey: "modals.demo.stapScore", icoon: "📈" },
 ];
 
 export default function DemoModal({ onClose }) {
+  const { t, taal } = useTaal();
   const [stap, setStap] = useState(-1);
   const [lev, setLev] = useState(null);
   const [emailInfo, setEmailInfo] = useState(null);
@@ -33,7 +35,7 @@ export default function DemoModal({ onClose }) {
       setStap(0);
       const st0 = await api.demoReset();
       if (!st0.leverancier) {
-        setFout("Geen leverancier met ontbrekende data gevonden om te demonstreren.");
+        setFout(t("modals.demo.geenLeverancier"));
         return;
       }
       setLev(st0.leverancier);
@@ -44,7 +46,7 @@ export default function DemoModal({ onClose }) {
 
       // Stap 1 — genereer en verstuur het dataverzoek als échte e-mail.
       setStap(1);
-      const gen = await api.genereerEmail({ leverancier_id: lid, taal: "nl" });
+      const gen = await api.genereerEmail({ leverancier_id: lid, taal });
       const snd = await api.verstuurEmail({
         leverancier_id: lid,
         onderwerp: gen.onderwerp,
@@ -95,9 +97,13 @@ export default function DemoModal({ onClose }) {
       <div className="bg-white rounded-xl shadow-xl w-full max-w-xl max-h-[92vh] overflow-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div>
-            <h2 className="font-semibold text-slate-800">🚀 Demo — automatische dataverrijking</h2>
+            <h2 className="font-semibold text-slate-800">
+              {t("modals.demo.titel")}
+            </h2>
             <div className="text-xs text-slate-400">
-              {lev ? `Leverancier: ${lev.naam}` : "Flow: mail → reply → AI → score"}
+              {lev
+                ? t("modals.demo.leverancier", { naam: lev.naam })
+                : t("modals.demo.flow")}
             </div>
           </div>
           <button
@@ -126,11 +132,15 @@ export default function DemoModal({ onClose }) {
                     <div className="text-slate-500 mt-0.5">
                       {emailInfo.kanaal === "gmail" && emailInfo.verzonden ? (
                         <span className="text-emerald-600">
-                          ✅ Echt verzonden via Gmail → {emailInfo.ontvanger}
+                          {t("modals.demo.echtVerzonden", {
+                            ontvanger: emailInfo.ontvanger,
+                          })}
                         </span>
                       ) : (
                         <span>
-                          📨 Verzending gesimuleerd ({emailInfo.aantal_velden} ontbrekende velden)
+                          {t("modals.demo.gesimuleerd", {
+                            aantal: emailInfo.aantal_velden,
+                          })}
                         </span>
                       )}
                     </div>
@@ -144,16 +154,24 @@ export default function DemoModal({ onClose }) {
                 {s.key === "verrijk" && i <= stap && reply && (
                   <div className="animate-fadeIn text-slate-600">
                     <span className="font-medium text-emerald-600">
-                      {reply.aantal_ingevuld} velden
+                      {t("modals.demo.veldenAangevuld", {
+                        aantal: reply.aantal_ingevuld,
+                      })}
                     </span>{" "}
-                    automatisch aangevuld over {reply.aantal_producten} producten{" "}
-                    {reply.ai_gebruikt ? "met AI (claude-sonnet-4-6)" : "(regel-parser)"}.
+                    {t("modals.demo.aangevuldOver", {
+                      aantal: reply.aantal_producten,
+                      methode: reply.ai_gebruikt
+                        ? t("modals.demo.metAi")
+                        : t("modals.demo.regelParser"),
+                    })}
                   </div>
                 )}
                 {s.key === "score" && i <= stap && voorNa.na != null && (
                   <div className="animate-fadeIn flex items-center gap-4 pt-1">
                     <div className="text-center">
-                      <div className="text-xs text-slate-400">voor</div>
+                      <div className="text-xs text-slate-400">
+                        {t("modals.demo.voor")}
+                      </div>
                       <div className="text-lg font-bold text-red-500">
                         {voorNa.voor?.toFixed(1)}%
                       </div>
@@ -162,7 +180,9 @@ export default function DemoModal({ onClose }) {
                       <ProgressBar value={klaar ? voorNa.na : voorNa.voor} />
                     </div>
                     <div className="text-center">
-                      <div className="text-xs text-slate-400">na</div>
+                      <div className="text-xs text-slate-400">
+                        {t("modals.demo.na")}
+                      </div>
                       <div className="text-lg font-bold text-emerald-600">
                         <AnimatedNumber
                           value={klaar ? voorNa.na : voorNa.voor}
@@ -181,17 +201,17 @@ export default function DemoModal({ onClose }) {
         <div className="flex items-center gap-2 px-6 py-4 border-t border-slate-200">
           {klaar && lev && (
             <span className="text-sm text-emerald-600">
-              ✓ Demo voltooid — {lev.naam} is nu volledig compliant.
+              {t("modals.demo.voltooid", { naam: lev.naam })}
             </span>
           )}
           <div className="ml-auto flex items-center gap-2">
             {(klaar || fout) && (
               <Button variant="ghost" onClick={run} disabled={bezig}>
-                ↻ Opnieuw
+                {t("modals.demo.opnieuw")}
               </Button>
             )}
             <Button onClick={onClose} disabled={bezig}>
-              {bezig ? "Bezig…" : "Sluiten"}
+              {bezig ? t("actie.bezig") : t("actie.sluiten")}
             </Button>
           </div>
         </div>
@@ -201,6 +221,7 @@ export default function DemoModal({ onClose }) {
 }
 
 function Stap({ s, toestand, children }) {
+  const { t } = useTaal();
   const bolStijl =
     toestand === "done"
       ? "bg-emerald-500 text-white"
@@ -222,9 +243,11 @@ function Stap({ s, toestand, children }) {
             toestand === "wacht" ? "text-slate-400" : "text-slate-800"
           }`}
         >
-          {s.titel}
+          {t(s.titelKey)}
           {toestand === "actief" && (
-            <span className="ml-2 text-xs text-brand-600">bezig…</span>
+            <span className="ml-2 text-xs text-brand-600">
+              {t("modals.demo.actief")}
+            </span>
           )}
         </div>
         <div className="text-xs mt-1 space-y-1">{children}</div>

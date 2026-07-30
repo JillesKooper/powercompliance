@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import { Badge, Button, Loading } from "./ui";
 
-function statusBadge(d) {
+function statusBadge(d, t) {
   if (d.verloop_status === "verlopen")
-    return <Badge color="red">verlopen ({Math.abs(d.dagen_tot_verloop)} d)</Badge>;
+    return <Badge color="red">{t("widgets.documenten.status.verlopen", { n: Math.abs(d.dagen_tot_verloop) })}</Badge>;
   if (d.verloop_status === "verloopt_binnenkort")
-    return <Badge color="amber">nog {d.dagen_tot_verloop} dagen</Badge>;
+    return <Badge color="amber">{t("widgets.documenten.status.nogDagen", { n: d.dagen_tot_verloop })}</Badge>;
   if (d.verloop_status === "geldig")
-    return <Badge color="green">geldig</Badge>;
-  return <Badge color="slate">geen verloopdatum</Badge>;
+    return <Badge color="green">{t("widgets.documenten.status.geldig")}</Badge>;
+  return <Badge color="slate">{t("widgets.documenten.status.geenVerloopdatum")}</Badge>;
 }
 
 function formaatGrootte(bytes) {
@@ -20,6 +21,7 @@ function formaatGrootte(bytes) {
 }
 
 export default function ProductDocumenten({ productId }) {
+  const { t } = useTaal();
   const [documenten, setDocumenten] = useState(null);
   const [types, setTypes] = useState({});
   const [documenttype, setDocumenttype] = useState("veiligheidsblad");
@@ -42,7 +44,7 @@ export default function ProductDocumenten({ productId }) {
   async function upload(e) {
     e.preventDefault();
     if (!bestand) {
-      setFout("Kies een bestand om te uploaden.");
+      setFout(t("widgets.documenten.kiesBestand"));
       return;
     }
     setBezig(true);
@@ -65,7 +67,7 @@ export default function ProductDocumenten({ productId }) {
   }
 
   async function verwijder(id) {
-    if (!confirm("Dit document verwijderen?")) return;
+    if (!confirm(t("widgets.documenten.bevestigVerwijder"))) return;
     await api.verwijderDocument(id);
     laad();
   }
@@ -77,7 +79,7 @@ export default function ProductDocumenten({ productId }) {
         className="rounded-lg border border-line bg-white p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
       >
         <label className="block md:col-span-1">
-          <span className="block text-xs font-medium text-muted mb-1">Documenttype</span>
+          <span className="block text-xs font-medium text-muted mb-1">{t("widgets.documenten.documenttype")}</span>
           <select
             value={documenttype}
             onChange={(e) => setDocumenttype(e.target.value)}
@@ -92,7 +94,7 @@ export default function ProductDocumenten({ productId }) {
         </label>
         <label className="block">
           <span className="block text-xs font-medium text-muted mb-1">
-            Verloopdatum (optioneel)
+            {t("widgets.documenten.verloopdatumOptioneel")}
           </span>
           <input
             type="date"
@@ -102,7 +104,7 @@ export default function ProductDocumenten({ productId }) {
           />
         </label>
         <label className="block md:col-span-1">
-          <span className="block text-xs font-medium text-muted mb-1">Bestand (PDF)</span>
+          <span className="block text-xs font-medium text-muted mb-1">{t("widgets.documenten.bestandPdf")}</span>
           <input
             ref={inputRef}
             type="file"
@@ -113,7 +115,7 @@ export default function ProductDocumenten({ productId }) {
         </label>
         <div>
           <Button type="submit" disabled={bezig}>
-            {bezig ? "Uploaden…" : "⬆ Upload"}
+            {bezig ? t("widgets.documenten.uploaden") : `⬆ ${t("widgets.documenten.upload")}`}
           </Button>
         </div>
         {fout && (
@@ -127,7 +129,7 @@ export default function ProductDocumenten({ productId }) {
         <Loading />
       ) : documenten.length === 0 ? (
         <div className="text-sm text-muted py-6 text-center">
-          Nog geen documenten gekoppeld aan dit product.
+          {t("widgets.documenten.geenDocumenten")}
         </div>
       ) : (
         <div className="divide-y divide-line/70">
@@ -141,11 +143,11 @@ export default function ProductDocumenten({ productId }) {
                   <span className="font-medium text-ink truncate">
                     📄 {d.originele_naam}
                   </span>
-                  {statusBadge(d)}
+                  {statusBadge(d, t)}
                 </div>
                 <div className="text-xs text-muted mt-0.5">
                   {types[d.documenttype] || d.documenttype} · {formaatGrootte(d.grootte)}
-                  {d.verloopdatum ? ` · verloopt ${d.verloopdatum}` : ""}
+                  {d.verloopdatum ? ` · ${t("widgets.documenten.verloopt", { datum: d.verloopdatum })}` : ""}
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
@@ -153,13 +155,13 @@ export default function ProductDocumenten({ productId }) {
                   onClick={() => api.downloadDocument(d.id)}
                   className="text-brand-600 hover:underline text-xs"
                 >
-                  Download
+                  {t("actie.download")}
                 </button>
                 <button
                   onClick={() => verwijder(d.id)}
                   className="text-red-500 hover:text-red-700 text-xs"
                 >
-                  Verwijderen
+                  {t("actie.verwijderen")}
                 </button>
               </div>
             </div>

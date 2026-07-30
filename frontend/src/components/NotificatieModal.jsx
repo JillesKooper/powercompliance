@@ -1,6 +1,7 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Button, Badge } from "./ui";
 import { useNotificaties, relatieVoor } from "../context/notificaties";
+import { useTaal } from "../context/taal";
 
 const TYPE_KLEUR = {
   info: "blue",
@@ -18,11 +19,12 @@ const TYPE_ICOON = {
 export default function NotificatieModal({ notificatie, onClose }) {
   const navigate = useNavigate();
   const { markeerGelezen } = useNotificaties();
+  const { t, taal } = useTaal();
   const n = notificatie;
   const rel = relatieVoor(n);
 
   const datum = n.aangemaakt_op
-    ? new Date(n.aangemaakt_op).toLocaleString("nl-NL", {
+    ? new Date(n.aangemaakt_op).toLocaleString(taal === "en" ? "en-GB" : "nl-NL", {
         dateStyle: "long",
         timeStyle: "short",
       })
@@ -54,7 +56,7 @@ export default function NotificatieModal({ notificatie, onClose }) {
                 {!n.gelezen && (
                   <span className="inline-flex items-center gap-1 text-xs text-brand-600">
                     <span className="h-2 w-2 rounded-full bg-brand-500" />
-                    Ongelezen
+                    {t("modals.notificatie.ongelezen")}
                   </span>
                 )}
               </div>
@@ -72,9 +74,11 @@ export default function NotificatieModal({ notificatie, onClose }) {
           <p className="text-sm text-slate-700 leading-relaxed">{n.bericht}</p>
 
           <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 text-sm">
-            <Rij label="Datum & tijd">{datum}</Rij>
-            <Rij label="Type">{n.categorie || n.type}</Rij>
-            <Rij label="Gerelateerd">
+            <Rij label={t("modals.notificatie.datumTijd")}>{datum}</Rij>
+            <Rij label={t("modals.notificatie.type")}>
+              {n.categorie || n.type}
+            </Rij>
+            <Rij label={t("modals.notificatie.gerelateerd")}>
               {rel ? (
                 <Link
                   to={rel.to}
@@ -84,10 +88,12 @@ export default function NotificatieModal({ notificatie, onClose }) {
                   }}
                   className="text-brand-700 hover:underline"
                 >
-                  {rel.label} →
+                  {t(rel.labelKey)} →
                 </Link>
               ) : (
-                <span className="text-slate-400">Geen gekoppeld onderdeel</span>
+                <span className="text-slate-400">
+                  {t("modals.notificatie.geenOnderdeel")}
+                </span>
               )}
             </Rij>
           </div>
@@ -99,11 +105,13 @@ export default function NotificatieModal({ notificatie, onClose }) {
             onClick={() => markeerGelezen(n.id)}
             disabled={n.gelezen}
           >
-            {n.gelezen ? "Gelezen ✓" : "Markeer als gelezen"}
+            {n.gelezen
+              ? t("modals.notificatie.gelezen")
+              : t("modals.notificatie.markeerGelezen")}
           </Button>
           <div className="ml-auto">
             <Button onClick={gaNaar} disabled={!rel}>
-              Ga naar
+              {t("modals.notificatie.gaNaar")}
             </Button>
           </div>
         </div>

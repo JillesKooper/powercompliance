@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import { Loading, ErrorBox } from "./ui";
 
 const TYPES = {
-  mail_verstuurd: { icoon: "✉️", label: "Mail verstuurd", kleur: "bg-brand-50 text-brand-700 border-brand-200", stip: "bg-brand-500" },
-  reply_ontvangen: { icoon: "📥", label: "Reply ontvangen", kleur: "bg-emerald-50 text-emerald-700 border-emerald-200", stip: "bg-emerald-500" },
-  data_aangevuld: { icoon: "✨", label: "Data aangevuld", kleur: "bg-emerald-50 text-emerald-700 border-emerald-200", stip: "bg-emerald-500" },
-  status_gewijzigd: { icoon: "🔄", label: "Status gewijzigd", kleur: "bg-amber-50 text-amber-700 border-amber-200", stip: "bg-amber-500" },
-  notificatie: { icoon: "🔔", label: "Notificatie", kleur: "bg-slate-100 text-slate-600 border-slate-200", stip: "bg-slate-400" },
+  mail_verstuurd: { icoon: "✉️", labelKey: "widgets.activiteit.type.mailVerstuurd", kleur: "bg-brand-50 text-brand-700 border-brand-200", stip: "bg-brand-500" },
+  reply_ontvangen: { icoon: "📥", labelKey: "widgets.activiteit.type.replyOntvangen", kleur: "bg-emerald-50 text-emerald-700 border-emerald-200", stip: "bg-emerald-500" },
+  data_aangevuld: { icoon: "✨", labelKey: "widgets.activiteit.type.dataAangevuld", kleur: "bg-emerald-50 text-emerald-700 border-emerald-200", stip: "bg-emerald-500" },
+  status_gewijzigd: { icoon: "🔄", labelKey: "widgets.activiteit.type.statusGewijzigd", kleur: "bg-amber-50 text-amber-700 border-amber-200", stip: "bg-amber-500" },
+  notificatie: { icoon: "🔔", labelKey: "widgets.activiteit.type.notificatie", kleur: "bg-slate-100 text-slate-600 border-slate-200", stip: "bg-slate-400" },
 };
 
 function formatteerDatum(iso) {
@@ -21,6 +22,7 @@ function formatteerDatum(iso) {
 }
 
 export default function ActiviteitTijdlijn({ leverancierId }) {
+  const { t } = useTaal();
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState({}); // id -> bool
@@ -39,7 +41,7 @@ export default function ActiviteitTijdlijn({ leverancierId }) {
   if (items.length === 0) {
     return (
       <div className="px-5 py-10 text-center text-slate-400 text-sm">
-        Nog geen interacties met deze leverancier.
+        {t("widgets.activiteit.geenInteracties")}
       </div>
     );
   }
@@ -64,7 +66,7 @@ export default function ActiviteitTijdlijn({ leverancierId }) {
                   className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${cfg.kleur}`}
                 >
                   <span>{cfg.icoon}</span>
-                  {cfg.label}
+                  {t(cfg.labelKey)}
                 </span>
                 <span className="text-xs text-slate-400">
                   {formatteerDatum(a.aangemaakt_op)}
@@ -79,7 +81,7 @@ export default function ActiviteitTijdlijn({ leverancierId }) {
                     }
                     className="text-xs text-brand-600 hover:underline"
                   >
-                    {isOpen ? "▲ Verberg details" : "▼ Toon details"}
+                    {isOpen ? `▲ ${t("widgets.activiteit.verbergDetails")}` : `▼ ${t("widgets.activiteit.toonDetails")}`}
                   </button>
                   {isOpen && (
                     <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 font-sans leading-relaxed max-h-72 overflow-auto">

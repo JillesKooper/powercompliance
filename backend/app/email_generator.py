@@ -17,7 +17,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from . import models, compliance
+from . import models, compliance, veld_vertaling
 
 log = logging.getLogger(__name__)
 
@@ -32,11 +32,12 @@ def verzamel_ontbrekend(
     leverancier: models.Leverancier,
     wetgeving_code: Optional[str] = None,
     product_id: Optional[int] = None,
+    taal: str = "nl",
 ):
     """Geef (per_product, per_wetgeving) terug.
 
     per_product: lijst van (product, [ComplianceVeld]) met ontbrekende velden.
-    per_wetgeving: dict wetgeving_code -> set van veldnamen.
+    per_wetgeving: dict wetgeving_code -> set van veldnamen (Engels bij taal="en").
 
     Scoping:
     - ``product_id``: beperk tot dat ene product (uitvraag voor 1 product).
@@ -63,7 +64,7 @@ def verzamel_ontbrekend(
             per_product.append((product, ontbrekend))
             for v in ontbrekend:
                 code = v.wetgeving.code if v.wetgeving else "—"
-                per_wet[code].add(v.naam)
+                per_wet[code].add(veld_vertaling.veld_naam(v, taal))
     totaal = sum(len(v) for _, v in per_product)
     log.info(
         "verzamel_ontbrekend(leverancier=%r, wetgeving=%s, product_id=%s): %d producten met samen %d ontbrekende velden",
@@ -121,23 +122,18 @@ def bouw_excel(
     leverancier: models.Leverancier,
     wetgeving_code: Optional[str] = None,
     product_id: Optional[int] = None,
+    taal: str = "nl",
 ) -> io.BytesIO:
     from openpyxl import Workbook
     from openpyxl.styles import Font
 
-    per_product, _ = verzamel_ontbrekend(db, leverancier, wetgeving_code, product_id)
+    per_product, _ = verzamel_ontbrekend(
+        db, leverancier, wetgeving_code, product_id, taal
+    )
     wb = Workbook()
     ws = wb.active
-    ws.title = "Ontbrekende data"
-    kop = [
-        "Product",
-        "Artikelnummer",
-        "EAN",
-        "Wetgeving",
-        "Ontbrekend veld",
-        "Veldtype",
-        "Waarde (in te vullen)",
-    ]
+    ws.title = veld_vertaling.EXCEL_TITEL.get(taal, veld_vertaling.EXCEL_TITEL["nl"])
+    kop = veld_vertaling.EXCEL_KOPPEN.get(taal, veld_vertaling.EXCEL_KOPPEN["nl"])
     ws.append(kop)
     for cel in ws[1]:
         cel.font = Font(bold=True)
@@ -149,8 +145,8 @@ def bouw_excel(
                     product.artikelnummer or "",
                     product.ean or "",
                     v.wetgeving.code if v.wetgeving else "",
-                    v.naam,
-                    v.veld_type,
+                    veld_vertaling.veld_naam(v, taal),
+                    veld_vertaling.veld_type(v.veld_type, taal),
                     "",
                 ]
             )
@@ -174,10 +170,11 @@ def bouw_excel_bytes(
     leverancier: models.Leverancier,
     wetgeving_code: Optional[str] = None,
     product_id: Optional[int] = None,
+    taal: str = "nl",
 ) -> bytes:
     """Zoals bouw_excel, maar geeft de rauwe bytes terug — handig om als
     e-mailbijlage mee te sturen."""
-    return bouw_excel(db, leverancier, wetgeving_code, product_id).getvalue()
+    return bouw_excel(db, leverancier, wetgeving_code, product_id, taal).getvalue()
 
 
 # ---------- onderwerp ----------

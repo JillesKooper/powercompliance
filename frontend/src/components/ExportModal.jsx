@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import { Button, Loading } from "./ui";
 
 const FORMATEN = [
-  { key: "csv", label: "CSV", hint: "Universeel, ; als scheidingsteken" },
-  { key: "xlsx", label: "Excel", hint: "Opgemaakt .xlsx-bestand" },
-  { key: "json", label: "JSON", hint: "Voor API-/systeemkoppelingen" },
+  { key: "csv", label: "CSV", hintKey: "modals.export.hintCsv" },
+  { key: "xlsx", label: "Excel", hintKey: "modals.export.hintXlsx" },
+  { key: "json", label: "JSON", hintKey: "modals.export.hintJson" },
 ];
 
 export default function ExportModal({ onClose }) {
+  const { t, taal } = useTaal();
   const [opties, setOpties] = useState(null);
   const [formaat, setFormaat] = useState("xlsx");
   const [gekozen, setGekozen] = useState(() => new Set());
@@ -62,7 +64,7 @@ export default function ExportModal({ onClose }) {
 
   async function exporteer() {
     if (gekozen.size === 0) {
-      setMelding({ type: "fout", tekst: "Kies minstens één veld om te exporteren." });
+      setMelding({ type: "fout", tekst: t("modals.export.kiesVeld") });
       return;
     }
     setBezig(true);
@@ -82,7 +84,10 @@ export default function ExportModal({ onClose }) {
       });
       setMelding({
         type: "succes",
-        tekst: `Export gestart: ${res.aantal ?? "?"} producten in ${res.bestandsnaam}. Webhook-abonnees zijn op de hoogte gesteld.`,
+        tekst: t("modals.export.exportGestart", {
+          aantal: res.aantal ?? "?",
+          bestandsnaam: res.bestandsnaam,
+        }),
       });
       laadHistorie();
     } catch (e) {
@@ -96,7 +101,7 @@ export default function ExportModal({ onClose }) {
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-line">
-          <h2 className="font-semibold text-ink">Exporteer naar PIM/ERP</h2>
+          <h2 className="font-semibold text-ink">{t("modals.export.titel")}</h2>
           <button
             onClick={onClose}
             className="text-muted hover:text-ink text-xl leading-none"
@@ -114,7 +119,7 @@ export default function ExportModal({ onClose }) {
             {/* Formaat */}
             <div>
               <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
-                Formaat
+                {t("modals.export.formaat")}
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {FORMATEN.map((f) => (
@@ -128,7 +133,7 @@ export default function ExportModal({ onClose }) {
                     }`}
                   >
                     <div className="font-medium text-ink">{f.label}</div>
-                    <div className="text-[11px] text-muted">{f.hint}</div>
+                    <div className="text-[11px] text-muted">{t(f.hintKey)}</div>
                   </button>
                 ))}
               </div>
@@ -137,7 +142,7 @@ export default function ExportModal({ onClose }) {
             {/* Filters */}
             <div>
               <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
-                Welke producten
+                {t("modals.export.welkeProducten")}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <select
@@ -145,7 +150,7 @@ export default function ExportModal({ onClose }) {
                   onChange={(e) => setLeverancierId(e.target.value)}
                   className="input bg-white"
                 >
-                  <option value="">Alle leveranciers</option>
+                  <option value="">{t("modals.export.alleLeveranciers")}</option>
                   {opties.leveranciers.map((l) => (
                     <option key={l.id} value={l.id}>
                       {l.naam}
@@ -157,7 +162,7 @@ export default function ExportModal({ onClose }) {
                   onChange={(e) => setCategorieId(e.target.value)}
                   className="input bg-white"
                 >
-                  <option value="">Alle categorieën</option>
+                  <option value="">{t("modals.export.alleCategorieen")}</option>
                   {opties.categorieen.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.naam}
@@ -169,7 +174,7 @@ export default function ExportModal({ onClose }) {
                   onChange={(e) => setWetgevingCode(e.target.value)}
                   className="input bg-white"
                 >
-                  <option value="">Alle wetgeving</option>
+                  <option value="">{t("modals.export.alleWetgeving")}</option>
                   {opties.wetgeving.map((w) => (
                     <option key={w.code} value={w.code}>
                       {w.code}
@@ -183,7 +188,7 @@ export default function ExportModal({ onClose }) {
                   checked={alleenCompliant}
                   onChange={(e) => setAlleenCompliant(e.target.checked)}
                 />
-                Alleen volledig goedgekeurde (compliant) producten
+                {t("modals.export.alleenCompliant")}
               </label>
             </div>
 
@@ -191,20 +196,22 @@ export default function ExportModal({ onClose }) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="text-xs font-semibold text-muted uppercase tracking-wide">
-                  Welke velden ({gekozen.size})
+                  {t("modals.export.welkeVelden", { aantal: gekozen.size })}
                 </div>
                 <button
                   onClick={() => setGekozen(new Set())}
                   className="text-xs text-brand-600 hover:underline"
                 >
-                  Alles wissen
+                  {t("modals.export.allesWissen")}
                 </button>
               </div>
               <div className="space-y-3 max-h-56 overflow-auto rounded-md border border-line p-3">
                 {groepen.map(([groep, velden]) => (
                   <div key={groep}>
                     <div className="text-[11px] font-semibold text-muted mb-1">
-                      {groep === "product" ? "Productvelden" : `Wetgeving · ${groep}`}
+                      {groep === "product"
+                        ? t("modals.export.productvelden")
+                        : t("modals.export.wetgevingGroep", { groep })}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
                       {velden.map((v) => (
@@ -241,7 +248,7 @@ export default function ExportModal({ onClose }) {
             {historie.length > 0 && (
               <div>
                 <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
-                  Recente exports
+                  {t("modals.export.recenteExports")}
                 </div>
                 <div className="space-y-1">
                   {historie.map((h) => (
@@ -251,8 +258,12 @@ export default function ExportModal({ onClose }) {
                     >
                       <span className="text-ink">{h.bestandsnaam}</span>
                       <span>
-                        {h.aantal_producten} prod. ·{" "}
-                        {new Date(h.aangemaakt_op).toLocaleString("nl-NL")}
+                        {t("modals.export.prodDatum", {
+                          aantal: h.aantal_producten,
+                          datum: new Date(h.aangemaakt_op).toLocaleString(
+                            taal === "en" ? "en-GB" : "nl-NL"
+                          ),
+                        })}
                       </span>
                     </div>
                   ))}
@@ -264,11 +275,11 @@ export default function ExportModal({ onClose }) {
 
         <div className="flex items-center gap-2 px-6 py-4 border-t border-line">
           <Button variant="ghost" onClick={onClose}>
-            Sluiten
+            {t("actie.sluiten")}
           </Button>
           <div className="ml-auto">
             <Button onClick={exporteer} disabled={bezig || !opties}>
-              {bezig ? "Exporteren…" : "Exporteer"}
+              {bezig ? t("modals.export.exporteren") : t("modals.export.exporteer")}
             </Button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import { Card, Badge, Loading, ErrorBox, Button } from "../components/ui";
 import BulkEmailModal from "../components/BulkEmailModal.jsx";
 
@@ -10,8 +11,16 @@ const STATUS_KLEUR = {
   concept: "slate",
 };
 
+// backend-statuswaarde → vertaalsleutel
+const STATUS_SLEUTEL = {
+  "van kracht": "status.vanKracht",
+  aankomend: "status.aankomend",
+  concept: "status.concept",
+};
+
 export default function Wetgeving() {
   const location = useLocation();
+  const { t } = useTaal();
   const [wetten, setWetten] = useState(null);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(null);
@@ -65,14 +74,14 @@ export default function Wetgeving() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-slate-800">{w.code}</span>
                 <Badge color={STATUS_KLEUR[w.status] || "slate"}>
-                  {w.status}
+                  {STATUS_SLEUTEL[w.status] ? t(STATUS_SLEUTEL[w.status]) : w.status}
                 </Badge>
                 {w.actief === false && (
-                  <Badge color="slate">uitgeschakeld</Badge>
+                  <Badge color="slate">{t("status.uitgeschakeld")}</Badge>
                 )}
                 {w.van_kracht_vanaf && (
                   <span className="text-xs text-slate-400">
-                    vanaf {w.van_kracht_vanaf}
+                    {t("wetgeving.vanaf", { datum: w.van_kracht_vanaf })}
                   </span>
                 )}
               </div>
@@ -92,21 +101,24 @@ export default function Wetgeving() {
                     rel="noopener noreferrer"
                     className="rounded-md border border-line px-3 py-2 text-sm font-medium text-ink hover:bg-hover"
                   >
-                    Officiële tekst →
+                    {t("wetgeving.officieleTekst")}
                   </a>
                 )}
                 <Button
                   variant="ghost"
                   onClick={() => setUitvraag({ code: w.code, naam: w.naam })}
                 >
-                  ✉️ Uitvragen
+                  {t("wetgeving.uitvragen")}
                 </Button>
               </div>
               <button
                 onClick={() => setOpen(open === w.id ? null : w.id)}
                 className="text-xs text-slate-400 hover:text-slate-600"
               >
-                {w.compliance_velden.length} velden {open === w.id ? "▲" : "▼"}
+                {t("wetgeving.veldenTelling", {
+                  aantal: w.compliance_velden.length,
+                  pijl: open === w.id ? "▲" : "▼",
+                })}
               </button>
             </div>
           </div>

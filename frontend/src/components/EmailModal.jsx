@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Button, Badge, Loading } from "./ui";
+import { useTaal } from "../context/taal";
 
 export default function EmailModal({
   leverancierId,
@@ -11,7 +12,8 @@ export default function EmailModal({
   productNaam = null,
   onClose,
 }) {
-  const [taal, setTaal] = useState("nl");
+  const { taal: appTaal, t } = useTaal();
+  const [taal, setTaal] = useState(appTaal);
   const [deadline, setDeadline] = useState("");
   const [data, setData] = useState(null);
   const [onderwerp, setOnderwerp] = useState("");
@@ -46,7 +48,7 @@ export default function EmailModal({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    genereer("nl", "");
+    genereer(appTaal, "");
   }, []);
 
   function wisselTaal(nieuw) {
@@ -61,15 +63,15 @@ export default function EmailModal({
   }
 
   async function kopieer() {
-    const inhoud = `${data?.aan_naam ? "Aan: " + data.aan_naam : ""}${
+    const inhoud = `${data?.aan_naam ? t("email.veldAan") + ": " + data.aan_naam : ""}${
       data?.aan_email ? " <" + data.aan_email + ">" : ""
-    }\nCC: ${data?.cc}\nOnderwerp: ${onderwerp}\n\n${tekst}`;
+    }\n${t("email.veldCc")}: ${data?.cc}\n${t("email.veldOnderwerp")}: ${onderwerp}\n\n${tekst}`;
     try {
       await navigator.clipboard.writeText(inhoud);
       setGekopieerd(true);
       setTimeout(() => setGekopieerd(false), 2000);
     } catch (_) {
-      setFout("Kopiëren naar klembord mislukt.");
+      setFout(t("email.kopieerFout"));
     }
   }
 
@@ -83,6 +85,7 @@ export default function EmailModal({
         aan_naam: data?.aan_naam || null,
         aan_email: data?.aan_email || null,
         deadline: deadline || null,
+        taal,
         wetgeving_code: wetgevingCode,
         product_id: productId,
       });
@@ -91,7 +94,7 @@ export default function EmailModal({
       // iets langer tonen zodat het afleverkanaal zichtbaar is
       setTimeout(onClose, 2600);
     } catch (e) {
-      setFout("Versturen mislukt: " + e.message);
+      setFout(t("email.versturenFout", { fout: e.message }));
     } finally {
       setBezigVersturen(false);
     }
@@ -103,7 +106,7 @@ export default function EmailModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div>
             <h2 className="font-semibold text-slate-800">
-              E-mail genereren
+              {t("email.titel")}
               {wetgevingCode ? ` — ${wetgevingCode}` : ""}
             </h2>
             <div className="text-xs text-slate-400">
@@ -113,10 +116,12 @@ export default function EmailModal({
             <div className="mt-1">
               <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[11px] font-medium">
                 {productId
-                  ? `📦 Uitvraag voor 1 product${productNaam ? `: ${productNaam}` : ""}`
+                  ? productNaam
+                    ? t("email.scopeProductNaam", { naam: productNaam })
+                    : t("email.scopeProduct")
                   : wetgevingCode
-                  ? `⚖️ Uitvraag voor wetgeving ${wetgevingCode} (alle producten)`
-                  : "🏭 Uitvraag voor alle producten van deze leverancier"}
+                  ? t("email.scopeWetgeving", { code: wetgevingCode })
+                  : t("email.scopeLeverancier")}
               </span>
             </div>
           </div>
@@ -133,27 +138,27 @@ export default function EmailModal({
           <div className="flex flex-wrap items-end gap-4">
             <div>
               <span className="block text-xs font-medium text-slate-600 mb-1">
-                Taal
+                {t("email.taalLabel")}
               </span>
               <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
-                {["nl", "en"].map((t) => (
+                {["nl", "en"].map((code) => (
                   <button
-                    key={t}
-                    onClick={() => wisselTaal(t)}
+                    key={code}
+                    onClick={() => wisselTaal(code)}
                     className={`px-3 py-1.5 text-sm ${
-                      taal === t
+                      taal === code
                         ? "bg-brand-600 text-white"
                         : "bg-white text-slate-600 hover:bg-slate-50"
                     }`}
                   >
-                    {t === "nl" ? "Nederlands" : "English"}
+                    {code === "nl" ? t("email.taalNl") : t("email.taalEn")}
                   </button>
                 ))}
               </div>
             </div>
             <div>
               <span className="block text-xs font-medium text-slate-600 mb-1">
-                Deadline
+                {t("email.deadlineLabel")}
               </span>
               <input
                 type="date"
@@ -164,7 +169,10 @@ export default function EmailModal({
             </div>
             {data && (
               <div className="text-xs text-slate-500 ml-auto">
-                {data.aantal_velden} velden · {data.aantal_producten} producten
+                {t("email.metaVeldenProducten", {
+                  velden: data.aantal_velden,
+                  producten: data.aantal_producten,
+                })}
               </div>
             )}
           </div>
@@ -181,21 +189,21 @@ export default function EmailModal({
             <>
               {/* adresvelden */}
               <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 text-sm">
-                <Rij label="Aan">
+                <Rij label={t("email.veldAan")}>
                   {data.aan_naam || "—"}
                   {data.aan_email && (
                     <span className="text-slate-400"> &lt;{data.aan_email}&gt;</span>
                   )}
                 </Rij>
-                <Rij label="CC">{data.cc}</Rij>
-                <Rij label="Onderwerp">
+                <Rij label={t("email.veldCc")}>{data.cc}</Rij>
+                <Rij label={t("email.veldOnderwerp")}>
                   <input
                     value={onderwerp}
                     onChange={(e) => setOnderwerp(e.target.value)}
                     className="w-full bg-transparent focus:outline-none"
                   />
                 </Rij>
-                <Rij label="Bijlage">
+                <Rij label={t("email.veldBijlage")}>
                   <button
                     type="button"
                     onClick={async () => {
@@ -203,10 +211,11 @@ export default function EmailModal({
                         await api.downloadBijlage(
                           leverancierId,
                           wetgevingCode,
-                          productId
+                          productId,
+                          taal
                         );
                       } catch (e) {
-                        setFout("Bijlage downloaden mislukt: " + e.message);
+                        setFout(t("email.bijlageDownloadFout", { fout: e.message }));
                       }
                     }}
                     className="inline-flex items-center gap-1 text-brand-700 hover:underline"
@@ -219,9 +228,11 @@ export default function EmailModal({
               {/* AI-indicatie */}
               <div className="flex items-center gap-2 text-xs">
                 {data.ai_gebruikt ? (
-                  <Badge color="green">✨ Gegenereerd met AI (claude-sonnet-4-6)</Badge>
+                  <Badge color="green">
+                    {t("email.aiGegenereerd", { model: "claude-sonnet-4-6" })}
+                  </Badge>
                 ) : (
-                  <Badge color="amber">Sjabloon gebruikt</Badge>
+                  <Badge color="amber">{t("email.sjabloonGebruikt")}</Badge>
                 )}
                 {data.ai_fout && (
                   <span className="text-slate-400">{data.ai_fout}</span>
@@ -231,7 +242,7 @@ export default function EmailModal({
               {/* mailtekst */}
               <div>
                 <span className="block text-xs font-medium text-slate-600 mb-1">
-                  Mailtekst
+                  {t("email.mailtekst")}
                 </span>
                 <textarea
                   value={tekst}
@@ -247,21 +258,21 @@ export default function EmailModal({
         {/* acties */}
         <div className="flex items-center gap-2 px-6 py-4 border-t border-slate-200">
           <Button variant="ghost" onClick={() => genereer(taal, deadline)} disabled={laden}>
-            ✨ Hergenereer met AI
+            {t("email.hergenereer")}
           </Button>
           <Button variant="ghost" onClick={kopieer} disabled={laden}>
-            {gekopieerd ? "Gekopieerd ✓" : "Kopieer"}
+            {gekopieerd ? `${t("actie.gekopieerd")} ✓` : t("actie.kopieer")}
           </Button>
           <div className="ml-auto flex items-center gap-2">
             {verzonden && (
               <span className="text-sm text-emerald-600">
                 {aflevering?.kanaal === "gmail" && aflevering?.verzonden
-                  ? `Verzonden via Gmail → ${aflevering.ontvanger} ✓`
-                  : "Verzonden ✓"}
+                  ? t("email.verzondenGmail", { ontvanger: aflevering.ontvanger })
+                  : t("email.verzonden")}
               </span>
             )}
             <Button onClick={verstuur} disabled={laden || bezigVersturen || verzonden}>
-              {bezigVersturen ? "Versturen…" : "Verstuur"}
+              {bezigVersturen ? t("email.versturen") : t("actie.verstuur")}
             </Button>
           </div>
         </div>

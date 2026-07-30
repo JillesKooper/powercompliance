@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { api } from "../api";
 import { Card, Badge, Loading, ErrorBox, Button } from "../components/ui";
 import EmailModal from "../components/EmailModal.jsx";
+import { useTaal } from "../context/taal";
 
 export default function OntbrekendeData() {
+  const { t } = useTaal();
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
   // {leverancierId, leverancierNaam, productId?, productNaam?}
@@ -60,7 +62,7 @@ export default function OntbrekendeData() {
   if (items.length === 0) {
     return (
       <Card className="p-10 text-center text-slate-500">
-        🎉 Alle producten hebben volledige compliance-data.
+        🎉 {t("ontbrekendeData.geenOntbrekend")}
       </Card>
     );
   }
@@ -80,18 +82,25 @@ export default function OntbrekendeData() {
       <Card className="p-5">
         <div className="text-sm text-slate-600">
           <span className="font-semibold text-red-600">{totaalVelden}</span>{" "}
-          ontbrekende velden verspreid over{" "}
-          <span className="font-semibold">{items.length}</span> producten en{" "}
-          <span className="font-semibold">{groepen.length}</span> leveranciers.
+          {t("ontbrekendeData.samenvattingVelden")}{" "}
+          <span className="font-semibold">{items.length}</span>{" "}
+          {t("ontbrekendeData.samenvattingProducten")}{" "}
+          <span className="font-semibold">{groepen.length}</span>{" "}
+          {t("ontbrekendeData.samenvattingLeveranciers")}
         </div>
       </Card>
 
       {replyResultaat && (
         <div className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm">
-          ✅ Reply van <span className="font-semibold">{replyResultaat.naam}</span>{" "}
-          verwerkt — <span className="font-semibold">{replyResultaat.aantal}</span>{" "}
-          velden automatisch aangevuld over {replyResultaat.producten} producten{" "}
-          {replyResultaat.ai ? "(AI-parsing)" : "(regel-parser)"}.
+          ✅{" "}
+          {t("ontbrekendeData.replyVerwerkt", {
+            naam: replyResultaat.naam,
+            aantal: replyResultaat.aantal,
+            producten: replyResultaat.producten,
+          })}{" "}
+          {replyResultaat.ai
+            ? t("ontbrekendeData.replyAiParsing")
+            : t("ontbrekendeData.replyRegelParser")}
         </div>
       )}
 
@@ -105,7 +114,7 @@ export default function OntbrekendeData() {
                   (s, p) => s + p.ontbrekende_velden.length,
                   0
                 )}{" "}
-                velden
+                {t("ontbrekendeData.velden")}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
@@ -118,7 +127,7 @@ export default function OntbrekendeData() {
                   })
                 }
               >
-                ✉️ E-mail (alle producten)
+                ✉️ {t("ontbrekendeData.emailAlleProducten")}
               </Button>
               <Button
                 variant="ghost"
@@ -126,8 +135,8 @@ export default function OntbrekendeData() {
                 disabled={replyBezig === groep.id}
               >
                 {replyBezig === groep.id
-                  ? "⏳ Verwerken…"
-                  : "📥 Simuleer leverancier reply"}
+                  ? `⏳ ${t("ontbrekendeData.verwerken")}`
+                  : `📥 ${t("ontbrekendeData.simuleerReply")}`}
               </Button>
             </div>
           </div>
@@ -155,7 +164,7 @@ export default function OntbrekendeData() {
                     }
                     className="ml-auto shrink-0 text-xs text-brand-600 hover:underline"
                   >
-                    ✉️ Uitvraag voor dit product
+                    ✉️ {t("ontbrekendeData.uitvraagDitProduct")}
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">

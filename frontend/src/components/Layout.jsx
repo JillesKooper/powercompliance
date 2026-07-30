@@ -1,23 +1,22 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useNotificaties } from "../context/notificaties";
+import { useTaal } from "../context/taal";
 
 const NAV = [
-  { to: "/", label: "Dashboard", icon: "📊", end: true },
-  { to: "/producten", label: "Producten", icon: "📦" },
-  { to: "/leveranciers", label: "Leveranciers", icon: "🏭" },
-  { to: "/ontbrekende-data", label: "Ontbrekende data", icon: "⚠️" },
-  { to: "/wetgeving", label: "Wetgeving", icon: "⚖️" },
-  { to: "/sequences", label: "Sequences", icon: "🔁" },
-  { to: "/rapportages", label: "Rapportages", icon: "📈" },
-  { to: "/instellingen", label: "Instellingen", icon: "⚙️" },
+  { to: "/", labelKey: "nav.dashboard", icon: "📊", end: true },
+  { to: "/producten", labelKey: "nav.producten", icon: "📦" },
+  { to: "/leveranciers", labelKey: "nav.leveranciers", icon: "🏭" },
+  { to: "/ontbrekende-data", labelKey: "nav.ontbrekendeData", icon: "⚠️" },
+  { to: "/wetgeving", labelKey: "nav.wetgeving", icon: "⚖️" },
+  { to: "/sequences", labelKey: "nav.sequences", icon: "🔁" },
+  { to: "/rapportages", labelKey: "nav.rapportages", icon: "📈" },
+  { to: "/instellingen", labelKey: "nav.instellingen", icon: "⚙️" },
 ];
-
-const GEBRUIKER = "Guus van der Mond";
-const BEDRIJF = "Machine Learning Company";
 
 export default function Layout({ children }) {
   const location = useLocation();
   const { ongelezen } = useNotificaties();
+  const { t } = useTaal();
   const huidig = NAV.find((n) =>
     n.end ? location.pathname === n.to : location.pathname.startsWith(n.to)
   );
@@ -38,14 +37,14 @@ export default function Layout({ children }) {
         <div className="ml-auto flex items-center gap-1 text-muted">
           <button
             type="button"
-            aria-label="Instellingen"
+            aria-label={t("nav.instellingen")}
             className="h-9 w-9 grid place-items-center rounded-md hover:bg-hover hover:text-ink transition-colors"
           >
             <GearIcon />
           </button>
           <button
             type="button"
-            aria-label="Apps"
+            aria-label={t("nav.apps")}
             className="h-9 w-9 grid place-items-center rounded-md hover:bg-hover hover:text-ink transition-colors"
           >
             <GridIcon />
@@ -58,9 +57,9 @@ export default function Layout({ children }) {
         <aside className="w-[210px] shrink-0 bg-white flex flex-col">
           <div className="px-4 py-4">
             <div className="text-sm font-bold text-ink leading-tight">
-              {GEBRUIKER}
+              {t("app.gebruiker")}
             </div>
-            <div className="text-xs text-muted mt-0.5">{BEDRIJF}</div>
+            <div className="text-xs text-muted mt-0.5">{t("app.bedrijf")}</div>
           </div>
           <nav className="flex-1 px-2 space-y-0.5">
             {NAV.map((item) => (
@@ -77,7 +76,7 @@ export default function Layout({ children }) {
                 }
               >
                 <span className="text-base">{item.icon}</span>
-                <span className="flex-1">{item.label}</span>
+                <span className="flex-1">{t(item.labelKey)}</span>
                 {item.to === "/" && ongelezen > 0 && (
                   <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-brand-500 text-white text-[11px] font-semibold">
                     {ongelezen}
@@ -91,7 +90,7 @@ export default function Layout({ children }) {
         {/* Main */}
         <main className="flex-1 min-w-0 overflow-auto p-8">
           <h1 className="text-xl font-semibold text-ink mb-6">
-            {huidig?.label ?? "PowerCompliance"}
+            {huidig ? t(huidig.labelKey) : t("app.naam")}
           </h1>
           {children}
         </main>

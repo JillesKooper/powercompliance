@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { useTaal } from "../context/taal";
 import { Button, Badge, Loading } from "./ui";
 import EmailModal from "./EmailModal.jsx";
 
 export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }) {
+  const { t, taal: appTaal } = useTaal();
   const [lijst, setLijst] = useState(null);
   const [geselecteerd, setGeselecteerd] = useState(new Set());
-  const [taal, setTaal] = useState("nl");
+  // Verzendtaal volgt standaard de app-taal, maar mag per uitvraag afwijken.
+  const [taal, setTaal] = useState(appTaal);
   const [deadline, setDeadline] = useState("");
   const [fout, setFout] = useState(null);
   const [bezig, setBezig] = useState(false);
@@ -43,7 +46,7 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
       });
       setResultaat(r);
     } catch (e) {
-      setFout("Versturen mislukt: " + e.message);
+      setFout(t("email.versturenFout", { fout: e.message }));
     } finally {
       setBezig(false);
     }
@@ -65,7 +68,7 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div>
             <h2 className="font-semibold text-slate-800">
-              Uitvragen — {wetgevingCode}
+              {t("email.bulkTitel", { code: wetgevingCode })}
             </h2>
             <div className="text-xs text-slate-400">{wetgevingNaam}</div>
           </div>
@@ -87,8 +90,10 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
           {resultaat ? (
             <div className="space-y-3">
               <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
-                ✅ {resultaat.aantal} dataverzoek(en) verstuurd voor{" "}
-                {resultaat.wetgeving_code}.
+                {t("email.bulkResultaat", {
+                  aantal: resultaat.aantal,
+                  code: resultaat.wetgeving_code,
+                })}
               </div>
               <ul className="text-sm text-slate-600 space-y-1 max-h-60 overflow-auto">
                 {resultaat.leveranciers.map((l) => (
@@ -96,41 +101,41 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
                 ))}
               </ul>
               <div className="text-right">
-                <Button onClick={onClose}>Sluiten</Button>
+                <Button onClick={onClose}>{t("actie.sluiten")}</Button>
               </div>
             </div>
           ) : !lijst ? (
             <Loading />
           ) : lijst.length === 0 ? (
             <div className="text-sm text-slate-500 py-6 text-center">
-              Geen leveranciers met ontbrekende data voor {wetgevingCode}.
+              {t("email.bulkGeenLeveranciers", { code: wetgevingCode })}
             </div>
           ) : (
             <>
               <div className="flex flex-wrap items-end gap-4">
                 <div>
                   <span className="block text-xs font-medium text-slate-600 mb-1">
-                    Taal
+                    {t("email.taalLabel")}
                   </span>
                   <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
-                    {["nl", "en"].map((t) => (
+                    {["nl", "en"].map((code) => (
                       <button
-                        key={t}
-                        onClick={() => setTaal(t)}
+                        key={code}
+                        onClick={() => setTaal(code)}
                         className={`px-3 py-1.5 text-sm ${
-                          taal === t
+                          taal === code
                             ? "bg-brand-600 text-white"
                             : "bg-white text-slate-600 hover:bg-slate-50"
                         }`}
                       >
-                        {t === "nl" ? "Nederlands" : "English"}
+                        {code === "nl" ? t("email.taalNl") : t("email.taalEn")}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
                   <span className="block text-xs font-medium text-slate-600 mb-1">
-                    Deadline
+                    {t("email.deadlineLabel")}
                   </span>
                   <input
                     type="date"
@@ -142,8 +147,10 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
               </div>
 
               <div className="text-sm text-slate-600">
-                <span className="font-semibold">{lijst.length}</span> leverancier(s)
-                met ontbrekende {wetgevingCode}-data:
+                {t("email.bulkAantalLeveranciers", {
+                  aantal: lijst.length,
+                  code: wetgevingCode,
+                })}
               </div>
 
               <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 max-h-64 overflow-auto">
@@ -164,7 +171,9 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
                         · {l.contactpersoon || "—"}
                       </span>
                     </span>
-                    <Badge color="red">{l.aantal_velden} velden</Badge>
+                    <Badge color="red">
+                      {t("email.bulkVeldenBadge", { aantal: l.aantal_velden })}
+                    </Badge>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -173,7 +182,7 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
                       }}
                       className="text-brand-600 hover:underline text-xs"
                     >
-                      Bekijk
+                      {t("email.bulkBekijk")}
                     </button>
                   </label>
                 ))}
@@ -185,7 +194,7 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
         {!resultaat && lijst && lijst.length > 0 && (
           <div className="flex items-center gap-2 px-6 py-4 border-t border-slate-200">
             <Button variant="ghost" onClick={onClose}>
-              Annuleren
+              {t("actie.annuleren")}
             </Button>
             <div className="ml-auto">
               <Button
@@ -193,10 +202,10 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
                 disabled={bezig || geselecteerd.size === 0}
               >
                 {bezig
-                  ? "Versturen…"
-                  : `Verstuur naar ${geselecteerd.size} leverancier${
-                      geselecteerd.size === 1 ? "" : "s"
-                    }`}
+                  ? t("email.versturen")
+                  : geselecteerd.size === 1
+                  ? t("email.bulkVerstuurNaarEen")
+                  : t("email.bulkVerstuurNaarMeer", { aantal: geselecteerd.size })}
               </Button>
             </div>
           </div>
