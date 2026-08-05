@@ -64,7 +64,25 @@ export default function ExportModal({ onClose }) {
     });
   }
 
-  async function exporteer() {
+  // Gekozen veldsleutels in de volgorde van de optielijst.
+  function gekozenVelden() {
+    return opties.velden.map((v) => v.sleutel).filter((s) => gekozen.has(s));
+  }
+
+  function filterPayload() {
+    return {
+      formaat,
+      velden: gekozenVelden(),
+      leverancier_id: leverancierId ? Number(leverancierId) : null,
+      categorie_id: categorieId ? Number(categorieId) : null,
+      wetgeving_code: wetgevingCode || null,
+      alleen_compliant: alleenCompliant,
+      taal,
+    };
+  }
+
+  // Verstuur de compliance-data naar het/de gekoppelde PIM/ERP-systeem/systemen.
+  async function verstuurNaarPim() {
     if (gekozen.size === 0) {
       setMelding({ type: "fout", tekst: t("modals.export.kiesVeld") });
       return;
@@ -72,19 +90,32 @@ export default function ExportModal({ onClose }) {
     setBezig(true);
     setMelding(null);
     try {
-      // behoud de volgorde zoals in de optielijst
-      const volgorde = opties.velden
-        .map((v) => v.sleutel)
-        .filter((s) => gekozen.has(s));
-      const res = await api.exporteer({
-        formaat,
-        velden: volgorde,
-        leverancier_id: leverancierId ? Number(leverancierId) : null,
-        categorie_id: categorieId ? Number(categorieId) : null,
-        wetgeving_code: wetgevingCode || null,
-        alleen_compliant: alleenCompliant,
-        taal,
+      const res = await api.exporteerNaarPim(filterPayload());
+      setMelding({
+        type: "succes",
+        tekst: t("modals.export.pimVerstuurd", {
+          aantal: res.aantal_producten ?? "?",
+          koppelingen: res.aantal_koppelingen ?? "?",
+        }),
       });
+      laadHistorie();
+    } catch (e) {
+      setMelding({ type: "fout", tekst: e.message });
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  // Download een kopie van de export als bestand (CSV/Excel/JSON).
+  async function downloadBestand() {
+    if (gekozen.size === 0) {
+      setMelding({ type: "fout", tekst: t("modals.export.kiesVeld") });
+      return;
+    }
+    setBezig(true);
+    setMelding(null);
+    try {
+      const res = await api.exporteer(filterPayload());
       setMelding({
         type: "succes",
         tekst: t("modals.export.exportGestart", {
@@ -282,9 +313,18 @@ export default function ExportModal({ onClose }) {
           <Button variant="ghost" onClick={onClose}>
             {t("actie.sluiten")}
           </Button>
-          <div className="ml-auto">
-            <Button onClick={exporteer} disabled={bezig || !opties}>
-              {bezig ? t("modals.export.exporteren") : t("modals.export.exporteer")}
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={downloadBestand}
+              disabled={bezig || !opties}
+            >
+              {t("modals.export.downloadBestand")}
+            </Button>
+            <Button onClick={verstuurNaarPim} disabled={bezig || !opties}>
+              {bezig
+                ? t("modals.export.naarPimBezig")
+                : t("modals.export.naarPim")}
             </Button>
           </div>
         </div>

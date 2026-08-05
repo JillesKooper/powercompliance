@@ -23,6 +23,11 @@ export default {
           "Export gestart: {aantal} producten in {bestandsnaam}. Webhook-abonnees zijn op de hoogte gesteld.",
         exporteren: "Exporteren…",
         exporteer: "Exporteer",
+        naarPim: "Verstuur naar PIM",
+        naarPimBezig: "Versturen…",
+        downloadBestand: "Download bestand",
+        pimVerstuurd:
+          "{aantal} producten verstuurd naar {koppelingen} PIM-koppeling(en).",
       },
       import: {
         titelProducten: "Producten importeren",
@@ -112,6 +117,11 @@ export default {
           "Export started: {aantal} products in {bestandsnaam}. Webhook subscribers have been notified.",
         exporteren: "Exporting…",
         exporteer: "Export",
+        naarPim: "Send to PIM",
+        naarPimBezig: "Sending…",
+        downloadBestand: "Download file",
+        pimVerstuurd:
+          "{aantal} products sent to {koppelingen} PIM integration(s).",
       },
       import: {
         titelProducten: "Import products",

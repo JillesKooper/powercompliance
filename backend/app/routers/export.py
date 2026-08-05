@@ -33,6 +33,24 @@ def maak_export(req: schemas.ExportRequest, db: Session = Depends(get_db)):
     )
 
 
+@router.post("/naar-pim")
+def exporteer_naar_pim(req: schemas.ExportRequest, db: Session = Depends(get_db)):
+    """Verstuur de compliance-data naar de gekoppelde PIM/ERP-systemen.
+
+    Geeft een duidelijke melding (HTTP 400) als er nog geen koppeling is ingesteld.
+    """
+    if not export_service.actieve_koppelingen(db):
+        detail = (
+            "No PIM/ERP integration has been set up yet. First set up a coupling "
+            "via Settings → PIM/ERP integration."
+            if getattr(req, "taal", "nl") == "en"
+            else "Er is nog geen PIM/ERP-koppeling ingesteld. Stel eerst een "
+            "koppeling in via Instellingen → PIM/ERP-koppeling."
+        )
+        raise HTTPException(status_code=400, detail=detail)
+    return export_service.push_naar_pim(db, req)
+
+
 @router.get("/historie", response_model=List[schemas.ExportLogOut])
 def export_historie(db: Session = Depends(get_db)):
     return (

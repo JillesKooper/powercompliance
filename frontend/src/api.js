@@ -212,6 +212,8 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     }),
+  exporteerNaarPim: (data) =>
+    request("/export/naar-pim", { method: "POST", body: JSON.stringify(data) }),
   exportHistorie: () => request("/export/historie"),
   webhooks: () => request("/export/webhook"),
   abonneerWebhook: (data) =>

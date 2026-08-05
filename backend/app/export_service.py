@@ -210,14 +210,24 @@ def bouw_export(
     return inhoud, bestandsnaam, MEDIA[formaat], len(rijen), velden
 
 
-# ---------- webhooks ----------
-def lever_aan_webhooks(db: Session, samenvatting: dict) -> List[dict]:
-    """POST de export-samenvatting naar alle actieve webhook-abonnementen."""
-    abonnees = (
+# ---------- webhooks / PIM-koppelingen ----------
+def actieve_koppelingen(db: Session) -> List[models.WebhookAbonnement]:
+    """Alle actieve PIM/ERP-koppelingen (webhook-abonnementen)."""
+    return (
         db.query(models.WebhookAbonnement)
         .filter(models.WebhookAbonnement.actief.is_(True))
         .all()
     )
+
+
+def lever_aan_webhooks(
+    db: Session,
+    samenvatting: dict,
+    abonnees: Optional[List[models.WebhookAbonnement]] = None,
+) -> List[dict]:
+    """POST de export-samenvatting naar de (actieve) webhook-abonnementen."""
+    if abonnees is None:
+        abonnees = actieve_koppelingen(db)
     resultaten = []
     for ab in abonnees:
         status = "ok"
@@ -243,30 +253,45 @@ def registreer_export(
     aantal: int,
     velden: List[str],
     bron: str = "handmatig",
+    webhook_resultaat: Optional[List[dict]] = None,
 ) -> models.ExportLog:
-    """Log de export + lever af aan webhooks; geef het ExportLog-record terug."""
-    samenvatting = {
-        "event": "product.export",
-        "formaat": req.formaat,
-        "bestandsnaam": bestandsnaam,
-        "aantal_producten": aantal,
-        "velden": velden,
-        "filters": {
-            "leverancier_id": req.leverancier_id,
-            "categorie_id": req.categorie_id,
-            "wetgeving_code": req.wetgeving_code,
-            "alleen_compliant": req.alleen_compliant,
-        },
-        "tijdstip": datetime.utcnow().isoformat() + "Z",
-    }
-    webhook_resultaat = lever_aan_webhooks(db, samenvatting)
+    """Log de export + lever (indien nog niet gebeurd) af aan webhooks.
+
+    Geef ``webhook_resultaat`` mee wanneer de aflevering al is uitgevoerd
+    (bv. door :func:`push_naar_pim`); dan wordt niet nogmaals bezorgd.
+    Geef het ExportLog-record terug.
+    """
+    if webhook_resultaat is None:
+        samenvatting = {
+            "event": "product.export",
+            "formaat": req.formaat,
+            "bestandsnaam": bestandsnaam,
+            "aantal_producten": aantal,
+            "velden": velden,
+            "filters": {
+                "leverancier_id": req.leverancier_id,
+                "categorie_id": req.categorie_id,
+                "wetgeving_code": req.wetgeving_code,
+                "alleen_compliant": req.alleen_compliant,
+            },
+            "tijdstip": datetime.utcnow().isoformat() + "Z",
+        }
+        webhook_resultaat = lever_aan_webhooks(db, samenvatting)
     log = models.ExportLog(
         formaat=req.formaat,
         bestandsnaam=bestandsnaam,
         aantal_producten=aantal,
         aantal_velden=len(velden),
         velden=json.dumps(velden, ensure_ascii=False),
-        filters=json.dumps(samenvatting["filters"], ensure_ascii=False),
+        filters=json.dumps(
+            {
+                "leverancier_id": req.leverancier_id,
+                "categorie_id": req.categorie_id,
+                "wetgeving_code": req.wetgeving_code,
+                "alleen_compliant": req.alleen_compliant,
+            },
+            ensure_ascii=False,
+        ),
         bron=bron,
         webhook_resultaat=json.dumps(webhook_resultaat, ensure_ascii=False)
         if webhook_resultaat
@@ -276,3 +301,52 @@ def registreer_export(
     db.commit()
     db.refresh(log)
     return log
+
+
+def push_naar_pim(db: Session, req: schemas.ExportRequest) -> dict:
+    """Verstuur de daadwerkelijke compliance-data naar de gekoppelde PIM/ERP-systemen.
+
+    In tegenstelling tot :func:`lever_aan_webhooks` (die enkel een samenvatting
+    stuurt) bevat de payload hier de volledige records. Geeft een resultaat-dict
+    terug met per koppeling de afleverstatus. De router controleert vooraf of er
+    überhaupt een koppeling actief is.
+    """
+    koppelingen = actieve_koppelingen(db)
+    taal = "en" if getattr(req, "taal", "nl") == "en" else "nl"
+    velden, rijen, labels = bouw_rijen(db, req)
+    records = [
+        {label: rij[i] for i, label in enumerate(labels)} for rij in rijen
+    ]
+    stempel = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    bestandsnaam = f"pim-export-{stempel}.json"
+    payload = {
+        "event": "product.export",
+        "formaat": "json",
+        "bestandsnaam": bestandsnaam,
+        "aantal_producten": len(records),
+        "velden": labels,
+        "filters": {
+            "leverancier_id": req.leverancier_id,
+            "categorie_id": req.categorie_id,
+            "wetgeving_code": req.wetgeving_code,
+            "alleen_compliant": req.alleen_compliant,
+        },
+        "records": records,
+        "tijdstip": datetime.utcnow().isoformat() + "Z",
+    }
+    webhook_resultaat = lever_aan_webhooks(db, payload, abonnees=koppelingen)
+    registreer_export(
+        db,
+        req,
+        bestandsnaam,
+        len(records),
+        velden,
+        bron="pim",
+        webhook_resultaat=webhook_resultaat,
+    )
+    return {
+        "aantal_producten": len(records),
+        "bestandsnaam": bestandsnaam,
+        "aantal_koppelingen": len(koppelingen),
+        "koppelingen": webhook_resultaat,
+    }

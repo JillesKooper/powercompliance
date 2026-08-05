@@ -73,6 +73,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Nodig zodat de frontend bij downloads (cross-origin) de bestandsnaam en het
+    # aantal-header kan uitlezen.
+    expose_headers=["Content-Disposition", "X-Export-Aantal"],
 )
 
 app.include_router(leveranciers.router)
