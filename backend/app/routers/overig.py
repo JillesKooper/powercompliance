@@ -10,6 +10,7 @@ from .. import (
     compliance_service,
     notificatie_teksten,
     veld_vertaling,
+    wetgeving_refresh_service,
 )
 from ..database import get_db
 
@@ -57,6 +58,7 @@ def wetgeving_beheer(db: Session = Depends(get_db)):
                 aantal_producten=stats["aantal_producten"],
                 compliance_percentage=stats["compliance_percentage"],
                 categorieen=sorted(c.naam for c in wet.categorieen),
+                laatst_bijgewerkt_op=wet.laatst_bijgewerkt_op,
             )
         )
     return resultaat
@@ -88,7 +90,63 @@ def zet_wetgeving_actief(
         aantal_producten=stats["aantal_producten"],
         compliance_percentage=stats["compliance_percentage"],
         categorieen=sorted(c.naam for c in wet.categorieen),
+        laatst_bijgewerkt_op=wet.laatst_bijgewerkt_op,
     )
+
+
+def _wetgeving_out_vertaald(wet: models.Wetgeving, taal: str) -> schemas.WetgevingOut:
+    """Bouw een WetgevingOut met vertaalde veldnamen/types (zoals de lijst)."""
+    w = schemas.WetgevingOut.model_validate(wet)
+    for veld in w.compliance_velden:
+        veld.naam = veld_vertaling.veld_naam_via_sleutel(veld.sleutel, veld.naam, taal)
+        veld.veld_type = veld_vertaling.veld_type(veld.veld_type, taal)
+    return w
+
+
+# ---------- Wetgeving-refresh (AI + websearch) ----------
+@router.get("/wetgeving/refresh-instelling", response_model=schemas.RefreshInstellingOut)
+def wetgeving_refresh_instelling(db: Session = Depends(get_db)):
+    return schemas.RefreshInstellingOut(
+        frequentie=wetgeving_refresh_service.get_frequentie(db),
+        laatste_run=wetgeving_refresh_service.get_laatste_run(db),
+    )
+
+
+@router.post("/wetgeving/refresh-instelling", response_model=schemas.RefreshInstellingOut)
+def zet_wetgeving_refresh_instelling(
+    data: schemas.RefreshInstellingIn, db: Session = Depends(get_db)
+):
+    if data.frequentie not in wetgeving_refresh_service.GELDIGE_FREQ:
+        raise HTTPException(
+            status_code=400,
+            detail="Ongeldige frequentie (kies: uit, dagelijks, wekelijks, maandelijks).",
+        )
+    wetgeving_refresh_service.zet_instelling(
+        db, wetgeving_refresh_service.FREQ_SLEUTEL, data.frequentie
+    )
+    return schemas.RefreshInstellingOut(
+        frequentie=wetgeving_refresh_service.get_frequentie(db),
+        laatste_run=wetgeving_refresh_service.get_laatste_run(db),
+    )
+
+
+@router.post("/wetgeving/ververs-alle", response_model=schemas.WetgevingRefreshResultaat)
+def ververs_alle_wetgeving(db: Session = Depends(get_db)):
+    """Haal via de AI de actuele info op voor álle actieve wetgevingen."""
+    return wetgeving_refresh_service.ververs_alle_actieve(db)
+
+
+@router.post("/wetgeving/{wetgeving_id}/ververs", response_model=schemas.WetgevingOut)
+def ververs_wetgeving(
+    wetgeving_id: int, taal: str = "nl", db: Session = Depends(get_db)
+):
+    """Haal via de AI de actuele info op voor één wetgeving en geef die terug."""
+    wet = db.get(models.Wetgeving, wetgeving_id)
+    if not wet:
+        raise HTTPException(status_code=404, detail="Wetgeving niet gevonden")
+    wetgeving_refresh_service.ververs_een(db, wet)
+    db.refresh(wet)
+    return _wetgeving_out_vertaald(wet, "en" if taal == "en" else "nl")
 
 
 # ---------- Ontbrekende data ----------

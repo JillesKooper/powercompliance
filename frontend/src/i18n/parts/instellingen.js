@@ -43,6 +43,21 @@ export default {
       kopWanneer: "Wanneer",
       afgeleverd: "{n} afgeleverd",
       webhookVerwijderBevestig: "Webhook-abonnement verwijderen?",
+      // Wetgeving vernieuwen
+      wetgevingRefreshTitel: "Wetgeving vernieuwen",
+      wetgevingRefreshOmschrijving:
+        "Haal via de AI de meest actuele informatie op over elke actieve wetgeving (ingangsdatum, status, wijzigingen en nieuwe verplichtingen). Bij een wijziging krijg je een notificatie.",
+      autoVernieuwen: "Automatisch vernieuwen",
+      freqUit: "Uit",
+      freqDagelijks: "Dagelijks",
+      freqWekelijks: "Wekelijks",
+      freqMaandelijks: "Maandelijks",
+      nuVernieuwen: "↻ Nu vernieuwen",
+      nuVernieuwenBezig: "Bezig met vernieuwen…",
+      laatsteRefresh: "Laatst vernieuwd: {datum}",
+      nooitVernieuwd: "Nog niet vernieuwd",
+      refreshKlaar: "{aantal} wetgeving(en) vernieuwd — {gewijzigd} gewijzigd.",
+      refreshFout: "Vernieuwen mislukt: {fout}",
     },
   },
   en: {
@@ -83,6 +98,21 @@ export default {
       kopWanneer: "When",
       afgeleverd: "{n} delivered",
       webhookVerwijderBevestig: "Delete webhook subscription?",
+      // Legislation refresh
+      wetgevingRefreshTitel: "Refresh legislation",
+      wetgevingRefreshOmschrijving:
+        "Use AI to fetch the most current information about each active piece of legislation (effective date, status, changes and new obligations). You get a notification when something changes.",
+      autoVernieuwen: "Automatic refresh",
+      freqUit: "Off",
+      freqDagelijks: "Daily",
+      freqWekelijks: "Weekly",
+      freqMaandelijks: "Monthly",
+      nuVernieuwen: "↻ Refresh now",
+      nuVernieuwenBezig: "Refreshing…",
+      laatsteRefresh: "Last refreshed: {datum}",
+      nooitVernieuwd: "Not refreshed yet",
+      refreshKlaar: "{aantal} legislation(s) refreshed — {gewijzigd} changed.",
+      refreshFout: "Refresh failed: {fout}",
     },
   },
 };

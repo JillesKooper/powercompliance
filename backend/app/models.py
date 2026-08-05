@@ -134,6 +134,9 @@ class Wetgeving(Base):
     actief = Column(Boolean, default=True)
     info_url = Column(String, nullable=True)  # officiële bron (EUR-Lex)
     samenvatting = Column(Text, nullable=True)  # korte NL-samenvatting
+    # wanneer de wetgeving-informatie voor het laatst via de AI-refresh is
+    # bijgewerkt (ingangsdatum/status/samenvatting).
+    laatst_bijgewerkt_op = Column(DateTime, nullable=True)
 
     compliance_velden = relationship(
         "ComplianceVeld", back_populates="wetgeving", cascade="all, delete-orphan"
@@ -397,3 +400,17 @@ class SequenceInschrijving(Base):
     leverancier = relationship(
         "Leverancier", back_populates="sequence_inschrijvingen"
     )
+
+
+class AppInstelling(Base):
+    """Eenvoudige sleutel/waarde-opslag voor app-instellingen.
+
+    Gebruikt o.a. voor de automatische-vernieuwing-frequentie van de
+    wetgeving-refresh en het tijdstip van de laatste run.
+    """
+
+    __tablename__ = "app_instellingen"
+
+    sleutel = Column(String, primary_key=True)
+    waarde = Column(String, nullable=True)
+    bijgewerkt_op = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

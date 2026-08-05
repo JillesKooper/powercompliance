@@ -117,6 +117,7 @@ class WetgevingOut(BaseModel):
     actief: bool = True
     info_url: Optional[str] = None
     samenvatting: Optional[str] = None
+    laatst_bijgewerkt_op: Optional[datetime] = None
     compliance_velden: List[ComplianceVeldOut] = []
 
 
@@ -130,10 +131,35 @@ class WetgevingBeheer(BaseModel):
     aantal_producten: int
     compliance_percentage: float
     categorieen: List[str] = []
+    laatst_bijgewerkt_op: Optional[datetime] = None
 
 
 class WetgevingActiefRequest(BaseModel):
     actief: bool
+
+
+# ---------- Wetgeving-refresh (AI + websearch) ----------
+class WetgevingRefreshRegel(BaseModel):
+    code: str
+    status: str  # ok | mislukt
+    gewijzigd: bool = False
+    velden: List[str] = []
+
+
+class WetgevingRefreshResultaat(BaseModel):
+    aantal_ververst: int
+    aantal_gewijzigd: int
+    laatste_run: Optional[datetime] = None
+    regels: List[WetgevingRefreshRegel] = []
+
+
+class RefreshInstellingOut(BaseModel):
+    frequentie: str  # uit | dagelijks | wekelijks | maandelijks
+    laatste_run: Optional[datetime] = None
+
+
+class RefreshInstellingIn(BaseModel):
+    frequentie: str
 
 
 # ---------- Bulk dataverzoeken ----------

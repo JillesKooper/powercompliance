@@ -20,6 +20,20 @@ def _dagelijkse_tick() -> None:
         logger.exception("Sequence-tick mislukt")
 
 
+def _wetgeving_refresh_tick() -> None:
+    """Draai de geplande wetgeving-refresh (dagelijks/wekelijks/maandelijks)."""
+    from . import wetgeving_refresh_service
+    from .database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        wetgeving_refresh_service.run_indien_gepland(db)
+    except Exception:  # noqa: BLE001 — nooit de scheduler laten crashen
+        logger.exception("Geplande wetgeving-refresh mislukt")
+    finally:
+        db.close()
+
+
 def start_scheduler() -> None:
     """Start de dagelijkse scheduler (idempotent)."""
     global _scheduler
@@ -38,8 +52,20 @@ def start_scheduler() -> None:
             id="sequences_dagelijks",
             replace_existing=True,
         )
+        # dagelijks controleren of de geplande wetgeving-refresh aan de beurt is;
+        # de service beslist zelf op basis van frequentie + laatste run.
+        _scheduler.add_job(
+            _wetgeving_refresh_tick,
+            trigger="cron",
+            hour=7,
+            minute=0,
+            id="wetgeving_refresh_dagelijks",
+            replace_existing=True,
+        )
         _scheduler.start()
-        logger.info("Sequence-scheduler gestart (dagelijks 08:00 UTC).")
+        logger.info(
+            "Scheduler gestart (sequences 08:00 UTC, wetgeving-refresh 07:00 UTC)."
+        )
     except Exception:  # noqa: BLE001
         logger.exception("Kon de scheduler niet starten — tick alleen handmatig.")
         _scheduler = None

@@ -24,6 +24,17 @@ const STATUS_SLEUTEL = {
   concept: "status.concept",
 };
 
+function formatDatum(iso, taal) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(taal === "en" ? "en-GB" : "nl-NL", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export default function Wetgeving() {
   const location = useLocation();
   const { t, taal } = useTaal();
@@ -31,10 +42,59 @@ export default function Wetgeving() {
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(null);
   const [uitvraag, setUitvraag] = useState(null); // {code, naam}
+  const [bezigId, setBezigId] = useState(null); // wetgeving die nu ververst
+  const [bezigAlle, setBezigAlle] = useState(false);
+  const [melding, setMelding] = useState(null); // {type, tekst}
 
   useEffect(() => {
     api.wetgeving(taal).then(setWetten).catch((e) => setError(e.message));
   }, [taal]);
+
+  async function vernieuwEen(w) {
+    setBezigId(w.id);
+    setMelding(null);
+    try {
+      const bijgewerkt = await api.verversWetgeving(w.id, taal);
+      setWetten((prev) =>
+        prev.map((x) => (x.id === bijgewerkt.id ? bijgewerkt : x))
+      );
+      const gewijzigd =
+        (bijgewerkt.samenvatting || "") !== (w.samenvatting || "") ||
+        bijgewerkt.status !== w.status ||
+        bijgewerkt.van_kracht_vanaf !== w.van_kracht_vanaf;
+      setMelding({
+        type: "succes",
+        tekst: gewijzigd
+          ? t("wetgeving.vernieuwdEenGewijzigd", { code: w.code })
+          : t("wetgeving.vernieuwdEen", { code: w.code }),
+      });
+    } catch (e) {
+      setMelding({ type: "fout", tekst: t("wetgeving.vernieuwenFout", { fout: e.message }) });
+    } finally {
+      setBezigId(null);
+    }
+  }
+
+  async function vernieuwAlle() {
+    setBezigAlle(true);
+    setMelding(null);
+    try {
+      const res = await api.verversAlleWetgeving();
+      const verse = await api.wetgeving(taal);
+      setWetten(verse);
+      setMelding({
+        type: "succes",
+        tekst: t("wetgeving.vernieuwdKlaar", {
+          aantal: res.aantal_ververst,
+          gewijzigd: res.aantal_gewijzigd,
+        }),
+      });
+    } catch (e) {
+      setMelding({ type: "fout", tekst: t("wetgeving.vernieuwenFout", { fout: e.message }) });
+    } finally {
+      setBezigAlle(false);
+    }
+  }
 
   // vanuit het dashboard kan een wetgeving-code worden meegegeven om die
   // direct uit te vouwen en in beeld te scrollen
@@ -60,6 +120,21 @@ export default function Wetgeving() {
           onClose={() => setUitvraag(null)}
         />
       )}
+
+      <div className="flex items-center justify-end gap-3">
+        {melding && (
+          <span
+            className={`text-sm ${
+              melding.type === "succes" ? "text-emerald-700" : "text-red-600"
+            }`}
+          >
+            {melding.tekst}
+          </span>
+        )}
+        <Button variant="ghost" onClick={vernieuwAlle} disabled={bezigAlle}>
+          {bezigAlle ? t("wetgeving.vernieuwenBezig") : t("wetgeving.vernieuwAlle")}
+        </Button>
+      </div>
 
       {wetten.map((w) => (
         <div key={w.id} id={`wet-${w.code}`}>
@@ -120,7 +195,23 @@ export default function Wetgeving() {
                 >
                   {t("wetgeving.uitvragen")}
                 </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => vernieuwEen(w)}
+                  disabled={bezigId === w.id || bezigAlle}
+                >
+                  {bezigId === w.id
+                    ? t("wetgeving.vernieuwenBezig")
+                    : t("wetgeving.vernieuwen")}
+                </Button>
               </div>
+              <span className="text-xs text-slate-400">
+                {w.laatst_bijgewerkt_op
+                  ? t("wetgeving.laatstBijgewerkt", {
+                      datum: formatDatum(w.laatst_bijgewerkt_op, taal),
+                    })
+                  : t("wetgeving.nooitBijgewerkt")}
+              </span>
               <button
                 onClick={() => setOpen(open === w.id ? null : w.id)}
                 className="text-xs text-slate-400 hover:text-slate-600"

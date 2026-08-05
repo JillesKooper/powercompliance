@@ -119,6 +119,20 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ actief }),
     }),
+  // ---------- Wetgeving-refresh (AI + websearch) ----------
+  verversWetgeving: (id, taal = "nl") =>
+    request(
+      `/wetgeving/${id}/ververs${taal && taal !== "nl" ? `?taal=${taal}` : ""}`,
+      { method: "POST" }
+    ),
+  verversAlleWetgeving: () =>
+    request("/wetgeving/ververs-alle", { method: "POST" }),
+  wetgevingRefreshInstelling: () => request("/wetgeving/refresh-instelling"),
+  zetWetgevingRefreshInstelling: (frequentie) =>
+    request("/wetgeving/refresh-instelling", {
+      method: "POST",
+      body: JSON.stringify({ frequentie }),
+    }),
   ontbrekendeData: (taal = "nl") =>
     request(`/ontbrekende-data${taal && taal !== "nl" ? `?taal=${taal}` : ""}`),
   dataverzoeken: (params = {}) => {

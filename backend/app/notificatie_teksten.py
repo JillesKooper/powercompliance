@@ -134,6 +134,26 @@ TEMPLATES = {
             "bericht": "{onderwerp}",
         },
     },
+    "wetgeving_nieuwe_ingangsdatum": {
+        "nl": {
+            "titel": "Nieuwe ingangsdatum voor {code}",
+            "bericht": "{code} geldt volgens de laatste informatie vanaf {datum}. Controleer de compliance-impact.",
+        },
+        "en": {
+            "titel": "New effective date for {code}",
+            "bericht": "According to the latest information, {code} applies from {datum}. Check the compliance impact.",
+        },
+    },
+    "wetgeving_gewijzigd": {
+        "nl": {
+            "titel": "Wetgeving {code} bijgewerkt",
+            "bericht": "De informatie over {code} is bijgewerkt (o.a. {velden}). Bekijk de wijzigingen op de wetgevingspagina.",
+        },
+        "en": {
+            "titel": "Legislation {code} updated",
+            "bericht": "The information about {code} has been updated ({velden}). Review the changes on the legislation page.",
+        },
+    },
 }
 
 # NL categorie-label -> { taal -> label }. We bewaren het NL-label in de kolom
@@ -147,6 +167,7 @@ CATEGORIE = {
     "Twijfelachtige waarde": {"nl": "Twijfelachtige waarde", "en": "Questionable value"},
     "Leverancier-update": {"nl": "Leverancier-update", "en": "Supplier update"},
     "Dataverzoek verstuurd": {"nl": "Dataverzoek verstuurd", "en": "Data request sent"},
+    "Wetgeving bijgewerkt": {"nl": "Wetgeving bijgewerkt", "en": "Legislation updated"},
 }
 
 # Params die zelf een (vertaalbare) enum-waarde zijn i.p.v. vrije tekst.

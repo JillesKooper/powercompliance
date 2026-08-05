@@ -56,6 +56,130 @@ function TaalKaart() {
   );
 }
 
+function formatDatum(iso, taal) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString(taal === "en" ? "en-GB" : "nl-NL", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// AI-vernieuwing van wetgeving: frequentie-instelling + handmatig vernieuwen.
+function WetgevingRefreshKaart() {
+  const { t, taal } = useTaal();
+  const [inst, setInst] = useState(null);
+  const [bezig, setBezig] = useState(false);
+  const [melding, setMelding] = useState(null);
+
+  useEffect(() => {
+    api.wetgevingRefreshInstelling().then(setInst).catch(() => setInst({ frequentie: "uit", laatste_run: null }));
+  }, []);
+
+  const FREQUENTIES = [
+    { code: "uit", label: t("instellingen.freqUit") },
+    { code: "dagelijks", label: t("instellingen.freqDagelijks") },
+    { code: "wekelijks", label: t("instellingen.freqWekelijks") },
+    { code: "maandelijks", label: t("instellingen.freqMaandelijks") },
+  ];
+
+  async function zetFrequentie(frequentie) {
+    const prev = inst;
+    setInst((x) => ({ ...x, frequentie }));
+    try {
+      const bijgewerkt = await api.zetWetgevingRefreshInstelling(frequentie);
+      setInst(bijgewerkt);
+    } catch (e) {
+      setInst(prev);
+      setMelding({ type: "fout", tekst: t("instellingen.refreshFout", { fout: e.message }) });
+    }
+  }
+
+  async function nuVernieuwen() {
+    setBezig(true);
+    setMelding(null);
+    try {
+      const res = await api.verversAlleWetgeving();
+      setInst((x) => ({ ...(x || {}), laatste_run: res.laatste_run }));
+      setMelding({
+        type: "succes",
+        tekst: t("instellingen.refreshKlaar", {
+          aantal: res.aantal_ververst,
+          gewijzigd: res.aantal_gewijzigd,
+        }),
+      });
+    } catch (e) {
+      setMelding({ type: "fout", tekst: t("instellingen.refreshFout", { fout: e.message }) });
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  return (
+    <Card className="p-6">
+      <h2 className="font-semibold text-slate-800 mb-1">
+        {t("instellingen.wetgevingRefreshTitel")}
+      </h2>
+      <p className="text-sm text-slate-500 mb-4">
+        {t("instellingen.wetgevingRefreshOmschrijving")}
+      </p>
+
+      <div className="flex flex-wrap items-center gap-4">
+        <div>
+          <span className="block text-xs font-medium text-muted mb-1">
+            {t("instellingen.autoVernieuwen")}
+          </span>
+          <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
+            {FREQUENTIES.map((f) => (
+              <button
+                key={f.code}
+                type="button"
+                onClick={() => zetFrequentie(f.code)}
+                aria-pressed={inst?.frequentie === f.code}
+                className={`px-3 py-1.5 text-sm transition-colors ${
+                  inst?.frequentie === f.code
+                    ? "bg-brand-600 text-white"
+                    : "bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="ml-auto flex flex-col items-end gap-1">
+          <Button onClick={nuVernieuwen} disabled={bezig}>
+            {bezig ? t("instellingen.nuVernieuwenBezig") : t("instellingen.nuVernieuwen")}
+          </Button>
+          <span className="text-xs text-slate-400">
+            {inst?.laatste_run
+              ? t("instellingen.laatsteRefresh", {
+                  datum: formatDatum(inst.laatste_run, taal),
+                })
+              : t("instellingen.nooitVernieuwd")}
+          </span>
+        </div>
+      </div>
+
+      {melding && (
+        <div
+          className={`mt-4 rounded-md border px-3 py-2 text-sm ${
+            melding.type === "succes"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-red-50 border-red-200 text-red-700"
+          }`}
+        >
+          {melding.tekst}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function Instellingen() {
   const location = useLocation();
   const { t, taal } = useTaal();
@@ -167,6 +291,8 @@ export default function Instellingen() {
           </div>
         )}
       </Card>
+
+      <WetgevingRefreshKaart />
 
       <Card className="p-6">
         <h2 className="font-semibold text-slate-800 mb-4">

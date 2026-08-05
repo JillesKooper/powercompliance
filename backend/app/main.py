@@ -50,7 +50,28 @@ def _migreer_notificatie_kolommen():
                 pass
 
 
+def _migreer_wetgeving_kolommen():
+    """Voeg de refresh-kolom toe aan bestaande wetgeving-tabellen (idempotent)."""
+    from sqlalchemy import inspect, text
+
+    try:
+        insp = inspect(engine)
+        bestaande = {c["name"] for c in insp.get_columns("wetgeving")}
+    except Exception:
+        return
+    if "laatst_bijgewerkt_op" in bestaande:
+        return
+    with engine.begin() as conn:
+        try:
+            conn.execute(
+                text("ALTER TABLE wetgeving ADD COLUMN laatst_bijgewerkt_op DATETIME")
+            )
+        except Exception:
+            pass
+
+
 _migreer_notificatie_kolommen()
+_migreer_wetgeving_kolommen()
 
 app = FastAPI(
     title="PowerCompliance API",
