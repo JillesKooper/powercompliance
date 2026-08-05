@@ -104,6 +104,13 @@ export const api = {
     request(`/producten/${productId}/compliance/${veldId}/verifieer`, {
       method: "POST",
     }),
+  wijzigComplianceWaarde: (productId, veldId, data, taal = "nl") =>
+    request(
+      `/producten/${productId}/compliance-waarde/${veldId}${
+        taal && taal !== "nl" ? `?taal=${taal}` : ""
+      }`,
+      { method: "PUT", body: JSON.stringify(data) }
+    ),
   maakProduct: (data) =>
     request("/producten", { method: "POST", body: JSON.stringify(data) }),
   wijzigProduct: (id, data) =>

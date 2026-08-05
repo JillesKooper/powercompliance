@@ -215,3 +215,74 @@ def verifieer_waarde(
         twijfelachtig=False,
         status="ingevuld",
     )
+
+
+def _regel_uit_waarde(
+    veld: models.ComplianceVeld,
+    w: Optional[models.ProductComplianceWaarde],
+    taal: str,
+) -> schemas.ProductComplianceRegel:
+    return schemas.ProductComplianceRegel(
+        compliance_veld_id=veld.id,
+        veld_naam=veld_vertaling.veld_naam(veld, taal),
+        sleutel=veld.sleutel,
+        veld_type=veld_vertaling.veld_type(veld.veld_type, taal),
+        verplicht=veld.verplicht,
+        wetgeving_id=veld.wetgeving_id,
+        wetgeving_code=veld.wetgeving.code if veld.wetgeving else "—",
+        ingevuld=bool(w and w.ingevuld),
+        waarde=(w.waarde if w else None),
+        bron=(w.bron if w else None),
+        bron_url=(w.bron_url if w else None),
+        geverifieerd=bool(w and w.geverifieerd),
+        twijfelachtig=bool(w and w.twijfelachtig),
+        status=_veld_status(w),
+    )
+
+
+@router.put(
+    "/{product_id}/compliance-waarde/{veld_id}",
+    response_model=schemas.ProductComplianceRegel,
+)
+def wijzig_compliance_waarde(
+    product_id: int,
+    veld_id: int,
+    data: schemas.ComplianceWaardeUpdate,
+    taal: str = "nl",
+    db: Session = Depends(get_db),
+):
+    """Bewerk een (handmatig ingevulde) compliance-veldwaarde en herbereken de score."""
+    taal = "en" if taal == "en" else "nl"
+    product = db.get(models.Product, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product niet gevonden")
+    veld = db.get(models.ComplianceVeld, veld_id)
+    if not veld:
+        raise HTTPException(status_code=404, detail="Compliance-veld niet gevonden")
+
+    nieuwe_waarde = (data.waarde or "").strip()
+    w = (
+        db.query(models.ProductComplianceWaarde)
+        .filter_by(product_id=product_id, compliance_veld_id=veld_id)
+        .first()
+    )
+    if not w:
+        w = models.ProductComplianceWaarde(
+            product_id=product_id, compliance_veld_id=veld_id
+        )
+        db.add(w)
+    # handmatige bewerking: telt mee (geverifieerd), bron wordt handmatig
+    w.waarde = nieuwe_waarde or None
+    w.ingevuld = bool(nieuwe_waarde)
+    w.bron = "handmatig"
+    w.bron_url = None
+    w.geverifieerd = True
+    w.twijfelachtig = False
+
+    # synchroon herberekenen zodat de frontend de nieuwe score direct kan tonen
+    db.flush()
+    compliance_service.herbereken_product(db, product)
+    db.commit()
+    db.refresh(w)
+    compliance_service.invalideer_dashboard()
+    return _regel_uit_waarde(veld, w, taal)

@@ -244,6 +244,12 @@ class ProductComplianceRegel(BaseModel):
     status: str = "ontbreekt"  # ingevuld | automatisch | niet_gevonden_online | ontbreekt
 
 
+class ComplianceWaardeUpdate(BaseModel):
+    """Handmatig bewerken van een ingevulde compliance-veldwaarde."""
+
+    waarde: Optional[str] = None
+
+
 # ---------- Import ----------
 class ImportFout(BaseModel):
     rij: int

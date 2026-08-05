@@ -66,6 +66,20 @@ export default function ProductDetail() {
     laad();
   }
 
+  // Verwerk een handmatig bewerkte compliance-waarde: werk de regel bij (de
+  // score in de kop wordt afgeleid uit `regels` en volgt automatisch) en
+  // ververs het producthoofd op de achtergrond (aantal_ontbrekend e.d.).
+  function handleWaardeOpgeslagen(bijgewerkt) {
+    setRegels((prev) =>
+      prev.map((x) =>
+        x.compliance_veld_id === bijgewerkt.compliance_veld_id
+          ? { ...x, ...bijgewerkt }
+          : x
+      )
+    );
+    api.product(id).then(setProduct).catch(() => {});
+  }
+
   if (error) return <ErrorBox message={error} />;
   if (!product || !regels) return <Loading />;
 
@@ -263,19 +277,14 @@ export default function ProductDetail() {
                     : ""
                 }`}
               >
-                <div className="min-w-0">
-                  <div className="text-slate-700">
-                    {r.veld_naam}
-                    <span className="text-xs text-slate-400 ml-2">{r.veld_type}</span>
-                    {r._replyNieuw && (
-                      <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px] font-medium">
-                        {t("productDetail.viaReply")}
-                      </span>
-                    )}
-                  </div>
-                  <VeldWaarde r={r} />
-                </div>
-                <VeldStatus r={r} onVerifieer={() => verifieer(r.compliance_veld_id)} />
+                <ComplianceRij
+                  r={r}
+                  bewerkbaar={!toonVoor}
+                  productId={product.id}
+                  taal={taal}
+                  onVerifieer={() => verifieer(r.compliance_veld_id)}
+                  onOpgeslagen={handleWaardeOpgeslagen}
+                />
               </div>
             ))}
           </div>
@@ -376,4 +385,137 @@ function VeldStatus({ r, onVerifieer }) {
     return <Badge color="slate">{t("productDetail.nietOnlineGevonden")}</Badge>;
   }
   return <Badge color="red">{t("productDetail.ontbreekt")}</Badge>;
+}
+
+// Eén compliance-regel: toont de waarde + status, met inline bewerken van een
+// ingevulde waarde (potlood → invoer → opslaan met ✓/Enter, annuleren met ✕/Esc).
+function ComplianceRij({ r, bewerkbaar, productId, taal, onVerifieer, onOpgeslagen }) {
+  const { t } = useTaal();
+  const ruwe = r.waarde ?? r.waarde_tekst ?? null;
+  const heeftWaarde = ruwe !== null && String(ruwe).trim() !== "";
+
+  const [bewerken, setBewerken] = useState(false);
+  const [concept, setConcept] = useState("");
+  const [bezig, setBezig] = useState(false);
+  const [fout, setFout] = useState(null);
+  const [opgeslagen, setOpgeslagen] = useState(false);
+
+  function start() {
+    setConcept(heeftWaarde ? String(ruwe) : "");
+    setFout(null);
+    setBewerken(true);
+  }
+  function annuleer() {
+    setBewerken(false);
+    setFout(null);
+  }
+  async function bewaar() {
+    setBezig(true);
+    setFout(null);
+    try {
+      const bijgewerkt = await api.wijzigComplianceWaarde(
+        productId,
+        r.compliance_veld_id,
+        { waarde: concept },
+        taal
+      );
+      onOpgeslagen(bijgewerkt);
+      setBewerken(false);
+      setOpgeslagen(true);
+      setTimeout(() => setOpgeslagen(false), 2500);
+    } catch (e) {
+      setFout(e.message);
+    } finally {
+      setBezig(false);
+    }
+  }
+  function onKeyDown(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      bewaar();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      annuleer();
+    }
+  }
+
+  return (
+    <>
+      <div className="min-w-0 flex-1">
+        <div className="text-slate-700">
+          {r.veld_naam}
+          <span className="text-xs text-slate-400 ml-2">{r.veld_type}</span>
+          {r._replyNieuw && (
+            <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px] font-medium">
+              {t("productDetail.viaReply")}
+            </span>
+          )}
+          {opgeslagen && (
+            <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px] font-medium">
+              ✓ {t("productDetail.waardeOpgeslagen")}
+            </span>
+          )}
+        </div>
+        {bewerken ? (
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
+            <input
+              autoFocus
+              value={concept}
+              onChange={(e) => setConcept(e.target.value)}
+              onKeyDown={onKeyDown}
+              disabled={bezig}
+              className="input py-1 text-sm w-full max-w-xs"
+            />
+            {fout && (
+              <span className="text-xs text-red-500">
+                {t("productDetail.opslaanMislukt")}: {fout}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <VeldWaarde r={r} />
+            {bewerkbaar && heeftWaarde && (
+              <button
+                type="button"
+                onClick={start}
+                title={t("productDetail.bewerkWaarde")}
+                aria-label={t("productDetail.bewerkWaarde")}
+                className="text-slate-300 hover:text-brand-600 transition-colors text-sm leading-none"
+              >
+                ✏️
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {bewerken ? (
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={bewaar}
+            disabled={bezig}
+            title={t("productDetail.opslaan")}
+            aria-label={t("productDetail.opslaan")}
+            className="grid h-8 w-8 place-items-center rounded-md bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
+          >
+            ✓
+          </button>
+          <button
+            type="button"
+            onClick={annuleer}
+            disabled={bezig}
+            title={t("productDetail.annuleren")}
+            aria-label={t("productDetail.annuleren")}
+            className="grid h-8 w-8 place-items-center rounded-md border border-line text-muted hover:bg-hover disabled:opacity-50"
+          >
+            ✕
+          </button>
+        </div>
+      ) : (
+        <VeldStatus r={r} onVerifieer={onVerifieer} />
+      )}
+    </>
+  );
 }

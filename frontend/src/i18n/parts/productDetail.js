@@ -31,6 +31,11 @@ export default {
       automatisch: "✨ automatisch",
       automatischTwijfelachtig: "✨ automatisch · twijfelachtig",
       verifieer: "Verifieer",
+      bewerkWaarde: "Waarde bewerken",
+      opslaan: "Opslaan",
+      annuleren: "Annuleren",
+      waardeOpgeslagen: "Opgeslagen",
+      opslaanMislukt: "Opslaan mislukt",
     },
   },
   en: {
@@ -65,6 +70,11 @@ export default {
       automatisch: "✨ automatic",
       automatischTwijfelachtig: "✨ automatic · uncertain",
       verifieer: "Verify",
+      bewerkWaarde: "Edit value",
+      opslaan: "Save",
+      annuleren: "Cancel",
+      waardeOpgeslagen: "Saved",
+      opslaanMislukt: "Save failed",
     },
   },
 };
