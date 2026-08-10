@@ -217,6 +217,22 @@ WETGEVING = [
         ],
         ["Cosmetica"],
     ),
+    (
+        "EAA",
+        "European Accessibility Act",
+        "EU 2019/882: toegankelijkheidseisen voor producten en diensten "
+        "(o.a. digitale interfaces) voor mensen met een beperking.",
+        date(2025, 6, 28),
+        "van kracht",
+        [
+            ("Toegankelijkheidsverklaring (URL)", "eaa_verklaring", "tekst"),
+            ("Ondersteunde hulptechnologieën", "eaa_hulptech", "tekst"),
+            ("Gebruiksaanwijzing in toegankelijk formaat", "eaa_handleiding", "boolean"),
+            ("Contactpunt toegankelijkheid", "eaa_contact", "tekst"),
+            ("Conformiteitsverklaring EAA (URL)", "eaa_conformiteit", "tekst"),
+        ],
+        ["Elektronica"],
+    ),
 ]
 
 # code -> (info_url naar officiële bron, korte NL-samenvatting)
@@ -290,6 +306,13 @@ WET_INFO = {
         EURLEX + "32009R1223",
         "Regelt de veiligheid van cosmetica: INCI-ingrediëntenlijst, "
         "CPNP-notificatie, een verantwoordelijke persoon in de EU en een PIF.",
+    ),
+    "EAA": (
+        EURLEX + "32019L0882",
+        "De European Accessibility Act stelt uniforme toegankelijkheidseisen aan "
+        "producten en diensten (zoals computers, smartphones, e-readers en "
+        "e-commerce) zodat mensen met een beperking ze zelfstandig kunnen gebruiken. "
+        "Van toepassing vanaf 28 juni 2025.",
     ),
 }
 
@@ -587,6 +610,9 @@ def seed():
         product_cat_namen = {cat for _, cat in prod_objs}
         for code, w in wet_map.items():
             w.actief = bool(set(wetcode_to_catnamen[code]) & product_cat_namen)
+        # EAA staat standaard uit; handmatig te activeren in de app
+        if "EAA" in wet_map:
+            wet_map["EAA"].actief = False
         db.flush()
 
         # --- Data-onderbouwing voor de demo-notificaties --------------------
