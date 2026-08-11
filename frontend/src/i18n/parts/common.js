@@ -17,6 +17,7 @@ export default {
       rapportages: "Rapportages",
       instellingen: "Instellingen",
       apps: "Apps",
+      taalWissel: "Taal wijzigen",
     },
     status: {
       open: "open",
@@ -76,6 +77,7 @@ export default {
       rapportages: "Reports",
       instellingen: "Settings",
       apps: "Apps",
+      taalWissel: "Change language",
     },
     status: {
       open: "open",

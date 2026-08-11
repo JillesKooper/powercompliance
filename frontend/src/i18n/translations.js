@@ -5,12 +5,25 @@
 // met een unieke namespace, zodat de delen zonder botsingen samengevoegd worden.
 //
 // Gebruik in componenten:
-//   const { t } = useTaal();
+//   const { t } = useLanguage();
 //   t("nav.dashboard")            → "Dashboard" / "Dashboard"
 //   t("ui.resultaten", { van, tot, totaal })  → tekst met ingevulde waarden
 //
 // NIET vertaald: eigennamen (leveranciers, producten, contactgegevens),
 // wetgevingscodes (PPWR, REACH, …) en e-mailadressen.
+//
+// ┌───────────────────────────────────────────────────────────────────────┐
+// │ REGEL VOOR NIEUWE FEATURES / RULE FOR NEW FEATURES                     │
+// │                                                                        │
+// │ Elke nieuwe UI-tekst (menu-items, knoppen, labels, statussen,          │
+// │ tabel-headers, foutmeldingen, tab-namen, paginatitels, …) MOET altijd  │
+// │ in ZOWEL het `nl`- als het `en`-blok van het betreffende part staan —  │
+// │ met dezelfde sleutel. Voeg nooit een sleutel in slechts één taal toe.  │
+// │ Gebruik de tekst daarna via t("part.sleutel").                         │
+// │                                                                        │
+// │ Every new UI string MUST ALWAYS be added in BOTH the `nl` and `en`     │
+// │ block (same key). Never add a key in only one language.                │
+// └───────────────────────────────────────────────────────────────────────┘
 import common from "./parts/common";
 import dashboard from "./parts/dashboard";
 import instellingen from "./parts/instellingen";

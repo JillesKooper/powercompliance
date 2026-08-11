@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useNotificaties } from "../context/notificaties";
-import { useTaal } from "../context/taal";
+import { useLanguage } from "../context/language";
 
 const NAV = [
   { to: "/", labelKey: "nav.dashboard", icon: "📊", end: true },
@@ -16,7 +16,7 @@ const NAV = [
 export default function Layout({ children }) {
   const location = useLocation();
   const { ongelezen } = useNotificaties();
-  const { t } = useTaal();
+  const { t } = useLanguage();
   const huidig = NAV.find((n) =>
     n.end ? location.pathname === n.to : location.pathname.startsWith(n.to)
   );
@@ -38,7 +38,8 @@ export default function Layout({ children }) {
             Power<span className="font-bold">Compliance</span>
           </span>
         </Link>
-        <div className="ml-auto flex items-center gap-1 text-muted">
+        <div className="ml-auto flex items-center gap-2 text-muted">
+          <LanguageToggle />
           <Link
             to="/instellingen"
             aria-label={t("nav.instellingen")}
@@ -92,6 +93,37 @@ export default function Layout({ children }) {
           {children}
         </main>
       </div>
+    </div>
+  );
+}
+
+// Compacte NL/EN-schakelaar, altijd zichtbaar in de topbar zodat de taal
+// zonder omweg via Instellingen te wisselen is. Taalcodes (NL/EN) blijven
+// bewust onvertaald.
+function LanguageToggle() {
+  const { language, setLanguage, t } = useLanguage();
+  const opties = ["nl", "en"];
+  return (
+    <div
+      role="group"
+      aria-label={t("nav.taalWissel")}
+      className="inline-flex rounded-md border border-line overflow-hidden text-xs font-semibold"
+    >
+      {opties.map((code) => (
+        <button
+          key={code}
+          type="button"
+          onClick={() => setLanguage(code)}
+          aria-pressed={language === code}
+          className={`px-2.5 py-1 transition-colors ${
+            language === code
+              ? "bg-brand-500 text-white"
+              : "bg-white text-muted hover:bg-hover hover:text-ink"
+          }`}
+        >
+          {code.toUpperCase()}
+        </button>
+      ))}
     </div>
   );
 }
