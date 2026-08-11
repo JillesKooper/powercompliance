@@ -207,6 +207,18 @@ export default function Instellingen() {
     );
   }
 
+  // Toon ALLE wetgevingen (ook inactieve zoals EAA, MDR, SPEELGOED),
+  // alfabetisch gesorteerd op de weergegeven (vertaalde) naam.
+  const wetgevingGesorteerd = wetgeving
+    ? [...wetgeving].sort((a, b) =>
+        wetgevingNaam(a.code, a.naam, taal).localeCompare(
+          wetgevingNaam(b.code, b.naam, taal),
+          taal === "en" ? "en" : "nl",
+          { sensitivity: "base" }
+        )
+      )
+    : null;
+
   return (
     <div className="space-y-6 max-w-4xl">
       <TaalKaart />
@@ -245,7 +257,7 @@ export default function Instellingen() {
           <Loading />
         ) : (
           <div className="space-y-2">
-            {wetgeving.map((w) => (
+            {wetgevingGesorteerd.map((w) => (
               <div
                 key={w.id}
                 className={`flex items-center gap-4 rounded-lg border px-4 py-3 ${
