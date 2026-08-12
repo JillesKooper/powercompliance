@@ -16,6 +16,24 @@ def _haal_leverancier(db: Session, leverancier_id: int) -> models.Leverancier:
     return lev
 
 
+def _registreer_reply_tekst(
+    db: Session, leverancier_id: int, reply_tekst: str
+) -> None:
+    """Bewaar de ontvangen reply-tekst op de lopende dataverzoeken, zodat die in
+    het dataverzoek-detail zichtbaar is (ook als er 0 velden matchten)."""
+    (
+        db.query(models.Dataverzoek)
+        .filter(
+            models.Dataverzoek.leverancier_id == leverancier_id,
+            models.Dataverzoek.status.in_(["open", "verzonden"]),
+        )
+        .update(
+            {models.Dataverzoek.reply_bericht: reply_tekst},
+            synchronize_session=False,
+        )
+    )
+
+
 def _markeer_dataverzoeken_ontvangen(db: Session, leverancier_id: int) -> None:
     """Zet lopende dataverzoeken van deze leverancier op 'afgerond'."""
     (
@@ -44,6 +62,10 @@ def _verwerk_en_registreer(
         f"Reply ontvangen van {lev.naam}",
         detail=reply_tekst,
     )
+
+    # Reply-tekst altijd op de lopende dataverzoeken bewaren (ook bij 0 matches),
+    # vóór het eventueel op 'afgerond' zetten.
+    _registreer_reply_tekst(db, lev.id, reply_tekst)
 
     if resultaat["aantal_ingevuld"] > 0:
         _markeer_dataverzoeken_ontvangen(db, lev.id)

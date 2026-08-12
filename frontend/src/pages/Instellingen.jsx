@@ -4,6 +4,7 @@ import { api } from "../api";
 import { useTaal } from "../context/taal";
 import { wetgevingCode, wetgevingNaam, categorieNaam } from "../i18n/dataVertaling";
 import { Card, Badge, Button, Loading, ProgressBar } from "../components/ui";
+import DataverzoekModal from "../components/DataverzoekModal";
 
 const STATUS_KLEUR = {
   open: "amber",
@@ -185,6 +186,7 @@ export default function Instellingen() {
   const { t, taal } = useTaal();
   const [categorieen, setCategorieen] = useState([]);
   const [dataverzoeken, setDataverzoeken] = useState(null);
+  const [gekozenVerzoek, setGekozenVerzoek] = useState(null);
   const [wetgeving, setWetgeving] = useState(null);
 
   useEffect(() => {
@@ -339,9 +341,11 @@ export default function Instellingen() {
         ) : (
           <div className="space-y-2">
             {dataverzoeken.map((d) => (
-              <div
+              <button
                 key={d.id}
-                className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3"
+                type="button"
+                onClick={() => setGekozenVerzoek(d.id)}
+                className="w-full flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 text-left transition-colors hover:bg-hover hover:border-brand-300"
               >
                 <div>
                   <div className="text-sm font-medium text-slate-800">
@@ -357,11 +361,18 @@ export default function Instellingen() {
                 <Badge color={STATUS_KLEUR[d.status] || "slate"}>
                   {STATUS_SLEUTEL[d.status] ? t(STATUS_SLEUTEL[d.status]) : d.status}
                 </Badge>
-              </div>
+              </button>
             ))}
           </div>
         )}
       </Card>
+
+      {gekozenVerzoek != null && (
+        <DataverzoekModal
+          id={gekozenVerzoek}
+          onClose={() => setGekozenVerzoek(null)}
+        />
+      )}
     </div>
   );
 }

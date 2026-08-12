@@ -211,6 +211,24 @@ class DataverzoekOut(BaseModel):
     leverancier: Optional[LeverancierOut] = None
 
 
+class DataverzoekRegelOut(BaseModel):
+    """Eén uitgevraagd product/veld-paar binnen een dataverzoek."""
+    id: int
+    product_id: Optional[int] = None
+    product_naam: Optional[str] = None
+    compliance_veld_id: Optional[int] = None
+    veld_naam: Optional[str] = None
+    wetgeving_code: Optional[str] = None
+    wetgeving_naam: Optional[str] = None
+
+
+class DataverzoekDetail(DataverzoekOut):
+    """Volledig dataverzoek incl. verstuurde mail, reply en uitgevraagde velden."""
+    verzonden_bericht: Optional[str] = None
+    reply_bericht: Optional[str] = None
+    regels: List[DataverzoekRegelOut] = []
+
+
 # ---------- Notificatie ----------
 class NotificatieOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

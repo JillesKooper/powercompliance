@@ -155,11 +155,28 @@ def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get
         leverancier_id=lev.id,
         onderwerp=data.onderwerp,
         bericht=f"Dataverzoek-e-mail vanuit PowerCompliance. {kanaal_tekst}",
+        verzonden_bericht=data.tekst or "",
         status="verzonden",
         deadline=data.deadline,
         aangemaakt_op=datetime.utcnow(),
     )
     db.add(verzoek)
+    db.flush()  # verzoek.id nodig voor de regels
+
+    # Leg vast welke producten/velden zijn uitgevraagd (exact dezelfde scope als de
+    # meegestuurde Excel-bijlage), zodat het dataverzoek-detail dit kan tonen.
+    per_product, _ = email_generator.verzamel_ontbrekend(
+        db, lev, data.wetgeving_code, data.product_id, taal
+    )
+    for prod, velden in per_product:
+        for veld in velden:
+            db.add(
+                models.DataverzoekRegel(
+                    dataverzoek_id=verzoek.id,
+                    product_id=prod.id,
+                    compliance_veld_id=veld.id,
+                )
+            )
     db.add(
         notificatie_teksten.maak(
             "dataverzoek_verstuurd",

@@ -202,6 +202,11 @@ class Dataverzoek(Base):
     )
     onderwerp = Column(String, nullable=False)
     bericht = Column(Text, nullable=True)
+    # Volledige tekst van de daadwerkelijk verstuurde mail (los van ``bericht``,
+    # dat alleen een korte samenvatting/metadata bevat).
+    verzonden_bericht = Column(Text, nullable=True)
+    # Platte tekst van de ontvangen reply van de leverancier (indien binnen).
+    reply_bericht = Column(Text, nullable=True)
     status = Column(
         String, default="open", index=True
     )  # open | verzonden | ontvangen | afgerond

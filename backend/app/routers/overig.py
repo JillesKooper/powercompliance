@@ -207,6 +207,46 @@ def lijst_dataverzoeken(
     )
 
 
+@router.get("/dataverzoeken/{dataverzoek_id}", response_model=schemas.DataverzoekDetail)
+def dataverzoek_detail(
+    dataverzoek_id: int,
+    taal: str = Query("nl"),
+    db: Session = Depends(get_db),
+):
+    """Volledig dataverzoek incl. leverancier, uitgevraagde velden, verstuurde
+    mail en eventuele reply — voor de detailweergave in de instellingen."""
+    verzoek = db.get(models.Dataverzoek, dataverzoek_id)
+    if not verzoek:
+        raise HTTPException(status_code=404, detail="Dataverzoek niet gevonden")
+
+    regels = []
+    for r in verzoek.regels:
+        product = db.get(models.Product, r.product_id) if r.product_id else None
+        veld = (
+            db.get(models.ComplianceVeld, r.compliance_veld_id)
+            if r.compliance_veld_id
+            else None
+        )
+        regels.append(
+            schemas.DataverzoekRegelOut(
+                id=r.id,
+                product_id=r.product_id,
+                product_naam=product.naam if product else None,
+                compliance_veld_id=r.compliance_veld_id,
+                veld_naam=veld_vertaling.veld_naam(veld, taal) if veld else None,
+                wetgeving_code=veld.wetgeving.code if veld and veld.wetgeving else None,
+                wetgeving_naam=veld.wetgeving.naam if veld and veld.wetgeving else None,
+            )
+        )
+
+    return schemas.DataverzoekDetail(
+        **schemas.DataverzoekOut.model_validate(verzoek).model_dump(),
+        verzonden_bericht=verzoek.verzonden_bericht,
+        reply_bericht=verzoek.reply_bericht,
+        regels=regels,
+    )
+
+
 @router.post("/dataverzoeken", response_model=schemas.DataverzoekOut, status_code=201)
 def maak_dataverzoek(data: schemas.DataverzoekCreate, db: Session = Depends(get_db)):
     verzoek = models.Dataverzoek(**data.model_dump())

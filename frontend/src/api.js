@@ -148,6 +148,8 @@ export const api = {
     ).toString();
     return request(`/dataverzoeken${qs ? `?${qs}` : ""}`);
   },
+  dataverzoek: (id, taal = "nl") =>
+    request(`/dataverzoeken/${id}${taal && taal !== "nl" ? `?taal=${taal}` : ""}`),
   bulkDataverzoeken: (data) =>
     request("/dataverzoeken/bulk", { method: "POST", body: JSON.stringify(data) }),
   notificaties: (taal = "nl") =>

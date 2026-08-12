@@ -70,8 +70,35 @@ def _migreer_wetgeving_kolommen():
             pass
 
 
+def _migreer_dataverzoek_kolommen():
+    """Voeg de mail-/reply-kolommen toe aan bestaande dataverzoeken-tabellen.
+
+    ``verzonden_bericht`` bewaart de volledige verstuurde mailtekst en
+    ``reply_bericht`` de ontvangen leveranciersreply; beide zijn nodig om het
+    dataverzoek-detail te tonen. Idempotent."""
+    from sqlalchemy import inspect, text
+
+    try:
+        insp = inspect(engine)
+        bestaande = {c["name"] for c in insp.get_columns("dataverzoeken")}
+    except Exception:
+        return
+    toe_te_voegen = [
+        c for c in ("verzonden_bericht", "reply_bericht") if c not in bestaande
+    ]
+    with engine.begin() as conn:
+        for kolom in toe_te_voegen:
+            try:
+                conn.execute(
+                    text(f"ALTER TABLE dataverzoeken ADD COLUMN {kolom} TEXT")
+                )
+            except Exception:
+                pass
+
+
 _migreer_notificatie_kolommen()
 _migreer_wetgeving_kolommen()
+_migreer_dataverzoek_kolommen()
 
 app = FastAPI(
     title="PowerCompliance API",
