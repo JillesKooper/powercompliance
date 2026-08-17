@@ -103,19 +103,19 @@ export default function EmailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
           <div>
-            <h2 className="font-semibold text-slate-800">
+            <h2 className="font-semibold text-ink">
               {t("email.titel")}
               {wetgevingCode ? ` — ${wetCodeLabel(wetgevingCode, appTaal)}` : ""}
             </h2>
-            <div className="text-xs text-slate-400">
+            <div className="text-xs text-faint">
               {leverancierNaam}
               {wetgevingNaam ? ` · ${wetgevingNaam}` : ""}
             </div>
             <div className="mt-1">
-              <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[11px] font-medium">
+              <span className="inline-flex items-center rounded-full bg-hover text-muted px-2 py-0.5 text-[11px] font-medium">
                 {productId
                   ? productNaam
                     ? t("email.scopeProductNaam", { naam: productNaam })
@@ -130,7 +130,7 @@ export default function EmailModal({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-xl leading-none"
+            className="text-faint hover:text-ink text-xl leading-none"
           >
             ×
           </button>
@@ -140,10 +140,10 @@ export default function EmailModal({
           {/* kop: taal + deadline */}
           <div className="flex flex-wrap items-end gap-4">
             <div>
-              <span className="block text-xs font-medium text-slate-600 mb-1">
+              <span className="block text-xs font-medium text-muted mb-1">
                 {t("email.taalLabel")}
               </span>
-              <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
+              <div className="inline-flex rounded-lg border border-line overflow-hidden">
                 {["nl", "en"].map((code) => (
                   <button
                     key={code}
@@ -151,7 +151,7 @@ export default function EmailModal({
                     className={`px-3 py-1.5 text-sm ${
                       taal === code
                         ? "bg-brand-600 text-white"
-                        : "bg-white text-slate-600 hover:bg-slate-50"
+                        : "bg-surface text-muted hover:bg-hover"
                     }`}
                   >
                     {code === "nl" ? t("email.taalNl") : t("email.taalEn")}
@@ -160,7 +160,7 @@ export default function EmailModal({
               </div>
             </div>
             <div>
-              <span className="block text-xs font-medium text-slate-600 mb-1">
+              <span className="block text-xs font-medium text-muted mb-1">
                 {t("email.deadlineLabel")}
               </span>
               <input
@@ -171,7 +171,7 @@ export default function EmailModal({
               />
             </div>
             {data && (
-              <div className="text-xs text-slate-500 ml-auto">
+              <div className="text-xs text-muted ml-auto">
                 {t("email.metaVeldenProducten", {
                   velden: data.aantal_velden,
                   producten: data.aantal_producten,
@@ -191,11 +191,11 @@ export default function EmailModal({
           ) : data ? (
             <>
               {/* adresvelden */}
-              <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 text-sm">
+              <div className="rounded-lg border border-line divide-y divide-line text-sm">
                 <Rij label={t("email.veldAan")}>
                   {data.aan_naam || "—"}
                   {data.aan_email && (
-                    <span className="text-slate-400"> &lt;{data.aan_email}&gt;</span>
+                    <span className="text-faint"> &lt;{data.aan_email}&gt;</span>
                   )}
                 </Rij>
                 <Rij label={t("email.veldCc")}>{data.cc}</Rij>
@@ -238,20 +238,20 @@ export default function EmailModal({
                   <Badge color="amber">{t("email.sjabloonGebruikt")}</Badge>
                 )}
                 {data.ai_fout && (
-                  <span className="text-slate-400">{data.ai_fout}</span>
+                  <span className="text-faint">{data.ai_fout}</span>
                 )}
               </div>
 
               {/* mailtekst */}
               <div>
-                <span className="block text-xs font-medium text-slate-600 mb-1">
+                <span className="block text-xs font-medium text-muted mb-1">
                   {t("email.mailtekst")}
                 </span>
                 <textarea
                   value={tekst}
                   onChange={(e) => setTekst(e.target.value)}
                   rows={14}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                  className="w-full rounded-lg border border-line px-3 py-2 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-brand-500/40"
                 />
               </div>
             </>
@@ -259,7 +259,7 @@ export default function EmailModal({
         </div>
 
         {/* acties */}
-        <div className="flex items-center gap-2 px-6 py-4 border-t border-slate-200">
+        <div className="flex items-center gap-2 px-6 py-4 border-t border-line">
           <Button variant="ghost" onClick={() => genereer(taal, deadline)} disabled={laden}>
             {t("email.hergenereer")}
           </Button>
@@ -287,8 +287,8 @@ export default function EmailModal({
 function Rij({ label, children }) {
   return (
     <div className="flex items-start px-4 py-2.5">
-      <span className="w-24 shrink-0 text-slate-400">{label}</span>
-      <div className="flex-1 text-slate-700">{children}</div>
+      <span className="w-24 shrink-0 text-faint">{label}</span>
+      <div className="flex-1 text-ink">{children}</div>
     </div>
   );
 }

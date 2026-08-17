@@ -8,7 +8,7 @@ const TYPES = {
   reply_ontvangen: { icoon: "📥", labelKey: "widgets.activiteit.type.replyOntvangen", kleur: "bg-emerald-50 text-emerald-700 border-emerald-200", stip: "bg-emerald-500" },
   data_aangevuld: { icoon: "✨", labelKey: "widgets.activiteit.type.dataAangevuld", kleur: "bg-emerald-50 text-emerald-700 border-emerald-200", stip: "bg-emerald-500" },
   status_gewijzigd: { icoon: "🔄", labelKey: "widgets.activiteit.type.statusGewijzigd", kleur: "bg-amber-50 text-amber-700 border-amber-200", stip: "bg-amber-500" },
-  notificatie: { icoon: "🔔", labelKey: "widgets.activiteit.type.notificatie", kleur: "bg-slate-100 text-slate-600 border-slate-200", stip: "bg-slate-400" },
+  notificatie: { icoon: "🔔", labelKey: "widgets.activiteit.type.notificatie", kleur: "bg-hover text-muted border-line", stip: "bg-slate-400" },
 };
 
 function formatteerDatum(iso) {
@@ -40,7 +40,7 @@ export default function ActiviteitTijdlijn({ leverancierId }) {
 
   if (items.length === 0) {
     return (
-      <div className="px-5 py-10 text-center text-slate-400 text-sm">
+      <div className="px-5 py-10 text-center text-faint text-sm">
         {t("widgets.activiteit.geenInteracties")}
       </div>
     );
@@ -49,7 +49,7 @@ export default function ActiviteitTijdlijn({ leverancierId }) {
   return (
     <div className="relative pl-6">
       {/* verticale lijn */}
-      <div className="absolute left-[9px] top-2 bottom-2 w-px bg-slate-200" />
+      <div className="absolute left-[9px] top-2 bottom-2 w-px bg-line" />
       <div className="space-y-4">
         {items.map((a) => {
           const cfg = TYPES[a.type] || TYPES.notificatie;
@@ -68,11 +68,11 @@ export default function ActiviteitTijdlijn({ leverancierId }) {
                   <span>{cfg.icoon}</span>
                   {t(cfg.labelKey)}
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-faint">
                   {formatteerDatum(a.aangemaakt_op)}
                 </span>
               </div>
-              <div className="mt-1 text-sm text-slate-700">{a.omschrijving}</div>
+              <div className="mt-1 text-sm text-ink">{a.omschrijving}</div>
               {heeftDetail && (
                 <div className="mt-1">
                   <button
@@ -84,7 +84,7 @@ export default function ActiviteitTijdlijn({ leverancierId }) {
                     {isOpen ? `▲ ${t("widgets.activiteit.verbergDetails")}` : `▼ ${t("widgets.activiteit.toonDetails")}`}
                   </button>
                   {isOpen && (
-                    <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 font-sans leading-relaxed max-h-72 overflow-auto">
+                    <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-line bg-hover px-3 py-2 text-xs text-muted font-sans leading-relaxed max-h-72 overflow-auto">
                       {a.detail}
                     </pre>
                   )}

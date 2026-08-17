@@ -81,18 +81,18 @@ export default function LeverancierDetail() {
       <Card className="p-6">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">{lev.naam}</h2>
-            <div className="text-sm text-slate-500 mt-1">
+            <h2 className="text-xl font-bold text-ink">{lev.naam}</h2>
+            <div className="text-sm text-muted mt-1">
               {lev.contactpersoon || "—"} · {lev.land}
             </div>
             {lev.email && (
-              <div className="text-sm text-slate-500">{lev.email}</div>
+              <div className="text-sm text-muted">{lev.email}</div>
             )}
             {lev.telefoon && (
-              <div className="text-sm text-slate-500">{lev.telefoon}</div>
+              <div className="text-sm text-muted">{lev.telefoon}</div>
             )}
             {lev.adres && (
-              <div className="text-sm text-slate-500">{lev.adres}</div>
+              <div className="text-sm text-muted">{lev.adres}</div>
             )}
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -110,7 +110,7 @@ export default function LeverancierDetail() {
           <Mini label={t("leverancierDetail.producten")} value={producten.length} />
           <Mini label={t("leverancierDetail.ontbrekendeVelden")} value={totaalOntbrekend} rood />
           <div>
-            <div className="text-xs text-slate-500 mb-1">{t("leverancierDetail.gemCompliance")}</div>
+            <div className="text-xs text-muted mb-1">{t("leverancierDetail.gemCompliance")}</div>
             <ProgressBar value={gem} />
           </div>
         </div>
@@ -145,19 +145,19 @@ export default function LeverancierDetail() {
       {tab === "overzicht" && (
       <>
       <Card>
-        <div className="px-5 py-3 border-b border-slate-200 font-semibold text-slate-800">
+        <div className="px-5 py-3 border-b border-line font-semibold text-ink">
           {t("leverancierDetail.productenVanLeverancier")}
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-line">
           {producten.map((p) => (
             <Link
               key={p.id}
               to={`/producten/${p.id}`}
-              className="flex items-center justify-between px-5 py-3 hover:bg-slate-50"
+              className="flex items-center justify-between px-5 py-3 hover:bg-hover"
             >
               <div>
-                <div className="font-medium text-slate-800">{p.naam}</div>
-                <div className="text-xs text-slate-400">
+                <div className="font-medium text-ink">{p.naam}</div>
+                <div className="text-xs text-faint">
                   {p.artikelnummer || "—"}
                   {p.categorie ? ` · ${p.categorie.naam}` : ""}
                 </div>
@@ -168,7 +168,7 @@ export default function LeverancierDetail() {
             </Link>
           ))}
           {producten.length === 0 && (
-            <div className="px-5 py-8 text-center text-slate-400 text-sm">
+            <div className="px-5 py-8 text-center text-faint text-sm">
               Nog geen producten.
             </div>
           )}
@@ -240,8 +240,8 @@ export default function LeverancierDetail() {
 function Mini({ label, value, rood }) {
   return (
     <div>
-      <div className="text-xs text-slate-500 mb-1">{label}</div>
-      <div className={`text-2xl font-bold ${rood ? "text-red-600" : "text-slate-800"}`}>
+      <div className="text-xs text-muted mb-1">{label}</div>
+      <div className={`text-2xl font-bold ${rood ? "text-red-600" : "text-ink"}`}>
         {value}
       </div>
     </div>
@@ -285,14 +285,14 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[92vh] overflow-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-800">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg max-h-[92vh] overflow-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+          <h2 className="font-semibold text-ink">
             {t("leverancierDetail.contactgegevensBewerken")}
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-xl leading-none"
+            className="text-faint hover:text-ink text-xl leading-none"
           >
             ×
           </button>
@@ -334,7 +334,7 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
           </Veld>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-200">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">
           <Button variant="ghost" onClick={onClose}>
             {t("actie.annuleren")}
           </Button>
@@ -350,7 +350,7 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
 function Veld({ label, children }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-muted mb-1">{label}</label>
       {children}
     </div>
   );

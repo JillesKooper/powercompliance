@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
+  // 'class'-strategie: darkmode wordt aangestuurd door de .dark-class op
+  // <html> (zie context/theme.jsx), niet door de OS-voorkeur.
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
@@ -13,12 +16,18 @@ export default {
           600: "#1a73e8",
           700: "#1557b0",
         },
-        // Neutrale huisstijl-tinten
-        ink: "#1a1a1a", // primaire tekst
-        muted: "#666666", // secundaire tekst
-        line: "#e0e0e0", // borders
-        canvas: "#f5f5f5", // achtergrond
-        hover: "#f0f0f0", // hover states
+        // Neutrale huisstijl-tinten. Deze verwijzen naar CSS-variabelen
+        // (zie index.css) zodat ze in één keer omklappen tussen licht en
+        // donker. De rgb(var(--x) / <alpha-value>)-vorm houdt opacity-
+        // utilities zoals text-muted/70 werkend.
+        ink: "rgb(var(--kleur-ink) / <alpha-value>)", // primaire tekst
+        muted: "rgb(var(--kleur-muted) / <alpha-value>)", // secundaire tekst
+        faint: "rgb(var(--kleur-faint) / <alpha-value>)", // tertiaire tekst
+        line: "rgb(var(--kleur-line) / <alpha-value>)", // borders
+        canvas: "rgb(var(--kleur-canvas) / <alpha-value>)", // hoofd-achtergrond
+        surface: "rgb(var(--kleur-surface) / <alpha-value>)", // kaarten/panelen
+        sidebar: "rgb(var(--kleur-sidebar) / <alpha-value>)", // zijbalk
+        hover: "rgb(var(--kleur-hover) / <alpha-value>)", // hover states
       },
       fontFamily: {
         sans: [

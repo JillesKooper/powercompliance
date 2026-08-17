@@ -106,7 +106,7 @@ export default function Producten() {
         <select
           value={filterLev}
           onChange={(e) => setFilterLev(e.target.value)}
-          className="rounded-md border border-line px-3 py-2 text-sm bg-white text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          className="rounded-md border border-line px-3 py-2 text-sm bg-surface text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
         >
           <option value="">{t("producten.alleLeveranciers")}</option>
           {leveranciers.map((l) => (
@@ -118,7 +118,7 @@ export default function Producten() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-md border border-line px-3 py-2 text-sm bg-white text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          className="rounded-md border border-line px-3 py-2 text-sm bg-surface text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
         >
           <option value="">{t("producten.alleStatussen")}</option>
           <option value="compliant">{t("producten.statusCompliant")}</option>
@@ -178,7 +178,7 @@ export default function Producten() {
                 onChange={(e) =>
                   setForm({ ...form, leverancier_id: e.target.value })
                 }
-                className="input bg-white"
+                className="input bg-surface"
               >
                 <option value="">{t("producten.kiesLeverancier")}</option>
                 {leveranciers.map((l) => (
@@ -194,7 +194,7 @@ export default function Producten() {
                 onChange={(e) =>
                   setForm({ ...form, categorie_id: e.target.value })
                 }
-                className="input bg-white"
+                className="input bg-surface"
               >
                 <option value="">{t("producten.geenCategorie")}</option>
                 {categorieen.map((c) => (
@@ -224,7 +224,7 @@ export default function Producten() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
+              <tr className="text-left text-muted border-b border-line">
                 <th className="px-5 py-3 font-medium">{t("producten.kolomProduct")}</th>
                 <th className="px-5 py-3 font-medium">{t("producten.kolomLeverancier")}</th>
                 <th className="px-5 py-3 font-medium">{t("producten.kolomCategorie")}</th>
@@ -236,7 +236,7 @@ export default function Producten() {
               {producten.map((p) => (
                 <tr
                   key={p.id}
-                  className="border-b border-slate-100 hover:bg-slate-50"
+                  className="border-b border-line hover:bg-hover"
                 >
                   <td className="px-5 py-3">
                     <Link
@@ -245,18 +245,18 @@ export default function Producten() {
                     >
                       {p.naam}
                     </Link>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-faint">
                       {p.artikelnummer || "—"}
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-slate-600">
+                  <td className="px-5 py-3 text-muted">
                     {p.leverancier?.naam || "—"}
                   </td>
                   <td className="px-5 py-3">
                     {p.categorie ? (
                       <Badge color="blue">{categorieNaam(p.categorie.naam, taal)}</Badge>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-faint">—</span>
                     )}
                   </td>
                   <td className="px-5 py-3">
@@ -279,7 +279,7 @@ export default function Producten() {
               ))}
               {producten.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-slate-400">
+                  <td colSpan={5} className="px-5 py-10 text-center text-faint">
                     {t("producten.geenProducten")}
                   </td>
                 </tr>
@@ -297,7 +297,7 @@ export default function Producten() {
 function Veld({ label, children }) {
   return (
     <label className="block">
-      <span className="block text-xs font-medium text-slate-600 mb-1">
+      <span className="block text-xs font-medium text-muted mb-1">
         {label}
       </span>
       {children}

@@ -39,14 +39,14 @@ export default function NotificatieModal({ notificatie, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-        <div className="flex items-start justify-between px-6 py-4 border-b border-slate-200">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg">
+        <div className="flex items-start justify-between px-6 py-4 border-b border-line">
           <div className="flex items-start gap-3">
             <span className="text-2xl leading-none">
               {TYPE_ICOON[n.type] || "ℹ️"}
             </span>
             <div>
-              <h2 className="font-semibold text-slate-800">{n.titel}</h2>
+              <h2 className="font-semibold text-ink">{n.titel}</h2>
               <div className="flex items-center gap-2 mt-1">
                 {n.categorie && (
                   <Badge color={TYPE_KLEUR[n.type] || "slate"}>
@@ -64,16 +64,16 @@ export default function NotificatieModal({ notificatie, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-xl leading-none"
+            className="text-faint hover:text-ink text-xl leading-none"
           >
             ×
           </button>
         </div>
 
         <div className="p-6 space-y-4">
-          <p className="text-sm text-slate-700 leading-relaxed">{n.bericht}</p>
+          <p className="text-sm text-ink leading-relaxed">{n.bericht}</p>
 
-          <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 text-sm">
+          <div className="rounded-lg border border-line divide-y divide-line text-sm">
             <Rij label={t("modals.notificatie.datumTijd")}>{datum}</Rij>
             <Rij label={t("modals.notificatie.type")}>
               {n.categorie || n.type}
@@ -91,7 +91,7 @@ export default function NotificatieModal({ notificatie, onClose }) {
                   {t(rel.labelKey)} →
                 </Link>
               ) : (
-                <span className="text-slate-400">
+                <span className="text-faint">
                   {t("modals.notificatie.geenOnderdeel")}
                 </span>
               )}
@@ -99,7 +99,7 @@ export default function NotificatieModal({ notificatie, onClose }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-6 py-4 border-t border-slate-200">
+        <div className="flex items-center gap-2 px-6 py-4 border-t border-line">
           <Button
             variant="ghost"
             onClick={() => markeerGelezen(n.id)}
@@ -123,8 +123,8 @@ export default function NotificatieModal({ notificatie, onClose }) {
 function Rij({ label, children }) {
   return (
     <div className="flex items-start px-4 py-2.5">
-      <span className="w-28 shrink-0 text-slate-400">{label}</span>
-      <div className="flex-1 text-slate-700">{children}</div>
+      <span className="w-28 shrink-0 text-faint">{label}</span>
+      <div className="flex-1 text-ink">{children}</div>
     </div>
   );
 }

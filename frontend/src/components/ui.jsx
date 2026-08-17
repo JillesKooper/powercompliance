@@ -5,7 +5,7 @@ export function Card({ children, className = "", onClick, ...rest }) {
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-lg border border-line shadow-card ${className}`}
+      className={`bg-surface rounded-lg border border-line shadow-card ${className}`}
       {...rest}
     >
       {children}
@@ -165,7 +165,7 @@ export function Paginatie({ pagina, onPagina }) {
 export function Button({ children, variant = "primary", ...props }) {
   const variants = {
     primary: "bg-brand-600 hover:bg-brand-700 text-white",
-    ghost: "bg-white hover:bg-hover text-ink border border-line",
+    ghost: "bg-surface hover:bg-hover text-ink border border-line",
     danger: "bg-red-600 hover:bg-red-700 text-white",
   };
   return (

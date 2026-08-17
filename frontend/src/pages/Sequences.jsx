@@ -96,7 +96,7 @@ export default function Sequences() {
       )}
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500 max-w-2xl">
+        <p className="text-sm text-muted max-w-2xl">
           {t("sequences.intro")}
         </p>
         <div className="flex items-center gap-2 shrink-0">
@@ -131,7 +131,7 @@ export default function Sequences() {
       )}
 
       {items.length === 0 ? (
-        <Card className="p-10 text-center text-slate-500">
+        <Card className="p-10 text-center text-muted">
           {t("sequences.leeg")}
         </Card>
       ) : (
@@ -168,10 +168,10 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
 
   return (
     <Card className="overflow-hidden">
-      <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-100">
+      <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-line">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-slate-800">{seq.naam}</span>
+            <span className="font-semibold text-ink">{seq.naam}</span>
             {seq.actief ? (
               <Badge color="green">{t("status.actief")}</Badge>
             ) : (
@@ -184,9 +184,9 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
             )}
           </div>
           {seq.beschrijving && (
-            <div className="text-sm text-slate-500 mt-1">{seq.beschrijving}</div>
+            <div className="text-sm text-muted mt-1">{seq.beschrijving}</div>
           )}
-          <div className="text-xs text-slate-400 mt-1">
+          <div className="text-xs text-faint mt-1">
             {t("sequences.stappenTelling", { aantal: seq.stappen.length })} ·{" "}
             {t("sequences.actieveLeveranciers", {
               actief: seq.aantal_actief,
@@ -214,10 +214,10 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
       <div className="px-5 py-3 flex flex-wrap items-center gap-2">
         {seq.stappen.map((s, i) => (
           <div key={s.id} className="flex items-center gap-2">
-            {i > 0 && <span className="text-slate-300">→</span>}
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs">
-              <span className="font-medium text-slate-700">{t("sequences.stap", { nr: i + 1 })}</span>
-              <span className="text-slate-400">
+            {i > 0 && <span className="text-faint">→</span>}
+            <div className="rounded-lg border border-line bg-hover px-3 py-1.5 text-xs">
+              <span className="font-medium text-ink">{t("sequences.stap", { nr: i + 1 })}</span>
+              <span className="text-faint">
                 {" "}
                 · {t("sequences.naDagen", { dagen: s.wachttijd_dagen })} ·{" "}
                 {CONDITIE_KEYS[s.conditie] ? t(CONDITIE_KEYS[s.conditie]) : s.conditie}
@@ -228,7 +228,7 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
       </div>
 
       {/* inschrijvingen */}
-      <div className="px-5 py-2 border-t border-slate-100">
+      <div className="px-5 py-2 border-t border-line">
         <button
           onClick={toggleOpen}
           className="text-xs text-brand-600 hover:underline"
@@ -240,19 +240,19 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
         {open && (
           <div className="mt-2">
             {inschrijvingen.length === 0 ? (
-              <div className="text-xs text-slate-400 py-2">
+              <div className="text-xs text-faint py-2">
                 {t("sequences.geenInschrijvingen")}
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-line">
                 {inschrijvingen.map((i) => (
                   <div
                     key={i.id}
                     className="flex items-center justify-between gap-3 py-2 text-sm"
                   >
-                    <span className="text-slate-700">{i.leverancier_naam}</span>
+                    <span className="text-ink">{i.leverancier_naam}</span>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-faint">
                         {t("sequences.stapVanTotaal", {
                           huidige: Math.min(i.huidige_stap + 1, i.aantal_stappen),
                           totaal: i.aantal_stappen,
@@ -367,16 +367,16 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-800">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+          <h2 className="font-semibold text-ink">
             {bestaand
               ? t("sequences.sequenceBewerken")
               : t("sequences.nieuweSequence")}
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-xl leading-none"
+            className="text-faint hover:text-ink text-xl leading-none"
           >
             ×
           </button>
@@ -390,7 +390,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">
+            <label className="block text-xs font-medium text-muted mb-1">
               {t("sequences.veldNaam")}
             </label>
             <input
@@ -401,7 +401,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">
+            <label className="block text-xs font-medium text-muted mb-1">
               {t("sequences.veldBeschrijving")}
             </label>
             <input
@@ -414,10 +414,10 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
 
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
+              <label className="block text-xs font-medium text-muted mb-1">
                 {t("sequences.trigger")}
               </label>
-              <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
+              <div className="inline-flex rounded-lg border border-line overflow-hidden">
                 {[
                   ["leverancier", t("sequences.triggerPerLeverancier")],
                   ["wetgeving", t("sequences.triggerPerWetgeving")],
@@ -428,7 +428,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
                     className={`px-3 py-1.5 text-sm ${
                       triggerType === key
                         ? "bg-brand-600 text-white"
-                        : "bg-white text-slate-600 hover:bg-slate-50"
+                        : "bg-surface text-muted hover:bg-hover"
                     }`}
                   >
                     {label}
@@ -438,7 +438,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
             </div>
             {triggerType === "wetgeving" && (
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
+                <label className="block text-xs font-medium text-muted mb-1">
                   {t("sequences.veldWetgeving")}
                 </label>
                 <select
@@ -455,7 +455,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
                 </select>
               </div>
             )}
-            <label className="flex items-end gap-2 text-sm text-slate-600 pb-1.5">
+            <label className="flex items-end gap-2 text-sm text-muted pb-1.5">
               <input
                 type="checkbox"
                 checked={actief}
@@ -468,7 +468,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
           {/* stappen */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium text-slate-600">
+              <label className="text-xs font-medium text-muted">
                 {t("sequences.stappen")}
               </label>
               <button
@@ -494,7 +494,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-200">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">
           <Button variant="ghost" onClick={onClose}>
             {t("actie.annuleren")}
           </Button>
@@ -550,24 +550,24 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 text-sm">
+    <div className="rounded-lg border border-line text-sm">
       <div className="flex items-center gap-2 px-3 py-2">
-        <span className="font-medium text-slate-500 w-14">
+        <span className="font-medium text-muted w-14">
           {t("sequences.stapNr", { nr: index + 1 })}
         </span>
-        <span className="text-slate-400">{t("sequences.na")}</span>
+        <span className="text-faint">{t("sequences.na")}</span>
         <input
           type="number"
           min="0"
           value={stap.wachttijd_dagen}
           onChange={(e) => onWijzig("wachttijd_dagen", e.target.value)}
-          className="w-16 rounded-md border border-slate-300 px-2 py-1"
+          className="w-16 rounded-md border border-line px-2 py-1"
         />
-        <span className="text-slate-400">{t("sequences.dagenMailVersturen")}</span>
+        <span className="text-faint">{t("sequences.dagenMailVersturen")}</span>
         <select
           value={stap.conditie}
           onChange={(e) => onWijzig("conditie", e.target.value)}
-          className="flex-1 rounded-md border border-slate-300 px-2 py-1 min-w-0"
+          className="flex-1 rounded-md border border-line px-2 py-1 min-w-0"
         >
           {Object.keys(CONDITIE_KEYS).map((k) => (
             <option key={k} value={k}>
@@ -578,7 +578,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
         {aantalStappen > 1 && (
           <button
             onClick={onVerwijder}
-            className="text-slate-400 hover:text-red-600"
+            className="text-faint hover:text-red-600"
             title={t("sequences.verwijderStap")}
           >
             ×
@@ -596,25 +596,25 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
             ? t("sequences.verbergMailinhoud")
             : t("sequences.toonMailinhoud")}
           {!open && eigenInhoud && (
-            <span className="ml-1 text-slate-400">
+            <span className="ml-1 text-faint">
               {t("sequences.eigenTekstIngesteld")}
             </span>
           )}
           {!open && !eigenInhoud && (
-            <span className="ml-1 text-slate-400">
+            <span className="ml-1 text-faint">
               {t("sequences.automatischGenereren")}
             </span>
           )}
         </button>
 
         {open && (
-          <div className="mt-2 space-y-3 rounded-lg bg-slate-50 border border-slate-100 p-3">
+          <div className="mt-2 space-y-3 rounded-lg bg-hover border border-line p-3">
             {fout && (
               <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-xs">
                 {fout}
               </div>
             )}
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted">
               {t("sequences.mailinhoudUitleg")}{" "}
               <code className="text-brand-700">{"{aanhef}"}</code>,{" "}
               <code className="text-brand-700">{"{ontbrekende_data}"}</code>,{" "}
@@ -623,7 +623,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
             </p>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
+              <label className="block text-xs font-medium text-muted mb-1">
                 {t("sequences.onderwerp")}
               </label>
               <input
@@ -634,7 +634,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
+              <label className="block text-xs font-medium text-muted mb-1">
                 {t("sequences.mailtekst")}
               </label>
               <textarea
@@ -661,7 +661,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
                     onWijzig("mailtekst", "");
                     setPreview(null);
                   }}
-                  className="text-xs text-slate-400 hover:text-red-600"
+                  className="text-xs text-faint hover:text-red-600"
                 >
                   {t("sequences.wissen")}
                 </button>
@@ -669,23 +669,23 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
             </div>
 
             {preview && (
-              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-                <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 text-xs text-slate-500">
+              <div className="rounded-lg border border-line bg-surface overflow-hidden">
+                <div className="px-3 py-2 border-b border-line bg-hover text-xs text-muted">
                   {t("sequences.previewVoor")}{" "}
-                  <span className="font-medium text-slate-700">
+                  <span className="font-medium text-ink">
                     {preview.leverancier_naam}
                   </span>
                   {preview.aan_email ? ` <${preview.aan_email}>` : ""}
                   {preview.voorbeeld && t("sequences.fictiefVoorbeeld")}
                   {preview.ai_gebruikt && t("sequences.aiGegenereerd")}
                 </div>
-                <div className="px-3 py-2 border-b border-slate-100 text-sm">
-                  <span className="text-slate-400">
+                <div className="px-3 py-2 border-b border-line text-sm">
+                  <span className="text-faint">
                     {t("sequences.previewOnderwerp")}
                   </span>
-                  <span className="font-medium text-slate-800">{preview.onderwerp}</span>
+                  <span className="font-medium text-ink">{preview.onderwerp}</span>
                 </div>
-                <pre className="px-3 py-3 text-xs text-slate-700 whitespace-pre-wrap font-sans max-h-72 overflow-auto">
+                <pre className="px-3 py-3 text-xs text-ink whitespace-pre-wrap font-sans max-h-72 overflow-auto">
                   {preview.tekst}
                 </pre>
               </div>

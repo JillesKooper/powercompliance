@@ -76,14 +76,14 @@ export default function ProductDocumenten({ productId }) {
     <div className="space-y-5">
       <form
         onSubmit={upload}
-        className="rounded-lg border border-line bg-white p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
+        className="rounded-lg border border-line bg-surface p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
       >
         <label className="block md:col-span-1">
           <span className="block text-xs font-medium text-muted mb-1">{t("widgets.documenten.documenttype")}</span>
           <select
             value={documenttype}
             onChange={(e) => setDocumenttype(e.target.value)}
-            className="input bg-white"
+            className="input bg-surface"
           >
             {Object.entries(types).map(([sleutel, label]) => (
               <option key={sleutel} value={sleutel}>

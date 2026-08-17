@@ -63,7 +63,7 @@ export default function OntbrekendeData() {
 
   if (items.length === 0) {
     return (
-      <Card className="p-10 text-center text-slate-500">
+      <Card className="p-10 text-center text-muted">
         🎉 {t("ontbrekendeData.geenOntbrekend")}
       </Card>
     );
@@ -82,7 +82,7 @@ export default function OntbrekendeData() {
       )}
 
       <Card className="p-5">
-        <div className="text-sm text-slate-600">
+        <div className="text-sm text-muted">
           <span className="font-semibold text-red-600">{totaalVelden}</span>{" "}
           {t("ontbrekendeData.samenvattingVelden")}{" "}
           <span className="font-semibold">{items.length}</span>{" "}
@@ -108,9 +108,9 @@ export default function OntbrekendeData() {
 
       {groepen.map((groep) => (
         <Card key={groep.id} className="overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
+          <div className="flex items-center justify-between px-5 py-3 bg-hover border-b border-line">
             <div className="flex items-center gap-3">
-              <span className="font-semibold text-slate-800">🏭 {groep.naam}</span>
+              <span className="font-semibold text-ink">🏭 {groep.naam}</span>
               <Badge color="red">
                 {groep.producten.reduce(
                   (s, p) => s + p.ontbrekende_velden.length,
@@ -142,7 +142,7 @@ export default function OntbrekendeData() {
               </Button>
             </div>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-line">
             {groep.producten.map((p) => (
               <div key={p.product_id} className="px-5 py-3">
                 <div className="flex items-center gap-2 mb-2">
@@ -152,7 +152,7 @@ export default function OntbrekendeData() {
                   >
                     {p.product_naam}
                   </Link>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-faint">
                     {p.artikelnummer}
                   </span>
                   <button

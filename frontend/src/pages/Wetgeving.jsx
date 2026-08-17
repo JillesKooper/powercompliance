@@ -153,7 +153,7 @@ export default function Wetgeving() {
               className="flex-1 min-w-0 cursor-pointer"
             >
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-slate-800">
+                <span className="font-semibold text-ink">
                   {wetgevingCode(w.code, taal)}
                 </span>
                 <Badge color={STATUS_KLEUR[w.status] || "slate"}>
@@ -163,16 +163,16 @@ export default function Wetgeving() {
                   <Badge color="slate">{t("status.uitgeschakeld")}</Badge>
                 )}
                 {w.van_kracht_vanaf && (
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-faint">
                     {t("wetgeving.vanaf", { datum: w.van_kracht_vanaf })}
                   </span>
                 )}
               </div>
-              <div className="text-sm text-slate-600 mt-0.5">
+              <div className="text-sm text-muted mt-0.5">
                 {wetgevingNaam(w.code, w.naam, taal)}
               </div>
               {w.samenvatting && (
-                <p className="text-sm text-slate-500 mt-2 leading-relaxed max-w-3xl">
+                <p className="text-sm text-muted mt-2 leading-relaxed max-w-3xl">
                   {wetgevingSamenvatting(w.code, w.samenvatting, taal)}
                 </p>
               )}
@@ -205,7 +205,7 @@ export default function Wetgeving() {
                     : t("wetgeving.vernieuwen")}
                 </Button>
               </div>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-faint">
                 {w.laatst_bijgewerkt_op
                   ? t("wetgeving.laatstBijgewerkt", {
                       datum: formatDatum(w.laatst_bijgewerkt_op, taal),
@@ -214,7 +214,7 @@ export default function Wetgeving() {
               </span>
               <button
                 onClick={() => setOpen(open === w.id ? null : w.id)}
-                className="text-xs text-slate-400 hover:text-slate-600"
+                className="text-xs text-faint hover:text-muted"
               >
                 {t("wetgeving.veldenTelling", {
                   aantal: w.compliance_velden.length,
@@ -225,9 +225,9 @@ export default function Wetgeving() {
           </div>
 
           {open === w.id && (
-            <div className="px-5 pb-5 border-t border-slate-100">
+            <div className="px-5 pb-5 border-t border-line">
               {w.beschrijving && (
-                <p className="text-sm text-slate-500 mt-3 mb-4 leading-relaxed">
+                <p className="text-sm text-muted mt-3 mb-4 leading-relaxed">
                   {wetgevingBeschrijving(w.code, w.beschrijving, taal)}
                 </p>
               )}
@@ -235,9 +235,9 @@ export default function Wetgeving() {
                 {w.compliance_velden.map((v) => (
                   <div
                     key={v.id}
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm flex items-center justify-between"
+                    className="rounded-lg border border-line px-3 py-2 text-sm flex items-center justify-between"
                   >
-                    <span className="text-slate-700">{v.naam}</span>
+                    <span className="text-ink">{v.naam}</span>
                     <Badge color="slate">{v.veld_type}</Badge>
                   </div>
                 ))}

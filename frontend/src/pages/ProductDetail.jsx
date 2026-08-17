@@ -158,8 +158,8 @@ export default function ProductDetail() {
       <Card className="p-6">
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">{product.naam}</h2>
-            <div className="text-sm text-slate-500 mt-1 space-x-3">
+            <h2 className="text-xl font-bold text-ink">{product.naam}</h2>
+            <div className="text-sm text-muted mt-1 space-x-3">
               <span>{t("productDetail.artNr", { waarde: product.artikelnummer || "—" })}</span>
               <span>{t("productDetail.ean", { waarde: product.ean || "—" })}</span>
             </div>
@@ -177,14 +177,14 @@ export default function ProductDetail() {
           <div className="text-right shrink-0 w-44">
             <div
               className={`text-3xl font-bold transition-colors duration-500 ${
-                toonVoor ? "text-red-500" : "text-slate-800"
+                toonVoor ? "text-red-500" : "text-ink"
               }`}
             >
               <AnimatedNumber value={pct} decimals={1} />%
             </div>
-            <div className="text-xs text-slate-400 mb-2">{t("productDetail.compliance")}</div>
+            <div className="text-xs text-faint mb-2">{t("productDetail.compliance")}</div>
             <ProgressBar value={pct} />
-            <div className="text-xs text-slate-500 mt-2">
+            <div className="text-xs text-muted mt-2">
               {t("productDetail.veldenOverzicht", { ingevuld: ingevuldNu, totaal: totaalVelden })}
               <span className="text-red-500">
                 {t("productDetail.ontbreektAantal", { aantal: ontbrekendNu })}
@@ -194,14 +194,14 @@ export default function ProductDetail() {
         </div>
 
         {heeftReply && (
-          <div className="mt-5 flex items-center justify-between gap-3 rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
-            <div className="text-sm text-slate-600">
-              <span className="font-medium text-slate-800">
+          <div className="mt-5 flex items-center justify-between gap-3 rounded-lg bg-hover border border-line px-4 py-3">
+            <div className="text-sm text-muted">
+              <span className="font-medium text-ink">
                 {t("productDetail.voorNaVergelijkingTitel")}
               </span>
               {t("productDetail.voorNaVergelijkingUitleg")}
             </div>
-            <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden shrink-0">
+            <div className="inline-flex rounded-lg border border-line overflow-hidden shrink-0">
               {[
                 ["voor", t("productDetail.voorReply")],
                 ["na", t("productDetail.naReply")],
@@ -214,7 +214,7 @@ export default function ProductDetail() {
                       ? key === "voor"
                         ? "bg-red-500 text-white"
                         : "bg-emerald-500 text-white"
-                      : "bg-white text-slate-600 hover:bg-slate-50"
+                      : "bg-surface text-muted hover:bg-hover"
                   }`}
                 >
                   {label}
@@ -251,10 +251,10 @@ export default function ProductDetail() {
         const heeftOntbrekend = items.some((i) => !i.ingevuld);
         return (
         <Card key={code} className="overflow-hidden">
-          <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <div className="font-semibold text-slate-800">
+          <div className="px-5 py-3 bg-hover border-b border-line flex items-center justify-between">
+            <div className="font-semibold text-ink">
               ⚖️ {wetgevingCode(code, taal)}
-              <span className="ml-2 text-xs font-normal text-slate-400">
+              <span className="ml-2 text-xs font-normal text-faint">
                 {t("productDetail.ingevuldOverzicht", {
                   ingevuld: items.filter((i) => i.ingevuld).length,
                   totaal: items.length,
@@ -267,7 +267,7 @@ export default function ProductDetail() {
               </Button>
             )}
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-line">
             {items.map((r) => (
               <div
                 key={`${weergave}-${r.compliance_veld_id}`}
@@ -318,7 +318,7 @@ function VeldWaarde({ r }) {
           </span>
         ) : (
           // 1. ingevulde waarde, direct zichtbaar
-          <span className="font-medium text-slate-800">{ruwe}</span>
+          <span className="font-medium text-ink">{ruwe}</span>
         )}
         {/* 2. automatisch gevonden via scraping: bron-URL als kleine link */}
         {automatisch && r.bron_url && (
@@ -332,7 +332,7 @@ function VeldWaarde({ r }) {
           </a>
         )}
         {automatisch && !r.bron_url && (
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-faint">
             {t("productDetail.automatischGevonden")}
           </span>
         )}
@@ -342,13 +342,13 @@ function VeldWaarde({ r }) {
 
   // ingevuld gemarkeerd maar zonder waarde: toon "—"
   if (isIngevuld) {
-    return <div className="mt-0.5 text-sm text-slate-400">—</div>;
+    return <div className="mt-0.5 text-sm text-faint">—</div>;
   }
 
   // 4. ontbreekt: blijf "ontbreekt" in rood tonen
   if (r.status === "niet_gevonden_online") {
     return (
-      <div className="mt-0.5 text-sm text-slate-400">
+      <div className="mt-0.5 text-sm text-faint">
         {t("productDetail.nietOnlineGevonden")}
       </div>
     );
@@ -442,9 +442,9 @@ function ComplianceRij({ r, bewerkbaar, productId, taal, onVerifieer, onOpgeslag
   return (
     <>
       <div className="min-w-0 flex-1">
-        <div className="text-slate-700">
+        <div className="text-ink">
           {r.veld_naam}
-          <span className="text-xs text-slate-400 ml-2">{r.veld_type}</span>
+          <span className="text-xs text-faint ml-2">{r.veld_type}</span>
           {r._replyNieuw && (
             <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px] font-medium">
               {t("productDetail.viaReply")}
@@ -481,7 +481,7 @@ function ComplianceRij({ r, bewerkbaar, productId, taal, onVerifieer, onOpgeslag
                 onClick={start}
                 title={t("productDetail.bewerkWaarde")}
                 aria-label={t("productDetail.bewerkWaarde")}
-                className="text-slate-300 hover:text-brand-600 transition-colors text-sm leading-none"
+                className="text-faint hover:text-brand-600 transition-colors text-sm leading-none"
               >
                 ✏️
               </button>

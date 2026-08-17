@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PowerCompliance</title>
+    <!-- Zet de darkmode-class vóór het renderen, zodat er geen lichte flits
+         optreedt bij het laden van een opgeslagen donkere voorkeur. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("powercompliance.thema");
+          if (!t) {
+            t =
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          }
+          if (t === "dark") document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

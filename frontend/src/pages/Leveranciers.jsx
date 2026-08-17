@@ -84,14 +84,14 @@ export default function Leveranciers() {
 
       <div className="flex items-center gap-3">
         {geselecteerd.size > 0 && (
-          <div className="flex items-center gap-2 text-sm text-slate-600">
+          <div className="flex items-center gap-2 text-sm text-muted">
             <span>{t("leveranciers.geselecteerd", { n: geselecteerd.size })}</span>
             <Button onClick={() => setBulkOpen(true)}>
               ✉️ {t("leveranciers.bulkDataverzoek")}
             </Button>
             <button
               onClick={() => setGeselecteerd(new Set())}
-              className="text-xs text-slate-400 hover:underline"
+              className="text-xs text-faint hover:underline"
             >
               {t("leveranciers.wissen")}
             </button>
@@ -124,7 +124,7 @@ export default function Leveranciers() {
               ["land", t("leveranciers.land"), false],
             ].map(([key, label, req]) => (
               <label key={key} className="block">
-                <span className="block text-xs font-medium text-slate-600 mb-1">
+                <span className="block text-xs font-medium text-muted mb-1">
                   {label}
                 </span>
                 <input
@@ -167,7 +167,7 @@ export default function Leveranciers() {
                       >
                         {l.naam}
                       </Link>
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-faint">
                         {l.contactpersoon || "—"} · {l.land}
                       </div>
                     </div>
@@ -179,10 +179,10 @@ export default function Leveranciers() {
                   )}
                 </div>
                 {l.email && (
-                  <div className="text-xs text-slate-500 mt-2">{l.email}</div>
+                  <div className="text-xs text-muted mt-2">{l.email}</div>
                 )}
                 <div className="mt-4">
-                  <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <div className="flex justify-between text-xs text-muted mb-1">
                     <span>{t("leveranciers.aantalProducten", { n: l.aantal_producten })}</span>
                     <span>
                       {l.aantal_ontbrekend > 0
@@ -192,7 +192,7 @@ export default function Leveranciers() {
                   </div>
                   <ProgressBar value={l.compliance_percentage} />
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 text-right">
+                <div className="mt-4 pt-3 border-t border-line text-right">
                   <button
                     onClick={() => verwijder(l.id)}
                     className="text-red-500 hover:text-red-700 text-xs"
@@ -237,14 +237,14 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-800">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+          <h2 className="font-semibold text-ink">
             {t("leveranciers.bulkTitel", { n: ids.length })}
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-xl leading-none"
+            className="text-faint hover:text-ink text-xl leading-none"
           >
             ×
           </button>
@@ -257,7 +257,7 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
           ) : (
             <>
               <label className="block">
-                <span className="block text-xs font-medium text-slate-600 mb-1">
+                <span className="block text-xs font-medium text-muted mb-1">
                   {t("leveranciers.onderwerp")}
                 </span>
                 <input
@@ -267,7 +267,7 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
                 />
               </label>
               <label className="block">
-                <span className="block text-xs font-medium text-slate-600 mb-1">
+                <span className="block text-xs font-medium text-muted mb-1">
                   {t("leveranciers.bericht")}
                 </span>
                 <textarea
@@ -278,7 +278,7 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
                 />
               </label>
               <label className="block">
-                <span className="block text-xs font-medium text-slate-600 mb-1">
+                <span className="block text-xs font-medium text-muted mb-1">
                   {t("leveranciers.deadline")}
                 </span>
                 <input
@@ -291,7 +291,7 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
             </>
           )}
         </div>
-        <div className="flex items-center gap-2 px-6 py-4 border-t border-slate-200">
+        <div className="flex items-center gap-2 px-6 py-4 border-t border-line">
           {resultaat ? (
             <div className="ml-auto">
               <Button onClick={onKlaar}>{t("actie.sluiten")}</Button>

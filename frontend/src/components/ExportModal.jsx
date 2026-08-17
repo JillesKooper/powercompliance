@@ -133,7 +133,7 @@ export default function ExportModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-surface rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-line">
           <h2 className="font-semibold text-ink">{t("modals.export.titel")}</h2>
           <button
@@ -182,7 +182,7 @@ export default function ExportModal({ onClose }) {
                 <select
                   value={leverancierId}
                   onChange={(e) => setLeverancierId(e.target.value)}
-                  className="input bg-white"
+                  className="input bg-surface"
                 >
                   <option value="">{t("modals.export.alleLeveranciers")}</option>
                   {opties.leveranciers.map((l) => (
@@ -194,7 +194,7 @@ export default function ExportModal({ onClose }) {
                 <select
                   value={categorieId}
                   onChange={(e) => setCategorieId(e.target.value)}
-                  className="input bg-white"
+                  className="input bg-surface"
                 >
                   <option value="">{t("modals.export.alleCategorieen")}</option>
                   {opties.categorieen.map((c) => (
@@ -206,7 +206,7 @@ export default function ExportModal({ onClose }) {
                 <select
                   value={wetgevingCode}
                   onChange={(e) => setWetgevingCode(e.target.value)}
-                  className="input bg-white"
+                  className="input bg-surface"
                 >
                   <option value="">{t("modals.export.alleWetgeving")}</option>
                   {opties.wetgeving.map((w) => (

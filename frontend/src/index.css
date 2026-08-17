@@ -4,15 +4,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Huisstijl-tokens als RGB-kanalen (spatie-gescheiden), zodat Tailwind ze
+   met opacity kan combineren via rgb(var(--x) / <alpha-value>). Lichte modus
+   volgt de PowerSuite-stijl: witte content, lichtgrijze zijbalk. */
+:root {
+  --kleur-canvas: 255 255 255; /* hoofd-achtergrond (wit) */
+  --kleur-surface: 255 255 255; /* kaarten/panelen */
+  --kleur-sidebar: 247 248 250; /* lichtgrijze zijbalk */
+  --kleur-ink: 26 26 26; /* primaire tekst */
+  --kleur-muted: 102 102 102; /* secundaire tekst */
+  --kleur-faint: 148 163 184; /* tertiaire tekst */
+  --kleur-line: 224 224 224; /* borders */
+  --kleur-hover: 240 240 240; /* hover states */
+}
+
+/* Donkere modus (#1a1a2e-familie): donkere achtergrond, lichte tekst,
+   iets lichtere kaarten voor diepte. */
+.dark {
+  --kleur-canvas: 26 26 46; /* #1a1a2e */
+  --kleur-surface: 34 34 54; /* #222236 */
+  --kleur-sidebar: 20 20 34; /* #141422 */
+  --kleur-ink: 233 233 242; /* #e9e9f2 */
+  --kleur-muted: 160 160 184; /* #a0a0b8 */
+  --kleur-faint: 118 118 140; /* #76768c */
+  --kleur-line: 46 46 68; /* #2e2e44 */
+  --kleur-hover: 42 42 64; /* #2a2a40 */
+}
+
 body {
   @apply bg-canvas text-ink antialiased;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
 }
 
+/* Zachte overgang bij het omschakelen tussen licht en donker. */
+body,
+.bg-canvas,
+.bg-surface,
+.bg-sidebar {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
 @layer components {
   .input {
-    @apply w-full rounded-md border border-line px-3 py-2 text-sm text-ink bg-white
+    @apply w-full rounded-md border border-line px-3 py-2 text-sm text-ink bg-surface
       placeholder:text-muted/70
       focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
   }

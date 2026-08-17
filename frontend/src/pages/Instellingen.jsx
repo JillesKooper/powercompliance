@@ -30,13 +30,13 @@ function TaalKaart() {
   ];
   return (
     <Card className="p-6">
-      <h2 className="font-semibold text-slate-800 mb-1">
+      <h2 className="font-semibold text-ink mb-1">
         {t("instellingen.taalTitel")}
       </h2>
-      <p className="text-sm text-slate-500 mb-4">
+      <p className="text-sm text-muted mb-4">
         {t("instellingen.taalOmschrijving")}
       </p>
-      <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
+      <div className="inline-flex rounded-lg border border-line overflow-hidden">
         {opties.map((o) => (
           <button
             key={o.code}
@@ -46,7 +46,7 @@ function TaalKaart() {
             className={`px-4 py-1.5 text-sm transition-colors ${
               taal === o.code
                 ? "bg-brand-600 text-white"
-                : "bg-white text-slate-600 hover:bg-slate-50"
+                : "bg-surface text-muted hover:bg-hover"
             }`}
           >
             {o.label}
@@ -122,10 +122,10 @@ function WetgevingRefreshKaart() {
 
   return (
     <Card className="p-6">
-      <h2 className="font-semibold text-slate-800 mb-1">
+      <h2 className="font-semibold text-ink mb-1">
         {t("instellingen.wetgevingRefreshTitel")}
       </h2>
-      <p className="text-sm text-slate-500 mb-4">
+      <p className="text-sm text-muted mb-4">
         {t("instellingen.wetgevingRefreshOmschrijving")}
       </p>
 
@@ -134,7 +134,7 @@ function WetgevingRefreshKaart() {
           <span className="block text-xs font-medium text-muted mb-1">
             {t("instellingen.autoVernieuwen")}
           </span>
-          <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
+          <div className="inline-flex rounded-lg border border-line overflow-hidden">
             {FREQUENTIES.map((f) => (
               <button
                 key={f.code}
@@ -144,7 +144,7 @@ function WetgevingRefreshKaart() {
                 className={`px-3 py-1.5 text-sm transition-colors ${
                   inst?.frequentie === f.code
                     ? "bg-brand-600 text-white"
-                    : "bg-white text-slate-600 hover:bg-slate-50"
+                    : "bg-surface text-muted hover:bg-hover"
                 }`}
               >
                 {f.label}
@@ -156,7 +156,7 @@ function WetgevingRefreshKaart() {
           <Button onClick={nuVernieuwen} disabled={bezig}>
             {bezig ? t("instellingen.nuVernieuwenBezig") : t("instellingen.nuVernieuwen")}
           </Button>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-faint">
             {inst?.laatste_run
               ? t("instellingen.laatsteRefresh", {
                   datum: formatDatum(inst.laatste_run, taal),
@@ -226,21 +226,21 @@ export default function Instellingen() {
       <TaalKaart />
 
       <Card className="p-6">
-        <h2 className="font-semibold text-slate-800 mb-1">
+        <h2 className="font-semibold text-ink mb-1">
           {t("instellingen.organisatie")}
         </h2>
-        <p className="text-sm text-slate-500 mb-4">
+        <p className="text-sm text-muted mb-4">
           {t("instellingen.organisatieOmschrijving")}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="block">
-            <span className="block text-xs font-medium text-slate-600 mb-1">
+            <span className="block text-xs font-medium text-muted mb-1">
               {t("instellingen.bedrijfsnaam")}
             </span>
             <input className="input" defaultValue="Mijn Groothandel B.V." />
           </label>
           <label className="block">
-            <span className="block text-xs font-medium text-slate-600 mb-1">
+            <span className="block text-xs font-medium text-muted mb-1">
               {t("instellingen.contactEmail")}
             </span>
             <input className="input" defaultValue="gvdmond@machine-learning.company" />
@@ -249,10 +249,10 @@ export default function Instellingen() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="font-semibold text-slate-800 mb-1">
+        <h2 className="font-semibold text-ink mb-1">
           {t("instellingen.wetgevingsbeheer")}
         </h2>
-        <p className="text-sm text-slate-500 mb-4">
+        <p className="text-sm text-muted mb-4">
           {t("instellingen.wetgevingsbeheerOmschrijving")}
         </p>
         {!wetgeving ? (
@@ -263,23 +263,23 @@ export default function Instellingen() {
               <div
                 key={w.id}
                 className={`flex items-center gap-4 rounded-lg border px-4 py-3 ${
-                  w.actief ? "border-slate-200" : "border-slate-200 bg-slate-50 opacity-70"
+                  w.actief ? "border-line" : "border-line bg-hover opacity-70"
                 }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-800">
+                    <span className="font-medium text-ink">
                       {wetgevingCode(w.code, taal)}
                     </span>
                     {w.aantal_producten === 0 && (
                       <Badge color="slate">{t("instellingen.geenProducten")}</Badge>
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 truncate">
+                  <div className="text-xs text-faint truncate">
                     {wetgevingNaam(w.code, w.naam, taal)}
                   </div>
                 </div>
-                <div className="w-28 text-xs text-slate-500 text-right shrink-0">
+                <div className="w-28 text-xs text-muted text-right shrink-0">
                   {t("instellingen.producten", { n: w.aantal_producten })}
                 </div>
                 <div className="w-32 shrink-0">
@@ -295,7 +295,7 @@ export default function Instellingen() {
                   }`}
                 >
                   <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                    className={`inline-block h-5 w-5 transform rounded-full bg-surface transition-transform ${
                       w.actief ? "translate-x-5" : "translate-x-0.5"
                     }`}
                   />
@@ -309,7 +309,7 @@ export default function Instellingen() {
       <WetgevingRefreshKaart />
 
       <Card className="p-6">
-        <h2 className="font-semibold text-slate-800 mb-4">
+        <h2 className="font-semibold text-ink mb-4">
           {t("instellingen.productcategorieen")}
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -319,7 +319,7 @@ export default function Instellingen() {
             </Badge>
           ))}
           {categorieen.length === 0 && (
-            <span className="text-sm text-slate-400">
+            <span className="text-sm text-faint">
               {t("instellingen.geenCategorieen")}
             </span>
           )}
@@ -329,13 +329,13 @@ export default function Instellingen() {
       <ExportKoppeling />
 
       <Card className="p-6" id="dataverzoeken">
-        <h2 className="font-semibold text-slate-800 mb-4">
+        <h2 className="font-semibold text-ink mb-4">
           {t("instellingen.dataverzoeken")}
         </h2>
         {!dataverzoeken ? (
           <Loading />
         ) : dataverzoeken.length === 0 ? (
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-faint">
             {t("instellingen.geenDataverzoeken")}
           </span>
         ) : (
@@ -345,13 +345,13 @@ export default function Instellingen() {
                 key={d.id}
                 type="button"
                 onClick={() => setGekozenVerzoek(d.id)}
-                className="w-full flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 text-left transition-colors hover:bg-hover hover:border-brand-300"
+                className="w-full flex items-center justify-between rounded-lg border border-line px-4 py-3 text-left transition-colors hover:bg-hover hover:border-brand-300"
               >
                 <div>
-                  <div className="text-sm font-medium text-slate-800">
+                  <div className="text-sm font-medium text-ink">
                     {d.onderwerp}
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-faint">
                     {d.leverancier?.naam}
                     {d.deadline
                       ? ` · ${t("instellingen.deadline", { datum: d.deadline })}`
@@ -419,10 +419,10 @@ function ExportKoppeling() {
 
   return (
     <Card className="p-6">
-      <h2 className="font-semibold text-slate-800 mb-1">
+      <h2 className="font-semibold text-ink mb-1">
         {t("instellingen.pimTitel")}
       </h2>
-      <p className="text-sm text-slate-500 mb-4">
+      <p className="text-sm text-muted mb-4">
         {t("instellingen.pimOmschrijving")}
       </p>
 

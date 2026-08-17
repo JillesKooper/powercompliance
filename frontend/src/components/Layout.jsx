@@ -1,6 +1,7 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useNotificaties } from "../context/notificaties";
 import { useLanguage } from "../context/language";
+import { useTheme } from "../context/theme";
 
 const NAV = [
   { to: "/", labelKey: "nav.dashboard", icon: "📊", end: true },
@@ -24,22 +25,20 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col bg-canvas">
       {/* Topbar */}
-      <header className="h-14 shrink-0 bg-white border-b border-line flex items-center px-5">
+      <header className="h-14 shrink-0 bg-surface border-b border-line flex items-center px-5">
         <Link
           to="/"
           aria-label={t("nav.dashboard")}
           className="flex items-center gap-2.5 rounded-md -mx-1 px-1 hover:opacity-80 transition-opacity"
         >
-          {/* Blauw A-icoon (placeholder) */}
-          <span className="h-7 w-7 rounded-full bg-brand-500 grid place-items-center text-white text-sm font-bold">
-            A
-          </span>
+          <BrandLogo />
           <span className="text-[15px] text-ink tracking-tight">
             Power<span className="font-bold">Compliance</span>
           </span>
         </Link>
         <div className="ml-auto flex items-center gap-2 text-muted">
           <LanguageToggle />
+          <ThemeToggle />
           <Link
             to="/instellingen"
             aria-label={t("nav.instellingen")}
@@ -52,7 +51,7 @@ export default function Layout({ children }) {
 
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
-        <aside className="w-[210px] shrink-0 bg-white flex flex-col">
+        <aside className="w-[210px] shrink-0 bg-sidebar border-r border-line flex flex-col">
           <div className="px-4 py-4">
             <div className="text-sm font-bold text-ink leading-tight">
               {t("app.gebruiker")}
@@ -68,7 +67,7 @@ export default function Layout({ children }) {
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
                     isActive
-                      ? "bg-hover text-ink font-medium"
+                      ? "bg-brand-500/10 text-brand-700 dark:text-brand-300 font-medium"
                       : "text-muted hover:bg-hover hover:text-ink"
                   }`
                 }
@@ -83,6 +82,12 @@ export default function Layout({ children }) {
               </NavLink>
             ))}
           </nav>
+          {/* Footer in de zijbalk */}
+          <div className="px-4 py-3 border-t border-line text-[11px] text-muted">
+            <span className="text-ink font-medium">PowerCompliance</span>
+            <span className="mx-1 text-faint">|</span>
+            powered by <span className="font-medium">Squadra</span>
+          </div>
         </aside>
 
         {/* Main */}
@@ -94,6 +99,30 @@ export default function Layout({ children }) {
         </main>
       </div>
     </div>
+  );
+}
+
+// PowerSuite-stijl logomerk: afgerond vierkant in de merkkleur met een
+// witte bliksem-glyph (het "Power"-motief dat de PowerSuite-apps delen).
+function BrandLogo() {
+  return (
+    <span className="h-7 w-7 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 grid place-items-center shadow-sm">
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"
+          fill="white"
+          stroke="white"
+          strokeWidth="1"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -118,13 +147,65 @@ function LanguageToggle() {
           className={`px-2.5 py-1 transition-colors ${
             language === code
               ? "bg-brand-500 text-white"
-              : "bg-white text-muted hover:bg-hover hover:text-ink"
+              : "bg-surface text-muted hover:bg-hover hover:text-ink"
           }`}
         >
           {code.toUpperCase()}
         </button>
       ))}
     </div>
+  );
+}
+
+// Licht/donker-schakelaar: zon in donkere modus (klik → licht),
+// maan in lichte modus (klik → donker).
+function ThemeToggle() {
+  const { isDark, toggleTheme } = useTheme();
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label={isDark ? "Lichte modus" : "Donkere modus"}
+      title={isDark ? "Lichte modus" : "Donkere modus"}
+      className="h-9 w-9 grid place-items-center rounded-md hover:bg-hover hover:text-ink transition-colors"
+    >
+      {isDark ? <SunIcon /> : <MoonIcon />}
+    </button>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
   );
 }
 

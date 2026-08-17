@@ -115,7 +115,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-slate-800">
+            <h2 className="font-semibold text-ink">
               {t("dashboard.compliancePerWetgeving")}
             </h2>
             <Link
@@ -134,10 +134,10 @@ export default function Dashboard() {
                 className="w-full text-left rounded-md -mx-2 px-2 py-2 cursor-pointer transition-colors hover:bg-hover"
               >
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium text-slate-700">
+                  <span className="font-medium text-ink">
                     {wetgevingCode(w.code, taal)}
                   </span>
-                  <span className="text-slate-400 truncate ml-4 max-w-xs">
+                  <span className="text-faint truncate ml-4 max-w-xs">
                     {wetgevingNaam(w.code, w.naam, taal)}
                   </span>
                 </div>
@@ -149,7 +149,7 @@ export default function Dashboard() {
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-slate-800">
+            <h2 className="font-semibold text-ink">
               {t("dashboard.notificaties")}
               {ongelezen > 0 && (
                 <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold">
@@ -168,7 +168,7 @@ export default function Dashboard() {
           </div>
           <div className="space-y-3">
             {notificaties.length === 0 && (
-              <div className="text-sm text-slate-400">
+              <div className="text-sm text-faint">
                 {t("dashboard.geenNotificaties")}
               </div>
             )}
@@ -178,7 +178,7 @@ export default function Dashboard() {
                 onClick={() => setGekozenId(n.id)}
                 className={`w-full text-left rounded-lg border p-3 text-sm cursor-pointer transition-colors hover:border-brand-300 hover:bg-hover ${
                   n.gelezen
-                    ? "border-slate-200 bg-slate-50"
+                    ? "border-line bg-hover"
                     : "border-brand-100 bg-brand-50"
                 }`}
               >
@@ -193,7 +193,7 @@ export default function Dashboard() {
                       : "ℹ️"}
                   </span>
                   <span
-                    className={`flex-1 text-slate-800 ${
+                    className={`flex-1 text-ink ${
                       n.gelezen ? "font-medium" : "font-bold"
                     }`}
                   >
@@ -204,12 +204,12 @@ export default function Dashboard() {
                   )}
                 </div>
                 {n.categorie && (
-                  <div className="text-[11px] text-slate-400 mt-1 ml-6">
+                  <div className="text-[11px] text-faint mt-1 ml-6">
                     {n.categorie}
                   </div>
                 )}
                 {n.bericht && (
-                  <div className="text-slate-500 mt-1 text-xs leading-relaxed ml-6 line-clamp-2">
+                  <div className="text-muted mt-1 text-xs leading-relaxed ml-6 line-clamp-2">
                     {n.bericht}
                   </div>
                 )}

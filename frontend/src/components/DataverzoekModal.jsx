@@ -65,10 +65,10 @@ export default function DataverzoekModal({ id, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-auto">
-        <div className="flex items-start justify-between px-6 py-4 border-b border-slate-200">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-auto">
+        <div className="flex items-start justify-between px-6 py-4 border-b border-line">
           <div>
-            <h2 className="font-semibold text-slate-800">
+            <h2 className="font-semibold text-ink">
               {verzoek?.onderwerp || t("modals.dataverzoek.titel")}
             </h2>
             {verzoek && (
@@ -83,7 +83,7 @@ export default function DataverzoekModal({ id, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-xl leading-none"
+            className="text-faint hover:text-ink text-xl leading-none"
           >
             ×
           </button>
@@ -97,7 +97,7 @@ export default function DataverzoekModal({ id, onClose }) {
           ) : (
             <>
               {/* Leverancier + contactgegevens */}
-              <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 text-sm">
+              <div className="rounded-lg border border-line divide-y divide-line text-sm">
                 <Rij label={t("modals.dataverzoek.leverancier")}>
                   {lev?.naam || "—"}
                 </Rij>
@@ -127,7 +127,7 @@ export default function DataverzoekModal({ id, onClose }) {
                 </Rij>
                 <Rij label={t("modals.dataverzoek.deadline")}>
                   {verzoek.deadline || (
-                    <span className="text-slate-400">
+                    <span className="text-faint">
                       {t("modals.dataverzoek.geenDeadline")}
                     </span>
                   )}
@@ -137,7 +137,7 @@ export default function DataverzoekModal({ id, onClose }) {
               {/* Uitgevraagde producten & velden */}
               <Sectie titel={t("modals.dataverzoek.uitgevraagd")}>
                 {perProduct.length === 0 ? (
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-faint">
                     {t("modals.dataverzoek.geenRegels")}
                   </p>
                 ) : (
@@ -145,16 +145,16 @@ export default function DataverzoekModal({ id, onClose }) {
                     {perProduct.map((groep, i) => (
                       <div
                         key={i}
-                        className="rounded-lg border border-slate-200 px-4 py-3"
+                        className="rounded-lg border border-line px-4 py-3"
                       >
-                        <div className="text-sm font-medium text-slate-800">
+                        <div className="text-sm font-medium text-ink">
                           {groep.naam || "—"}
                         </div>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {groep.velden.map((v) => (
                             <span
                               key={v.id}
-                              className="inline-flex items-center rounded-md bg-hover px-2 py-0.5 text-xs text-slate-600"
+                              className="inline-flex items-center rounded-md bg-hover px-2 py-0.5 text-xs text-muted"
                               title={v.wetgeving_naam || v.wetgeving_code || ""}
                             >
                               {v.veld_naam || "—"}
@@ -170,11 +170,11 @@ export default function DataverzoekModal({ id, onClose }) {
               {/* Verstuurde mail */}
               <Sectie titel={t("modals.dataverzoek.verstuurdeMail")}>
                 {verzoek.verzonden_bericht ? (
-                  <pre className="whitespace-pre-wrap font-sans text-sm text-slate-700 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                  <pre className="whitespace-pre-wrap font-sans text-sm text-ink rounded-lg border border-line bg-hover px-4 py-3">
                     {verzoek.verzonden_bericht}
                   </pre>
                 ) : (
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-faint">
                     {t("modals.dataverzoek.geenMail")}
                   </p>
                 )}
@@ -183,11 +183,11 @@ export default function DataverzoekModal({ id, onClose }) {
               {/* Ontvangen reply */}
               <Sectie titel={t("modals.dataverzoek.reply")}>
                 {verzoek.reply_bericht ? (
-                  <pre className="whitespace-pre-wrap font-sans text-sm text-slate-700 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <pre className="whitespace-pre-wrap font-sans text-sm text-ink rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
                     {verzoek.reply_bericht}
                   </pre>
                 ) : (
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-faint">
                     {t("modals.dataverzoek.geenReply")}
                   </p>
                 )}
@@ -196,7 +196,7 @@ export default function DataverzoekModal({ id, onClose }) {
           )}
         </div>
 
-        <div className="flex items-center px-6 py-4 border-t border-slate-200">
+        <div className="flex items-center px-6 py-4 border-t border-line">
           <div className="ml-auto">
             <Button variant="ghost" onClick={onClose}>
               {t("actie.sluiten")}
@@ -211,8 +211,8 @@ export default function DataverzoekModal({ id, onClose }) {
 function Rij({ label, children }) {
   return (
     <div className="flex items-start px-4 py-2.5">
-      <span className="w-32 shrink-0 text-slate-400">{label}</span>
-      <div className="flex-1 text-slate-700 break-words">{children}</div>
+      <span className="w-32 shrink-0 text-faint">{label}</span>
+      <div className="flex-1 text-ink break-words">{children}</div>
     </div>
   );
 }
@@ -220,7 +220,7 @@ function Rij({ label, children }) {
 function Sectie({ titel, children }) {
   return (
     <div>
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-faint mb-2">
         {titel}
       </h3>
       {children}

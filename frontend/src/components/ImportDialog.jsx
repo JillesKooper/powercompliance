@@ -53,12 +53,12 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-800">{t(cfg.titelKey)}</h2>
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+          <h2 className="font-semibold text-ink">{t(cfg.titelKey)}</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-xl leading-none"
+            className="text-faint hover:text-ink text-xl leading-none"
           >
             ×
           </button>
@@ -82,16 +82,16 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
                 className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
                   sleep
                     ? "border-brand-500 bg-brand-50"
-                    : "border-slate-300 hover:border-brand-400 hover:bg-slate-50"
+                    : "border-line hover:border-brand-400 hover:bg-hover"
                 }`}
               >
                 <div className="text-4xl mb-2">📥</div>
-                <div className="font-medium text-slate-700">
+                <div className="font-medium text-ink">
                   {bezig
                     ? t("modals.import.bezig")
                     : t("modals.import.sleepBestand")}
                 </div>
-                <div className="text-xs text-slate-400 mt-1">
+                <div className="text-xs text-faint mt-1">
                   {t("modals.import.ondersteund")}
                 </div>
                 <input
@@ -109,9 +109,9 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
                 </div>
               )}
 
-              <div className="mt-5 text-xs text-slate-500 space-y-2">
+              <div className="mt-5 text-xs text-muted space-y-2">
                 <div>
-                  <span className="font-medium text-slate-600">
+                  <span className="font-medium text-muted">
                     {t("modals.import.verplichteKolommen")}
                   </span>
                   {cfg.verplicht.map((k) => (
@@ -121,7 +121,7 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
                   ))}
                 </div>
                 <div>
-                  <span className="font-medium text-slate-600">
+                  <span className="font-medium text-muted">
                     {t("modals.import.optioneel")}
                   </span>
                   {cfg.optioneel.map((k) => (
@@ -130,7 +130,7 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
                     </span>
                   ))}
                 </div>
-                <p className="text-slate-400 pt-1">{t(cfg.hintKey)}</p>
+                <p className="text-faint pt-1">{t(cfg.hintKey)}</p>
               </div>
             </>
           ) : (
@@ -170,7 +170,7 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
         <Stat
           label={t("modals.import.statGeimporteerd")}
           value={r.aantal_geimporteerd}
-          kleur="text-slate-800"
+          kleur="text-ink"
         />
         {isProduct && (
           <>
@@ -196,19 +196,19 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
       </div>
 
       <div className="mb-4">
-        <div className="text-xs font-medium text-slate-600 mb-1">
+        <div className="text-xs font-medium text-muted mb-1">
           {t("modals.import.herkendeKolommen")}
         </div>
         <div className="space-y-1 text-xs">
           {Object.entries(r.herkende_kolommen).map(([k, v]) => (
             <div key={k} className="flex justify-between">
-              <span className="text-slate-500">{k}</span>
-              <span className="text-slate-700 font-medium">→ {v}</span>
+              <span className="text-muted">{k}</span>
+              <span className="text-ink font-medium">→ {v}</span>
             </div>
           ))}
         </div>
         {r.genegeerde_kolommen.length > 0 && (
-          <div className="text-xs text-slate-400 mt-2">
+          <div className="text-xs text-faint mt-2">
             {t("modals.import.genegeerd", {
               lijst: r.genegeerde_kolommen.join(", "),
             })}
@@ -231,7 +231,7 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
         </div>
       )}
 
-      <div className="flex gap-2 justify-end pt-2 border-t border-slate-100">
+      <div className="flex gap-2 justify-end pt-2 border-t border-line">
         <Button variant="ghost" onClick={onClose}>
           {t("actie.sluiten")}
         </Button>
@@ -247,9 +247,9 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
 
 function Stat({ label, value, kleur }) {
   return (
-    <div className="rounded-lg border border-slate-200 p-3 text-center">
+    <div className="rounded-lg border border-line p-3 text-center">
       <div className={`text-2xl font-bold ${kleur}`}>{value}</div>
-      <div className="text-xs text-slate-500 mt-0.5">{label}</div>
+      <div className="text-xs text-muted mt-0.5">{label}</div>
     </div>
   );
 }
