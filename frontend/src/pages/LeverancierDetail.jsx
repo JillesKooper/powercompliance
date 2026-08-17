@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
 import { Card, ProgressBar, Badge, Loading, ErrorBox, Button } from "../components/ui";
 import ActiviteitTijdlijn from "../components/ActiviteitTijdlijn.jsx";
+import AuditTrail from "../components/AuditTrail.jsx";
 import { useTaal } from "../context/taal";
 
 export default function LeverancierDetail() {
@@ -121,6 +122,7 @@ export default function LeverancierDetail() {
         {[
           ["overzicht", t("leverancierDetail.tabOverzicht")],
           ["activiteit", t("leverancierDetail.tabActiviteit")],
+          ["audit", t("activiteit.tabAudit")],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -139,6 +141,12 @@ export default function LeverancierDetail() {
       {tab === "activiteit" && (
         <Card className="p-5">
           <ActiviteitTijdlijn leverancierId={id} />
+        </Card>
+      )}
+
+      {tab === "audit" && (
+        <Card className="overflow-hidden">
+          <AuditTrail leverancierId={id} />
         </Card>
       )}
 

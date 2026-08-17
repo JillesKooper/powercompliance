@@ -13,6 +13,7 @@ from .. import (
     compliance_service,
     activiteit_service,
     notificatie_teksten,
+    audit_service,
 )
 from ..database import get_db
 
@@ -192,6 +193,15 @@ def verstuur_email(data: schemas.EmailVerstuurRequest, db: Session = Depends(get
         f"Dataverzoek verstuurd — {data.onderwerp}",
         detail=(data.tekst or "") + f"\n\n[{kanaal_tekst}]",
     )
+    audit_service.log(
+        db,
+        audit_service.DATAVERZOEK_VERSTUURD,
+        audit_service.OBJ_DATAVERZOEK,
+        object_id=verzoek.id,
+        object_naam=data.onderwerp,
+        nieuwe_waarde=f"Verstuurd aan {lev.naam} ({mail['ontvanger']})",
+        leverancier_id=lev.id,
+    )
     db.commit()
     db.refresh(verzoek)
     compliance_service.invalideer_dashboard()
@@ -251,6 +261,14 @@ def uitvraag_wetgeving(
             lev.id,
             activiteit_service.MAIL_VERSTUURD,
             f"Dataverzoek verstuurd ({data.wetgeving_code}) — {onderwerp}",
+        )
+        audit_service.log(
+            db,
+            audit_service.DATAVERZOEK_VERSTUURD,
+            audit_service.OBJ_DATAVERZOEK,
+            object_naam=onderwerp,
+            nieuwe_waarde=f"Uitvraag {data.wetgeving_code} aan {lev.naam}",
+            leverancier_id=lev.id,
         )
         verstuurd.append({"id": lev.id, "naam": lev.naam, "onderwerp": onderwerp})
 

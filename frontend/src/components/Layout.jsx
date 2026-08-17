@@ -11,6 +11,7 @@ const NAV = [
   { to: "/wetgeving", labelKey: "nav.wetgeving", icon: "⚖️" },
   { to: "/sequences", labelKey: "nav.sequences", icon: "🔁" },
   { to: "/rapportages", labelKey: "nav.rapportages", icon: "📈" },
+  { to: "/activiteit", labelKey: "nav.activiteit", icon: "🕓" },
   { to: "/instellingen", labelKey: "nav.instellingen", icon: "⚙️" },
 ];
 

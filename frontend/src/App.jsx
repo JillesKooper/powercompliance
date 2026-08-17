@@ -12,6 +12,7 @@ import OntbrekendeData from "./pages/OntbrekendeData.jsx";
 import Wetgeving from "./pages/Wetgeving.jsx";
 import Sequences from "./pages/Sequences.jsx";
 import Rapportages from "./pages/Rapportages.jsx";
+import Activiteit from "./pages/Activiteit.jsx";
 import Instellingen from "./pages/Instellingen.jsx";
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/wetgeving" element={<Wetgeving />} />
         <Route path="/sequences" element={<Sequences />} />
         <Route path="/rapportages" element={<Rapportages />} />
+        <Route path="/activiteit" element={<Activiteit />} />
         <Route path="/instellingen" element={<Instellingen />} />
         </Routes>
         </Layout>

@@ -165,6 +165,33 @@ export const api = {
   importProducten: (file) => upload("/import/producten", file),
   importLeveranciers: (file) => upload("/import/leveranciers", file),
 
+  // ---------- Slimme bulkimport (analyse → bevestig → template) ----------
+  analyseerImport: (file) => upload("/import/producten/analyseer", file),
+  bevestigImport: (file, mapping, modus, categorieen) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("mapping", JSON.stringify(mapping || {}));
+    fd.append("modus", modus || "alles");
+    fd.append("categorieen", JSON.stringify(categorieen || {}));
+    return uploadForm("/import/producten/bevestig", fd);
+  },
+  downloadImportTemplate: () => download("/import/producten/template"),
+
+  // ---------- Audit trail / activiteit ----------
+  audit: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== "" && v != null)
+    ).toString();
+    return request(`/audit${qs ? `?${qs}` : ""}`);
+  },
+  auditFilters: () => request("/audit/filters"),
+  exporteerAudit: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== "" && v != null)
+    ).toString();
+    return download(`/audit/export${qs ? `?${qs}` : ""}`);
+  },
+
   genereerEmail: (data) =>
     request("/email/genereer", { method: "POST", body: JSON.stringify(data) }),
   verstuurEmail: (data) =>

@@ -10,7 +10,7 @@ import {
   Button,
   Paginatie,
 } from "../components/ui";
-import ImportDialog from "../components/ImportDialog.jsx";
+import SlimmeImportModal from "../components/SlimmeImportModal.jsx";
 import ExportModal from "../components/ExportModal.jsx";
 import { useTaal } from "../context/taal";
 import { categorieNaam } from "../i18n/dataVertaling";
@@ -137,8 +137,7 @@ export default function Producten() {
       {toonExport && <ExportModal onClose={() => setToonExport(false)} />}
 
       {toonImport && (
-        <ImportDialog
-          soort="producten"
+        <SlimmeImportModal
           onClose={() => setToonImport(false)}
           onKlaar={laad}
         />

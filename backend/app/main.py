@@ -20,6 +20,7 @@ from .routers import (
     export,
     rapportages,
     documenten,
+    audit,
 )
 from . import scheduler
 
@@ -137,6 +138,7 @@ app.include_router(sequences.router)
 app.include_router(export.router)
 app.include_router(rapportages.router)
 app.include_router(documenten.router)
+app.include_router(audit.router)
 
 
 @app.on_event("startup")

@@ -3,7 +3,15 @@ from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, compliance, compliance_service, scraper, veld_vertaling
+from .. import (
+    models,
+    schemas,
+    compliance,
+    compliance_service,
+    scraper,
+    veld_vertaling,
+    audit_service,
+)
 from ..database import get_db
 
 router = APIRouter(prefix="/api/producten", tags=["producten"])
@@ -123,6 +131,17 @@ def maak_product(
         raise HTTPException(status_code=400, detail="Leverancier bestaat niet")
     product = models.Product(**data.model_dump())
     db.add(product)
+    db.flush()
+    audit_service.log(
+        db,
+        audit_service.PRODUCT_TOEGEVOEGD,
+        audit_service.OBJ_PRODUCT,
+        object_id=product.id,
+        object_naam=product.naam,
+        nieuwe_waarde=product.naam,
+        leverancier_id=product.leverancier_id,
+        product_id=product.id,
+    )
     db.commit()
     db.refresh(product)
     # compliance herberekenen + automatisch scrapen als er velden ontbreken
@@ -141,8 +160,29 @@ def wijzig_product(
     product = db.get(models.Product, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product niet gevonden")
-    for veld, waarde in data.model_dump(exclude_unset=True).items():
+    velden = data.model_dump(exclude_unset=True)
+    # wijzigingen bepalen (oude → nieuwe waarde) voor de audit trail
+    wijzigingen = {
+        veld: (getattr(product, veld), waarde)
+        for veld, waarde in velden.items()
+        if getattr(product, veld) != waarde
+    }
+    for veld, waarde in velden.items():
         setattr(product, veld, waarde)
+    if wijzigingen:
+        oud = "; ".join(f"{v}: {o}" for v, (o, _) in wijzigingen.items())
+        nieuw = "; ".join(f"{v}: {n}" for v, (_, n) in wijzigingen.items())
+        audit_service.log(
+            db,
+            audit_service.PRODUCT_GEWIJZIGD,
+            audit_service.OBJ_PRODUCT,
+            object_id=product.id,
+            object_naam=product.naam,
+            oude_waarde=oud,
+            nieuwe_waarde=nieuw,
+            leverancier_id=product.leverancier_id,
+            product_id=product.id,
+        )
     db.commit()
     db.refresh(product)
     background_tasks.add_task(compliance_service.herbereken_product_bg, product.id)
@@ -154,6 +194,16 @@ def verwijder_product(product_id: int, db: Session = Depends(get_db)):
     product = db.get(models.Product, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product niet gevonden")
+    audit_service.log(
+        db,
+        audit_service.PRODUCT_VERWIJDERD,
+        audit_service.OBJ_PRODUCT,
+        object_id=product.id,
+        object_naam=product.naam,
+        oude_waarde=product.naam,
+        leverancier_id=product.leverancier_id,
+        product_id=product.id,
+    )
     db.delete(product)
     db.commit()
     compliance_service.invalideer_dashboard()
@@ -266,6 +316,7 @@ def wijzig_compliance_waarde(
         .filter_by(product_id=product_id, compliance_veld_id=veld_id)
         .first()
     )
+    oude_waarde = w.waarde if w else None
     if not w:
         w = models.ProductComplianceWaarde(
             product_id=product_id, compliance_veld_id=veld_id
@@ -278,6 +329,20 @@ def wijzig_compliance_waarde(
     w.bron_url = None
     w.geverifieerd = True
     w.twijfelachtig = False
+
+    # audit trail: leg de inline compliance-wijziging vast (oud → nieuw)
+    if (oude_waarde or None) != (nieuwe_waarde or None):
+        audit_service.log(
+            db,
+            audit_service.COMPLIANCE_GEWIJZIGD,
+            audit_service.OBJ_COMPLIANCE,
+            object_id=product_id,
+            object_naam=f"{product.naam} · {veld.naam}",
+            oude_waarde=oude_waarde,
+            nieuwe_waarde=nieuwe_waarde or None,
+            leverancier_id=product.leverancier_id,
+            product_id=product_id,
+        )
 
     # synchroon herberekenen zodat de frontend de nieuwe score direct kan tonen
     db.flush()

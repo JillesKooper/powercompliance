@@ -3,8 +3,19 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, compliance_service
+from .. import models, schemas, compliance_service, audit_service
 from ..database import get_db
+
+# Labels van de leverancier-velden voor leesbare audit-meldingen.
+_LEV_VELD_LABEL = {
+    "naam": "naam",
+    "contactpersoon": "contactpersoon",
+    "email": "e-mail",
+    "telefoon": "telefoon",
+    "adres": "adres",
+    "land": "land",
+    "actief": "actief",
+}
 
 router = APIRouter(prefix="/api/leveranciers", tags=["leveranciers"])
 
@@ -91,8 +102,33 @@ def wijzig_leverancier(
     lev = db.get(models.Leverancier, leverancier_id)
     if not lev:
         raise HTTPException(status_code=404, detail="Leverancier niet gevonden")
-    for veld, waarde in data.model_dump(exclude_unset=True).items():
+    velden = data.model_dump(exclude_unset=True)
+    wijzigingen = {
+        veld: (getattr(lev, veld), waarde)
+        for veld, waarde in velden.items()
+        if getattr(lev, veld) != waarde
+    }
+    for veld, waarde in velden.items():
         setattr(lev, veld, waarde)
+    if wijzigingen:
+        oud = "; ".join(
+            f"{_LEV_VELD_LABEL.get(v, v)}: {o or '—'}"
+            for v, (o, _) in wijzigingen.items()
+        )
+        nieuw = "; ".join(
+            f"{_LEV_VELD_LABEL.get(v, v)}: {n or '—'}"
+            for v, (_, n) in wijzigingen.items()
+        )
+        audit_service.log(
+            db,
+            audit_service.LEVERANCIER_GEWIJZIGD,
+            audit_service.OBJ_LEVERANCIER,
+            object_id=lev.id,
+            object_naam=lev.naam,
+            oude_waarde=oud,
+            nieuwe_waarde=nieuw,
+            leverancier_id=lev.id,
+        )
     db.commit()
     db.refresh(lev)
     return lev

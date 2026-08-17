@@ -14,6 +14,7 @@ import {
 } from "../components/ui";
 import EmailModal from "../components/EmailModal.jsx";
 import ProductDocumenten from "../components/ProductDocumenten.jsx";
+import AuditTrail from "../components/AuditTrail.jsx";
 
 export default function ProductDetail() {
   const { t, taal } = useTaal();
@@ -229,6 +230,7 @@ export default function ProductDetail() {
         {[
           ["compliance", t("productDetail.tabCompliance")],
           ["documenten", t("productDetail.tabDocumenten")],
+          ["audit", t("activiteit.tabAudit")],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -245,6 +247,12 @@ export default function ProductDetail() {
       </div>
 
       {tab === "documenten" && <ProductDocumenten productId={product.id} />}
+
+      {tab === "audit" && (
+        <Card className="overflow-hidden">
+          <AuditTrail productId={product.id} />
+        </Card>
+      )}
 
       {tab === "compliance" &&
         Object.entries(perWet).map(([code, items]) => {

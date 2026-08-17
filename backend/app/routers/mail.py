@@ -3,7 +3,14 @@ de ontbrekende compliance-velden automatisch aan met behulp van AI."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import activiteit_service, mail_service, models, schemas, notificatie_teksten
+from .. import (
+    activiteit_service,
+    audit_service,
+    mail_service,
+    models,
+    schemas,
+    notificatie_teksten,
+)
 from ..database import get_db
 
 router = APIRouter(prefix="/api/mail", tags=["mail"])
@@ -99,6 +106,21 @@ def _verwerk_en_registreer(
             ),
             detail=detail,
         )
+
+    # audit trail: reply verwerkt (ook als er 0 velden matchten)
+    audit_service.log(
+        db,
+        audit_service.REPLY_VERWERKT,
+        audit_service.OBJ_LEVERANCIER,
+        object_id=lev.id,
+        object_naam=lev.naam,
+        nieuwe_waarde=(
+            f"{resultaat['aantal_ingevuld']} velden aangevuld over "
+            f"{resultaat['aantal_producten']} producten"
+            + (" (AI)" if resultaat["ai_gebruikt"] else "")
+        ),
+        leverancier_id=lev.id,
+    )
 
     db.commit()
 

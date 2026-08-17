@@ -11,6 +11,7 @@ from .. import (
     notificatie_teksten,
     veld_vertaling,
     wetgeving_refresh_service,
+    audit_service,
 )
 from ..database import get_db
 
@@ -74,7 +75,18 @@ def zet_wetgeving_actief(
     wet = db.get(models.Wetgeving, wetgeving_id)
     if not wet:
         raise HTTPException(status_code=404, detail="Wetgeving niet gevonden")
+    oud = wet.actief
     wet.actief = data.actief
+    if oud != data.actief:
+        audit_service.log(
+            db,
+            audit_service.WETGEVING_GEWIJZIGD,
+            audit_service.OBJ_WETGEVING,
+            object_id=wet.id,
+            object_naam=f"{wet.code} — {wet.naam}",
+            oude_waarde="aan" if oud else "uit",
+            nieuwe_waarde="aan" if data.actief else "uit",
+        )
     db.commit()
     db.refresh(wet)
     # een actief-wijziging beïnvloedt de compliance van alle producten
@@ -280,6 +292,16 @@ def bulk_dataverzoeken(data: schemas.BulkDataverzoekRequest, db: Session = Depen
         db.add(verzoek)
         db.flush()
         ids.append(verzoek.id)
+        lev = db.get(models.Leverancier, lev_id)
+        audit_service.log(
+            db,
+            audit_service.DATAVERZOEK_VERSTUURD,
+            audit_service.OBJ_DATAVERZOEK,
+            object_id=verzoek.id,
+            object_naam=data.onderwerp,
+            nieuwe_waarde=f"Bulk-dataverzoek aan {lev.naam if lev else lev_id}",
+            leverancier_id=lev_id,
+        )
     if ids:
         db.add(
             notificatie_teksten.maak(

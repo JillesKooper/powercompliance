@@ -38,6 +38,8 @@ import sequences from "./parts/sequences";
 import email from "./parts/email";
 import modals from "./parts/modals";
 import widgets from "./parts/widgets";
+import slimimport from "./parts/slimimport";
+import activiteit from "./parts/activiteit";
 
 const parts = [
   common,
@@ -54,6 +56,8 @@ const parts = [
   email,
   modals,
   widgets,
+  slimimport,
+  activiteit,
 ];
 
 function voegSamen(taal) {

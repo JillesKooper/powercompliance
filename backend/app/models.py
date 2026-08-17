@@ -407,6 +407,37 @@ class SequenceInschrijving(Base):
     )
 
 
+class AuditLog(Base):
+    """Audit trail: registreert elke wijziging in het systeem.
+
+    Eén rij per wijziging, met wie (``gebruiker``), wanneer (``tijdstip``),
+    wat voor actie (``actie``), op welk object (``object_type``/``object_id``/
+    ``object_naam``) en de waarde vóór en na (``oude_waarde``/``nieuwe_waarde``).
+
+    ``leverancier_id`` en ``product_id`` worden waar mogelijk meegeschreven,
+    zodat de audit trail per leverancier/product te filteren is (o.a. voor de
+    tabbladen op de detailpagina's).
+    """
+
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tijdstip = Column(DateTime, default=datetime.utcnow, index=True)
+    gebruiker = Column(String, nullable=False, default="Systeem")
+    # actie: compliance_gewijzigd | leverancier_gewijzigd | product_toegevoegd |
+    # product_gewijzigd | product_verwijderd | wetgeving_gewijzigd |
+    # dataverzoek_verstuurd | bulkimport | reply_verwerkt
+    actie = Column(String, nullable=False, index=True)
+    object_type = Column(String, nullable=False, index=True)  # product | leverancier | wetgeving | compliance | dataverzoek | import
+    object_id = Column(Integer, nullable=True, index=True)
+    object_naam = Column(String, nullable=True)
+    oude_waarde = Column(Text, nullable=True)
+    nieuwe_waarde = Column(Text, nullable=True)
+    # optionele koppelingen voor filtering per leverancier/product
+    leverancier_id = Column(Integer, nullable=True, index=True)
+    product_id = Column(Integer, nullable=True, index=True)
+
+
 class AppInstelling(Base):
     """Eenvoudige sleutel/waarde-opslag voor app-instellingen.
 

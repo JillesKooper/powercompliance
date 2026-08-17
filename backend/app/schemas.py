@@ -663,6 +663,86 @@ class SchedulerResultaat(BaseModel):
     acties: List[dict] = []
 
 
+# ---------- Audit trail ----------
+class AuditLogOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    tijdstip: datetime
+    gebruiker: str
+    actie: str
+    object_type: str
+    object_id: Optional[int] = None
+    object_naam: Optional[str] = None
+    oude_waarde: Optional[str] = None
+    nieuwe_waarde: Optional[str] = None
+    leverancier_id: Optional[int] = None
+    product_id: Optional[int] = None
+
+
+class AuditPagina(Pagina):
+    items: List[AuditLogOut] = []
+
+
+class AuditFilters(BaseModel):
+    """Beschikbare filterwaarden voor de activiteitenpagina."""
+    acties: List[str] = []
+    leveranciers: List[dict] = []
+
+
+# ---------- Slimme bulkimport ----------
+class ImportDoelVeld(BaseModel):
+    """Een veld in PowerCompliance waarnaar een kolom gemapt kan worden."""
+    sleutel: str
+    label: str
+    groep: str  # "kern" | wetgeving-code (compliance-veld)
+
+
+class ImportKolomMapping(BaseModel):
+    header: str
+    veld: Optional[str] = None  # doelveld-sleutel, of None = negeren
+    zekerheid: float = 0.0  # 0..1 betrouwbaarheid van de (AI-)mapping
+
+
+class ImportRijPreview(BaseModel):
+    rij_index: int  # 0-gebaseerd binnen de databestand-rijen (excl. header)
+    naam: Optional[str] = None
+    artikelnummer: Optional[str] = None
+    ean: Optional[str] = None
+    leverancier: Optional[str] = None
+    actie: str  # "nieuw" | "update" | "fout"
+    bestaand_product_id: Optional[int] = None
+    match_op: Optional[str] = None  # "ean" | "artikelnummer"
+    categorie_suggestie: Optional[str] = None
+    categorie_zekerheid: float = 0.0
+    melding: Optional[str] = None  # bij actie == "fout"
+
+
+class ImportAnalyse(BaseModel):
+    bestandsnaam: str
+    aantal_rijen: int
+    headers: List[str] = []
+    doelvelden: List[ImportDoelVeld] = []
+    mapping: List[ImportKolomMapping] = []
+    rijen: List[ImportRijPreview] = []
+    aantal_nieuw: int = 0
+    aantal_update: int = 0
+    aantal_fouten: int = 0
+    ai_gebruikt: bool = False
+    ai_fout: Optional[str] = None
+
+
+class ImportBevestigResultaat(BaseModel):
+    type: str = "producten"
+    bestandsnaam: str
+    aantal_rijen: int
+    aantal_nieuw: int = 0
+    aantal_geupdatet: int = 0
+    aantal_fouten: int = 0
+    aantal_velden_ingevuld: int = 0
+    aantal_gecategoriseerd: int = 0
+    fouten: List[ImportFout] = []
+
+
 # ---------- Sequence mailinhoud (genereren + preview) ----------
 class SequenceMailGenereerRequest(BaseModel):
     wetgeving_code: Optional[str] = None  # scope; None = alle wetgeving
