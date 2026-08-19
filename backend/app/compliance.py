@@ -9,6 +9,7 @@ Een veld 'ontbreekt' wanneer er geen ProductComplianceWaarde bestaat met
 ingevuld=True voor dat product/veld.
 """
 import logging
+from datetime import date
 from typing import List
 
 from sqlalchemy import and_, func, or_
@@ -17,6 +18,23 @@ from sqlalchemy.orm import Session
 from . import models
 
 log = logging.getLogger(__name__)
+
+
+def bereken_status(wet: models.Wetgeving) -> str:
+    """Bepaal de weer te geven status van een wetgeving op basis van de
+    ingangsdatum, niet op basis van de opgeslagen kolom.
+
+    - van_kracht_vanaf in de toekomst  -> "aankomend"
+    - van_kracht_vanaf vandaag/verleden -> "van kracht"
+    - geen ingangsdatum bekend         -> de opgeslagen status (bv. "concept"),
+      omdat er dan niets te berekenen valt.
+
+    Zo klapt "aankomend" automatisch om naar "van kracht" zodra de ingangsdatum
+    is verstreken, zonder dat de database bijgewerkt hoeft te worden.
+    """
+    if wet.van_kracht_vanaf is None:
+        return wet.status
+    return "aankomend" if wet.van_kracht_vanaf > date.today() else "van kracht"
 
 
 def relevante_wetgeving_voor_product(

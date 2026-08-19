@@ -32,6 +32,8 @@ def lijst_wetgeving(taal: str = "nl", db: Session = Depends(get_db)):
     uit = []
     for wet in wetten:
         w = schemas.WetgevingOut.model_validate(wet)
+        # status dynamisch bepalen op basis van de ingangsdatum (niet de DB-kolom)
+        w.status = compliance.bereken_status(wet)
         # veldnamen + veldtypes mee vertalen (op basis van de technische sleutel)
         for veld in w.compliance_velden:
             veld.naam = veld_vertaling.veld_naam_via_sleutel(
@@ -53,7 +55,7 @@ def wetgeving_beheer(db: Session = Depends(get_db)):
                 id=wet.id,
                 code=wet.code,
                 naam=wet.naam,
-                status=wet.status,
+                status=compliance.bereken_status(wet),
                 actief=wet.actief,
                 aantal_velden=len(wet.compliance_velden),
                 aantal_producten=stats["aantal_producten"],
@@ -96,7 +98,7 @@ def zet_wetgeving_actief(
         id=wet.id,
         code=wet.code,
         naam=wet.naam,
-        status=wet.status,
+        status=compliance.bereken_status(wet),
         actief=wet.actief,
         aantal_velden=len(wet.compliance_velden),
         aantal_producten=stats["aantal_producten"],
@@ -109,6 +111,7 @@ def zet_wetgeving_actief(
 def _wetgeving_out_vertaald(wet: models.Wetgeving, taal: str) -> schemas.WetgevingOut:
     """Bouw een WetgevingOut met vertaalde veldnamen/types (zoals de lijst)."""
     w = schemas.WetgevingOut.model_validate(wet)
+    w.status = compliance.bereken_status(wet)
     for veld in w.compliance_velden:
         veld.naam = veld_vertaling.veld_naam_via_sleutel(veld.sleutel, veld.naam, taal)
         veld.veld_type = veld_vertaling.veld_type(veld.veld_type, taal)
