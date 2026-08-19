@@ -97,9 +97,37 @@ def _migreer_dataverzoek_kolommen():
                 pass
 
 
+def _migreer_leverancier_kolommen():
+    """Voeg de contact-/bedrijfskolommen toe aan bestaande leveranciers-tabellen.
+
+    ``create_all`` maakt alleen ontbrekende TABELLEN aan, geen ontbrekende
+    kolommen. Na de uitbreiding van het Leverancier-model (postcode, stad,
+    KvK-/BTW-nummer) moet een bestaande database die kolommen alsnog krijgen,
+    anders faalt elke query met "no such column: leveranciers.postcode".
+    Idempotent: al aanwezige kolommen (bv. telefoon, land) worden overgeslagen."""
+    from sqlalchemy import inspect, text
+
+    try:
+        insp = inspect(engine)
+        bestaande = {c["name"] for c in insp.get_columns("leveranciers")}
+    except Exception:
+        return
+    kolommen = ("postcode", "stad", "land", "telefoon", "kvk_nummer", "btw_nummer")
+    toe_te_voegen = [c for c in kolommen if c not in bestaande]
+    with engine.begin() as conn:
+        for kolom in toe_te_voegen:
+            try:
+                conn.execute(
+                    text(f"ALTER TABLE leveranciers ADD COLUMN {kolom} VARCHAR")
+                )
+            except Exception:
+                pass
+
+
 _migreer_notificatie_kolommen()
 _migreer_wetgeving_kolommen()
 _migreer_dataverzoek_kolommen()
+_migreer_leverancier_kolommen()
 
 app = FastAPI(
     title="PowerCompliance API",
