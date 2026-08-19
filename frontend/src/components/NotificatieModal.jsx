@@ -54,7 +54,7 @@ export default function NotificatieModal({ notificatie, onClose }) {
                   </Badge>
                 )}
                 {!n.gelezen && (
-                  <span className="inline-flex items-center gap-1 text-xs text-brand-600">
+                  <span className="inline-flex items-center gap-1 text-xs text-brandtext">
                     <span className="h-2 w-2 rounded-full bg-brand-500" />
                     {t("modals.notificatie.ongelezen")}
                   </span>
@@ -86,7 +86,7 @@ export default function NotificatieModal({ notificatie, onClose }) {
                     markeerGelezen(n.id);
                     onClose();
                   }}
-                  className="text-brand-700 hover:underline"
+                  className="text-brandtext hover:underline"
                 >
                   {t(rel.labelKey)} →
                 </Link>

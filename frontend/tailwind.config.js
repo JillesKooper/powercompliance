@@ -28,6 +28,30 @@ export default {
         surface: "rgb(var(--kleur-surface) / <alpha-value>)", // kaarten/panelen
         sidebar: "rgb(var(--kleur-sidebar) / <alpha-value>)", // zijbalk
         hover: "rgb(var(--kleur-hover) / <alpha-value>)", // hover states
+        // Merk-tekst voor links/accenten (flipt naar brand-300 in donkere modus)
+        brandtext: "rgb(var(--kleur-brand-text) / <alpha-value>)",
+        // Semantische statuskleuren (notificaties, badges, alerts, statuslabels).
+        // Elk trio klapt in één keer om via de .dark-class (zie index.css).
+        info: {
+          soft: "rgb(var(--status-info-soft) / <alpha-value>)",
+          line: "rgb(var(--status-info-line) / <alpha-value>)",
+          text: "rgb(var(--status-info-text) / <alpha-value>)",
+        },
+        success: {
+          soft: "rgb(var(--status-success-soft) / <alpha-value>)",
+          line: "rgb(var(--status-success-line) / <alpha-value>)",
+          text: "rgb(var(--status-success-text) / <alpha-value>)",
+        },
+        warning: {
+          soft: "rgb(var(--status-warning-soft) / <alpha-value>)",
+          line: "rgb(var(--status-warning-line) / <alpha-value>)",
+          text: "rgb(var(--status-warning-text) / <alpha-value>)",
+        },
+        danger: {
+          soft: "rgb(var(--status-danger-soft) / <alpha-value>)",
+          line: "rgb(var(--status-danger-line) / <alpha-value>)",
+          text: "rgb(var(--status-danger-text) / <alpha-value>)",
+        },
       },
       fontFamily: {
         sans: [

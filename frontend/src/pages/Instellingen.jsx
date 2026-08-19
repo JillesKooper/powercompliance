@@ -170,8 +170,8 @@ function WetgevingRefreshKaart() {
         <div
           className={`mt-4 rounded-md border px-3 py-2 text-sm ${
             melding.type === "succes"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-              : "bg-red-50 border-red-200 text-red-700"
+              ? "bg-success-soft border-success-line text-success-text"
+              : "bg-danger-soft border-danger-line text-danger-text"
           }`}
         >
           {melding.tekst}
@@ -291,7 +291,7 @@ export default function Instellingen() {
                   role="switch"
                   aria-checked={w.actief}
                   className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                    w.actief ? "bg-brand-600" : "bg-slate-300"
+                    w.actief ? "bg-brand-600" : "bg-faint"
                   }`}
                 >
                   <span
@@ -455,7 +455,7 @@ function ExportKoppeling() {
         </Button>
       </form>
       {fout && (
-        <div className="mb-4 rounded-md bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-sm">
+        <div className="mb-4 rounded-md bg-danger-soft border border-danger-line text-danger-text px-3 py-2 text-sm">
           {fout}
         </div>
       )}
@@ -482,7 +482,7 @@ function ExportKoppeling() {
                 </Badge>
                 <button
                   onClick={() => verwijder(w.id)}
-                  className="text-red-500 hover:text-red-700 text-xs"
+                  className="text-danger-text hover:text-danger-text text-xs"
                 >
                   {t("actie.verwijderen")}
                 </button>
@@ -501,7 +501,7 @@ function ExportKoppeling() {
         <div className="text-sm text-muted">{t("instellingen.geenExports")}</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-zebra">
             <thead>
               <tr className="text-left text-muted border-b border-line">
                 <th className="px-3 py-2 font-medium">{t("instellingen.kopBestand")}</th>

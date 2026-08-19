@@ -133,7 +133,7 @@ export default function ProductDetail() {
       )}
 
       <div className="flex items-center justify-between">
-        <Link to="/producten" className="text-sm text-brand-600 hover:underline">
+        <Link to="/producten" className="text-sm text-brandtext hover:underline">
           {t("productDetail.terugNaarProducten")}
         </Link>
         {product.aantal_ontbrekend > 0 && (
@@ -151,7 +151,7 @@ export default function ProductDetail() {
       </div>
 
       {scrapeMelding && (
-        <div className="rounded-lg bg-brand-50 border border-brand-100 text-brand-700 px-4 py-2 text-sm">
+        <div className="rounded-lg bg-info-soft border border-info-line text-brandtext px-4 py-2 text-sm">
           {scrapeMelding}
         </div>
       )}
@@ -178,7 +178,7 @@ export default function ProductDetail() {
           <div className="text-right shrink-0 w-44">
             <div
               className={`text-3xl font-bold transition-colors duration-500 ${
-                toonVoor ? "text-red-500" : "text-ink"
+                toonVoor ? "text-danger-text" : "text-ink"
               }`}
             >
               <AnimatedNumber value={pct} decimals={1} />%
@@ -187,7 +187,7 @@ export default function ProductDetail() {
             <ProgressBar value={pct} />
             <div className="text-xs text-muted mt-2">
               {t("productDetail.veldenOverzicht", { ingevuld: ingevuldNu, totaal: totaalVelden })}
-              <span className="text-red-500">
+              <span className="text-danger-text">
                 {t("productDetail.ontbreektAantal", { aantal: ontbrekendNu })}
               </span>
             </div>
@@ -281,7 +281,7 @@ export default function ProductDetail() {
                 key={`${weergave}-${r.compliance_veld_id}`}
                 className={`px-5 py-3 flex items-center justify-between gap-3 text-sm ${
                   r._replyNieuw
-                    ? "animate-flashGreen border-l-2 border-emerald-400"
+                    ? "animate-flashGreen border-l-2 border-success-line"
                     : ""
                 }`}
               >
@@ -317,10 +317,10 @@ function VeldWaarde({ r }) {
       <div className="mt-0.5 text-sm flex items-center gap-2 flex-wrap">
         {r.twijfelachtig ? (
           // 3. twijfelachtig: waarde in oranje met waarschuwingsicoon
-          <span className="inline-flex items-center gap-1 font-medium text-amber-600">
+          <span className="inline-flex items-center gap-1 font-medium text-warning-text">
             <span aria-hidden="true">⚠️</span>
             {ruwe}
-            <span className="text-xs font-normal text-amber-500">
+            <span className="text-xs font-normal text-warning-text">
               {t("productDetail.twijfelachtig")}
             </span>
           </span>
@@ -334,7 +334,7 @@ function VeldWaarde({ r }) {
             href={r.bron_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-brand-600 hover:underline"
+            className="text-xs text-brandtext hover:underline"
           >
             {t("productDetail.bron")}
           </a>
@@ -361,7 +361,7 @@ function VeldWaarde({ r }) {
       </div>
     );
   }
-  return <div className="mt-0.5 text-sm text-red-500">{t("productDetail.ontbreekt")}</div>;
+  return <div className="mt-0.5 text-sm text-danger-text">{t("productDetail.ontbreekt")}</div>;
 }
 
 function VeldStatus({ r, onVerifieer }) {
@@ -454,12 +454,12 @@ function ComplianceRij({ r, bewerkbaar, productId, taal, onVerifieer, onOpgeslag
           {r.veld_naam}
           <span className="text-xs text-faint ml-2">{r.veld_type}</span>
           {r._replyNieuw && (
-            <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px] font-medium">
+            <span className="ml-2 inline-flex items-center rounded-full bg-success-soft text-success-text px-2 py-0.5 text-[11px] font-medium">
               {t("productDetail.viaReply")}
             </span>
           )}
           {opgeslagen && (
-            <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px] font-medium">
+            <span className="ml-2 inline-flex items-center rounded-full bg-success-soft text-success-text px-2 py-0.5 text-[11px] font-medium">
               ✓ {t("productDetail.waardeOpgeslagen")}
             </span>
           )}
@@ -475,7 +475,7 @@ function ComplianceRij({ r, bewerkbaar, productId, taal, onVerifieer, onOpgeslag
               className="input py-1 text-sm w-full max-w-xs"
             />
             {fout && (
-              <span className="text-xs text-red-500">
+              <span className="text-xs text-danger-text">
                 {t("productDetail.opslaanMislukt")}: {fout}
               </span>
             )}
@@ -489,7 +489,7 @@ function ComplianceRij({ r, bewerkbaar, productId, taal, onVerifieer, onOpgeslag
                 onClick={start}
                 title={t("productDetail.bewerkWaarde")}
                 aria-label={t("productDetail.bewerkWaarde")}
-                className="text-faint hover:text-brand-600 transition-colors text-sm leading-none"
+                className="text-faint hover:text-brandtext transition-colors text-sm leading-none"
               >
                 ✏️
               </button>

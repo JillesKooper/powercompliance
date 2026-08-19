@@ -68,7 +68,7 @@ export default function Layout({ children }) {
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
                     isActive
-                      ? "bg-brand-500/10 text-brand-700 dark:text-brand-300 font-medium"
+                      ? "bg-brand-500/10 text-brandtext dark:text-brand-300 font-medium"
                       : "text-muted hover:bg-hover hover:text-ink"
                   }`
                 }

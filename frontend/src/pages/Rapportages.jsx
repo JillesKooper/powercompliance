@@ -114,7 +114,7 @@ export default function Rapportages() {
                 <Badge color={r.compliance_percentage >= 80 ? "green" : "amber"}>
                   {r.compliance_percentage}%
                 </Badge>,
-                <span className={r.aantal_ontbrekende_velden ? "text-red-600" : "text-muted"}>
+                <span className={r.aantal_ontbrekende_velden ? "text-danger-text" : "text-muted"}>
                   {r.aantal_ontbrekende_velden}
                 </span>,
               ])}
@@ -148,7 +148,7 @@ export default function Rapportages() {
                   {s.compleetheid_percentage}%
                 </Badge>,
                 s.open_verzoeken > 0 ? (
-                  <span className="text-amber-600">{s.open_verzoeken}</span>
+                  <span className="text-warning-text">{s.open_verzoeken}</span>
                 ) : (
                   <span className="text-muted">0</span>
                 ),
@@ -227,7 +227,7 @@ export default function Rapportages() {
               >
                 {t("rapportages.risicoCategorie", { cat: r.risicocategorie })}
               </Badge>,
-              <span className="text-red-600">
+              <span className="text-danger-text">
                 {t("rapportages.velden", { n: r.aantal_ontbrekend })}
               </span>,
             ])}
@@ -304,7 +304,7 @@ function Rapport({ titel, omschrijving, soort, bezig, onExport, children }) {
 function Tabel({ kop, rijen }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm table-zebra">
         <thead>
           <tr className="text-left text-muted border-b border-line">
             {kop.map((k, i) => (

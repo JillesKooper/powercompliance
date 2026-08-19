@@ -116,7 +116,7 @@ export default function DemoModal({ onClose }) {
 
         <div className="p-6 space-y-2">
           {fout && (
-            <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm mb-2">
+            <div className="rounded-lg bg-danger-soft border border-danger-line text-danger-text px-4 py-2 text-sm mb-2">
               {fout}
             </div>
           )}
@@ -131,7 +131,7 @@ export default function DemoModal({ onClose }) {
                     <div className="text-muted">“{emailInfo.onderwerp}”</div>
                     <div className="text-muted mt-0.5">
                       {emailInfo.kanaal === "gmail" && emailInfo.verzonden ? (
-                        <span className="text-emerald-600">
+                        <span className="text-success-text">
                           {t("modals.demo.echtVerzonden", {
                             ontvanger: emailInfo.ontvanger,
                           })}
@@ -153,7 +153,7 @@ export default function DemoModal({ onClose }) {
                 )}
                 {s.key === "verrijk" && i <= stap && reply && (
                   <div className="animate-fadeIn text-muted">
-                    <span className="font-medium text-emerald-600">
+                    <span className="font-medium text-success-text">
                       {t("modals.demo.veldenAangevuld", {
                         aantal: reply.aantal_ingevuld,
                       })}
@@ -172,7 +172,7 @@ export default function DemoModal({ onClose }) {
                       <div className="text-xs text-faint">
                         {t("modals.demo.voor")}
                       </div>
-                      <div className="text-lg font-bold text-red-500">
+                      <div className="text-lg font-bold text-danger-text">
                         {voorNa.voor?.toFixed(1)}%
                       </div>
                     </div>
@@ -183,7 +183,7 @@ export default function DemoModal({ onClose }) {
                       <div className="text-xs text-faint">
                         {t("modals.demo.na")}
                       </div>
-                      <div className="text-lg font-bold text-emerald-600">
+                      <div className="text-lg font-bold text-success-text">
                         <AnimatedNumber
                           value={klaar ? voorNa.na : voorNa.voor}
                           decimals={1}
@@ -200,7 +200,7 @@ export default function DemoModal({ onClose }) {
 
         <div className="flex items-center gap-2 px-6 py-4 border-t border-line">
           {klaar && lev && (
-            <span className="text-sm text-emerald-600">
+            <span className="text-sm text-success-text">
               {t("modals.demo.voltooid", { naam: lev.naam })}
             </span>
           )}
@@ -245,7 +245,7 @@ function Stap({ s, toestand, children }) {
         >
           {t(s.titelKey)}
           {toestand === "actief" && (
-            <span className="ml-2 text-xs text-brand-600">
+            <span className="ml-2 text-xs text-brandtext">
               {t("modals.demo.actief")}
             </span>
           )}

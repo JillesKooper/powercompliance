@@ -83,7 +83,7 @@ export default function OntbrekendeData() {
 
       <Card className="p-5">
         <div className="text-sm text-muted">
-          <span className="font-semibold text-red-600">{totaalVelden}</span>{" "}
+          <span className="font-semibold text-danger-text">{totaalVelden}</span>{" "}
           {t("ontbrekendeData.samenvattingVelden")}{" "}
           <span className="font-semibold">{items.length}</span>{" "}
           {t("ontbrekendeData.samenvattingProducten")}{" "}
@@ -93,7 +93,7 @@ export default function OntbrekendeData() {
       </Card>
 
       {replyResultaat && (
-        <div className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm">
+        <div className="rounded-lg bg-success-soft border border-success-line text-success-text px-4 py-3 text-sm">
           ✅{" "}
           {t("ontbrekendeData.replyVerwerkt", {
             naam: replyResultaat.naam,
@@ -148,7 +148,7 @@ export default function OntbrekendeData() {
                 <div className="flex items-center gap-2 mb-2">
                   <Link
                     to={`/producten/${p.product_id}`}
-                    className="font-medium text-brand-700 hover:underline"
+                    className="font-medium text-brandtext hover:underline"
                   >
                     {p.product_naam}
                   </Link>
@@ -164,7 +164,7 @@ export default function OntbrekendeData() {
                         productNaam: p.product_naam,
                       })
                     }
-                    className="ml-auto shrink-0 text-xs text-brand-600 hover:underline"
+                    className="ml-auto shrink-0 text-xs text-brandtext hover:underline"
                   >
                     ✉️ {t("ontbrekendeData.uitvraagDitProduct")}
                   </button>
@@ -173,12 +173,12 @@ export default function OntbrekendeData() {
                   {p.ontbrekende_velden.map((v) => (
                     <span
                       key={v.compliance_veld_id}
-                      className="inline-flex items-center gap-1 rounded-md bg-red-50 text-red-700 px-2 py-1 text-xs"
+                      className="inline-flex items-center gap-1 rounded-md bg-danger-soft text-danger-text px-2 py-1 text-xs"
                     >
                       <span className="font-semibold">
                         {wetgevingCode(v.wetgeving_code, taal)}
                       </span>
-                      <span className="text-red-400">·</span>
+                      <span className="text-danger-text">·</span>
                       {v.veld_naam}
                     </span>
                   ))}

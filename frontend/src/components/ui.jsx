@@ -15,10 +15,10 @@ export function Card({ children, className = "", onClick, ...rest }) {
 
 export function StatCard({ label, value, sub, accent = "brand", onClick }) {
   const accents = {
-    brand: "text-brand-600",
-    green: "text-emerald-600",
-    amber: "text-amber-600",
-    red: "text-red-600",
+    brand: "text-brandtext",
+    green: "text-success-text",
+    amber: "text-warning-text",
+    red: "text-danger-text",
   };
   const klikbaar = typeof onClick === "function";
   return (
@@ -87,10 +87,10 @@ export function AnimatedNumber({ value, decimals = 0, duration = 700 }) {
 export function Badge({ children, color = "slate" }) {
   const colors = {
     slate: "bg-hover text-muted",
-    green: "bg-emerald-50 text-emerald-700",
-    amber: "bg-amber-50 text-amber-700",
-    red: "bg-red-50 text-red-700",
-    blue: "bg-brand-50 text-brand-700",
+    green: "bg-success-soft text-success-text",
+    amber: "bg-warning-soft text-warning-text",
+    red: "bg-danger-soft text-danger-text",
+    blue: "bg-info-soft text-info-text",
   };
   return (
     <span
@@ -111,7 +111,7 @@ export function Loading() {
 export function ErrorBox({ message }) {
   const { t } = useTaal();
   return (
-    <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+    <div className="rounded-md bg-danger-soft border border-danger-line text-danger-text px-4 py-3 text-sm">
       {t("ui.fout")}
       {message}
     </div>

@@ -125,7 +125,7 @@ export default function Wetgeving() {
         {melding && (
           <span
             className={`text-sm ${
-              melding.type === "succes" ? "text-emerald-700" : "text-red-600"
+              melding.type === "succes" ? "text-success-text" : "text-danger-text"
             }`}
           >
             {melding.tekst}
@@ -140,7 +140,7 @@ export default function Wetgeving() {
         <div key={w.id} id={`wet-${w.code}`}>
         <Card className="overflow-hidden">
           <div className="px-5 py-4 flex items-start gap-4">
-            <div className="h-10 w-10 shrink-0 rounded-lg bg-brand-100 text-brand-700 grid place-items-center font-bold">
+            <div className="h-10 w-10 shrink-0 rounded-lg bg-info-soft text-info-text grid place-items-center font-bold">
               ⚖️
             </div>
             <div

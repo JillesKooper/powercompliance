@@ -81,7 +81,7 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
                 onClick={() => inputRef.current?.click()}
                 className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
                   sleep
-                    ? "border-brand-500 bg-brand-50"
+                    ? "border-brand-500 bg-info-soft"
                     : "border-line hover:border-brand-400 hover:bg-hover"
                 }`}
               >
@@ -104,7 +104,7 @@ export default function ImportDialog({ soort, onClose, onKlaar }) {
               </div>
 
               {fout && (
-                <div className="mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+                <div className="mt-4 rounded-lg bg-danger-soft border border-danger-line text-danger-text px-4 py-3 text-sm">
                   ⚠️ {fout}
                 </div>
               )}
@@ -157,7 +157,7 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
     : t("modals.import.typeLeveranciers");
   return (
     <div>
-      <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800 mb-4">
+      <div className="rounded-lg bg-success-soft border border-success-line px-4 py-3 text-sm text-success-text mb-4">
         ✅{" "}
         {t("modals.import.voltooid", {
           aantal: r.aantal_geimporteerd,
@@ -177,12 +177,12 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
             <Stat
               label={t("modals.import.statCompliant")}
               value={r.aantal_compliant}
-              kleur="text-emerald-600"
+              kleur="text-success-text"
             />
             <Stat
               label={t("modals.import.statDataOntbreekt")}
               value={r.aantal_met_ontbrekende_data}
-              kleur="text-red-600"
+              kleur="text-danger-text"
             />
           </>
         )}
@@ -190,7 +190,7 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
           <Stat
             label={t("modals.import.statFouten")}
             value={r.aantal_fouten}
-            kleur="text-red-600"
+            kleur="text-danger-text"
           />
         )}
       </div>
@@ -218,10 +218,10 @@ function Samenvatting({ r, onClose, onNaarOntbrekend }) {
 
       {r.fouten.length > 0 && (
         <div className="mb-4">
-          <div className="text-xs font-medium text-red-600 mb-1">
+          <div className="text-xs font-medium text-danger-text mb-1">
             {t("modals.import.rijenOvergeslagen", { aantal: r.fouten.length })}
           </div>
-          <ul className="text-xs text-red-600 space-y-0.5 max-h-28 overflow-auto">
+          <ul className="text-xs text-danger-text space-y-0.5 max-h-28 overflow-auto">
             {r.fouten.map((f, i) => (
               <li key={i}>
                 {t("modals.import.rijFout", { rij: f.rij, bericht: f.bericht })}

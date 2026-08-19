@@ -78,7 +78,7 @@ export default function SlimmeImportModal({ onClose, onKlaar }) {
 
         <div className="p-6">
           {fout && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+            <div className="mb-4 rounded-lg bg-danger-soft border border-danger-line text-danger-text px-4 py-3 text-sm">
               ⚠️ {fout}
             </div>
           )}
@@ -139,7 +139,7 @@ function UploadStap({ bezig, onBestand }) {
         onClick={() => inputRef.current?.click()}
         className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
           sleep
-            ? "border-brand-500 bg-brand-50"
+            ? "border-brand-500 bg-info-soft"
             : "border-line hover:border-brand-400 hover:bg-hover"
         }`}
       >
@@ -159,7 +159,7 @@ function UploadStap({ bezig, onBestand }) {
       <div className="mt-4 text-center">
         <button
           onClick={() => api.downloadImportTemplate()}
-          className="text-sm text-brand-600 hover:underline"
+          className="text-sm text-brandtext hover:underline"
         >
           {t("slimimport.templateKnop")}
         </button>
@@ -203,7 +203,7 @@ function PreviewStap({
             : t("slimimport.heuristischHerkend")}
         </p>
         {analyse.ai_fout && (
-          <p className="text-xs text-amber-600 mt-1">⚠️ {t("slimimport.aiFout")}</p>
+          <p className="text-xs text-warning-text mt-1">⚠️ {t("slimimport.aiFout")}</p>
         )}
       </div>
 
@@ -420,23 +420,23 @@ function ResultaatStap({ r, onClose, onNaarProducten }) {
   const { t } = useTaal();
   return (
     <div>
-      <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800 mb-4">
+      <div className="rounded-lg bg-success-soft border border-success-line px-4 py-3 text-sm text-success-text mb-4">
         ✅ {t("slimimport.klaarTitel")} — {r.bestandsnaam}
       </div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-        <Stat label={t("slimimport.resNieuw")} value={r.aantal_nieuw} kleur="text-emerald-600" />
-        <Stat label={t("slimimport.resGeupdatet")} value={r.aantal_geupdatet} kleur="text-brand-600" />
+        <Stat label={t("slimimport.resNieuw")} value={r.aantal_nieuw} kleur="text-success-text" />
+        <Stat label={t("slimimport.resGeupdatet")} value={r.aantal_geupdatet} kleur="text-brandtext" />
         <Stat label={t("slimimport.resVelden")} value={r.aantal_velden_ingevuld} kleur="text-ink" />
         <Stat label={t("slimimport.resCategorie")} value={r.aantal_gecategoriseerd} kleur="text-ink" />
-        <Stat label={t("slimimport.resFouten")} value={r.aantal_fouten} kleur="text-red-600" />
+        <Stat label={t("slimimport.resFouten")} value={r.aantal_fouten} kleur="text-danger-text" />
       </div>
 
       {r.fouten?.length > 0 && (
         <div className="mb-4">
-          <div className="text-xs font-medium text-red-600 mb-1">
+          <div className="text-xs font-medium text-danger-text mb-1">
             {t("slimimport.rijenOvergeslagen", { aantal: r.fouten.length })}
           </div>
-          <ul className="text-xs text-red-600 space-y-0.5 max-h-28 overflow-auto">
+          <ul className="text-xs text-danger-text space-y-0.5 max-h-28 overflow-auto">
             {r.fouten.map((f, i) => (
               <li key={i}>{t("slimimport.rijFout", { rij: f.rij, bericht: f.bericht })}</li>
             ))}

@@ -108,12 +108,12 @@ export default function Sequences() {
       </div>
 
       {schedulerResultaat && (
-        <div className="rounded-lg bg-brand-50 border border-brand-100 text-brand-800 px-4 py-3 text-sm">
+        <div className="rounded-lg bg-info-soft border border-info-line text-brandtext px-4 py-3 text-sm">
           <div className="font-medium">
             {t("sequences.schedulerUitgevoerd", { aantal: schedulerResultaat.aantal_acties })}
           </div>
           {schedulerResultaat.acties.length > 0 && (
-            <ul className="mt-1 space-y-0.5 text-brand-700/90 max-h-40 overflow-auto">
+            <ul className="mt-1 space-y-0.5 text-brandtext/90 max-h-40 overflow-auto">
               {schedulerResultaat.acties.map((a, i) => (
                 <li key={i}>
                   • <span className="font-medium">{a.leverancier}</span> — {a.info}
@@ -125,7 +125,7 @@ export default function Sequences() {
       )}
 
       {uitvraagMelding && (
-        <div className="rounded-lg bg-green-50 border border-green-100 text-green-800 px-4 py-3 text-sm">
+        <div className="rounded-lg bg-success-soft border border-success-line text-success-text px-4 py-3 text-sm">
           ✅ {uitvraagMelding.tekst}
         </div>
       )}
@@ -231,7 +231,7 @@ function SequenceKaart({ seq, uitvraagBezig, onNuUitvragen, onToggle, onBewerk, 
       <div className="px-5 py-2 border-t border-line">
         <button
           onClick={toggleOpen}
-          className="text-xs text-brand-600 hover:underline"
+          className="text-xs text-brandtext hover:underline"
         >
           {open
             ? t("sequences.verbergLeveranciers")
@@ -384,7 +384,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
 
         <div className="p-6 space-y-4">
           {fout && (
-            <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm">
+            <div className="rounded-lg bg-danger-soft border border-danger-line text-danger-text px-4 py-2 text-sm">
               {fout}
             </div>
           )}
@@ -473,7 +473,7 @@ function SequenceModal({ sequence, wetgeving, onClose, onOpgeslagen }) {
               </label>
               <button
                 onClick={voegStapToe}
-                className="text-xs text-brand-600 hover:underline"
+                className="text-xs text-brandtext hover:underline"
               >
                 {t("sequences.stapToevoegen")}
               </button>
@@ -578,7 +578,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
         {aantalStappen > 1 && (
           <button
             onClick={onVerwijder}
-            className="text-faint hover:text-red-600"
+            className="text-faint hover:text-danger-text"
             title={t("sequences.verwijderStap")}
           >
             ×
@@ -590,7 +590,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="text-xs text-brand-600 hover:underline"
+          className="text-xs text-brandtext hover:underline"
         >
           {open
             ? t("sequences.verbergMailinhoud")
@@ -610,16 +610,16 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
         {open && (
           <div className="mt-2 space-y-3 rounded-lg bg-hover border border-line p-3">
             {fout && (
-              <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-xs">
+              <div className="rounded-md bg-danger-soft border border-danger-line text-danger-text px-3 py-2 text-xs">
                 {fout}
               </div>
             )}
             <p className="text-xs text-muted">
               {t("sequences.mailinhoudUitleg")}{" "}
-              <code className="text-brand-700">{"{aanhef}"}</code>,{" "}
-              <code className="text-brand-700">{"{ontbrekende_data}"}</code>,{" "}
-              <code className="text-brand-700">{"{portaal_link}"}</code>,{" "}
-              <code className="text-brand-700">{"{leverancier}"}</code>.
+              <code className="text-brandtext">{"{aanhef}"}</code>,{" "}
+              <code className="text-brandtext">{"{ontbrekende_data}"}</code>,{" "}
+              <code className="text-brandtext">{"{portaal_link}"}</code>,{" "}
+              <code className="text-brandtext">{"{leverancier}"}</code>.
             </p>
 
             <div>
@@ -661,7 +661,7 @@ function StapRij({ index, stap, aantalStappen, wetgevingCode, onWijzig, onVerwij
                     onWijzig("mailtekst", "");
                     setPreview(null);
                   }}
-                  className="text-xs text-faint hover:text-red-600"
+                  className="text-xs text-faint hover:text-danger-text"
                 >
                   {t("sequences.wissen")}
                 </button>

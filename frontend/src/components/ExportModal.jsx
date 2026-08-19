@@ -162,7 +162,7 @@ export default function ExportModal({ onClose }) {
                     onClick={() => setFormaat(f.key)}
                     className={`rounded-md border px-3 py-2 text-left text-sm transition-colors ${
                       formaat === f.key
-                        ? "border-brand-500 bg-brand-50 text-ink"
+                        ? "border-brand-500 bg-info-soft text-ink"
                         : "border-line hover:bg-hover text-muted"
                     }`}
                   >
@@ -234,7 +234,7 @@ export default function ExportModal({ onClose }) {
                 </div>
                 <button
                   onClick={() => setGekozen(new Set())}
-                  className="text-xs text-brand-600 hover:underline"
+                  className="text-xs text-brandtext hover:underline"
                 >
                   {t("modals.export.allesWissen")}
                 </button>
@@ -273,8 +273,8 @@ export default function ExportModal({ onClose }) {
               <div
                 className={`rounded-md border px-4 py-2 text-sm ${
                   melding.type === "succes"
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : "bg-red-50 border-red-200 text-red-700"
+                    ? "bg-success-soft border-success-line text-success-text"
+                    : "bg-danger-soft border-danger-line text-danger-text"
                 }`}
               >
                 {melding.tekst}

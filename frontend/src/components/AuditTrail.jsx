@@ -46,7 +46,7 @@ export function AuditTabel({ rows, leeg }) {
   }
   return (
     <div className="overflow-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm table-zebra">
         <thead className="bg-hover text-muted text-xs uppercase">
           <tr>
             <th className="text-left px-4 py-2 font-medium whitespace-nowrap">
@@ -131,7 +131,7 @@ export default function AuditTrail({ leverancierId, productId }) {
   }, [leverancierId, productId]);
 
   if (error)
-    return <div className="text-sm text-red-600 px-4 py-4">{error}</div>;
+    return <div className="text-sm text-danger-text px-4 py-4">{error}</div>;
   if (rows === null) return <Loading />;
   return <AuditTabel rows={rows} leeg={t("activiteit.geenItem")} />;
 }

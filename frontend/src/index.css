@@ -16,6 +16,27 @@
   --kleur-faint: 148 163 184; /* tertiaire tekst */
   --kleur-line: 224 224 224; /* borders */
   --kleur-hover: 240 240 240; /* hover states */
+  --kleur-zebra: 249 250 251; /* even tabelrijen (zebra) */
+
+  /* Merk-tekst (links, accenten). Los van de brand-fill zodat tekst in beide
+     modi ≥ 4.5:1 haalt: brand-700 op wit, brand-300 op donker. */
+  --kleur-brand-text: 21 87 176; /* brand-700 #1557b0 */
+
+  /* Statuskleuren voor notificaties, badges, alerts en statuslabels. Elk trio
+     is een zacht vlak (soft) + rand (line) + leesbare tekst (text). De
+     tekstwaarden halen minimaal 4.5:1 op hun eigen soft-vlak (WCAG AA). */
+  --status-info-soft: 232 240 254; /* brand-50 */
+  --status-info-line: 210 227 252; /* brand-100 */
+  --status-info-text: 21 87 176; /* brand-700 */
+  --status-success-soft: 236 253 245; /* emerald-50 */
+  --status-success-line: 167 243 208; /* emerald-200 */
+  --status-success-text: 4 108 78; /* donker emerald */
+  --status-warning-soft: 255 251 235; /* amber-50 */
+  --status-warning-line: 253 230 138; /* amber-200 */
+  --status-warning-text: 146 64 14; /* amber-800 */
+  --status-danger-soft: 254 242 242; /* red-50 */
+  --status-danger-line: 254 202 202; /* red-200 */
+  --status-danger-text: 185 28 28; /* red-700 */
 }
 
 /* Donkere modus (#1a1a2e-familie): donkere achtergrond, lichte tekst,
@@ -29,12 +50,42 @@
   --kleur-faint: 118 118 140; /* #76768c */
   --kleur-line: 46 46 68; /* #2e2e44 */
   --kleur-hover: 42 42 64; /* #2a2a40 */
+  --kleur-zebra: 40 40 62; /* iets lichter dan surface voor zebra */
+
+  /* In donkere modus wordt merk-tekst lichter (brand-300) zodat links op de
+     donkere achtergrond leesbaar blijven. */
+  --kleur-brand-text: 138 180 248; /* brand-300 #8ab4f8 */
+
+  /* Donkere statusvarianten: diep getint vlak met een lichte tekstkleur
+     (300-niveau). Elke tekst haalt ruim 4.5:1 op zijn eigen soft-vlak. */
+  --status-info-soft: 28 40 66; /* diep blauw */
+  --status-info-line: 46 66 104;
+  --status-info-text: 147 197 253; /* blue-300 */
+  --status-success-soft: 17 44 36; /* diep groen */
+  --status-success-line: 27 71 57;
+  --status-success-text: 110 231 183; /* emerald-300 */
+  --status-warning-soft: 55 44 20; /* diep amber */
+  --status-warning-line: 87 66 28;
+  --status-warning-text: 252 211 77; /* amber-300 */
+  --status-danger-soft: 56 27 30; /* diep rood */
+  --status-danger-line: 91 42 46;
+  --status-danger-text: 252 165 165; /* red-300 */
 }
 
 body {
   @apply bg-canvas text-ink antialiased;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Laat native form-controls (select-dropdowns, date-pickers, scrollbars) de
+   juiste licht/donker-variant tonen; zonder dit blijft de dropdownlijst in
+   donkere modus wit met onleesbare tekst. */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
 }
 
 /* Zachte overgang bij het omschakelen tussen licht en donker. */
@@ -50,5 +101,15 @@ body,
     @apply w-full rounded-md border border-line px-3 py-2 text-sm text-ink bg-surface
       placeholder:text-muted/70
       focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+  }
+
+  /* Zebra striping voor datatabellen: even rijen krijgen een subtiel afwijkend
+     vlak dat in beide modi genoeg contrast met de tekst houdt. Toe te passen op
+     de <table> zelf. */
+  .table-zebra tbody tr:nth-child(even) {
+    background-color: rgb(var(--kleur-zebra));
+  }
+  .table-zebra tbody tr:hover {
+    background-color: rgb(var(--kleur-hover));
   }
 }

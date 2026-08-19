@@ -163,7 +163,7 @@ export default function Leveranciers() {
                     <div>
                       <Link
                         to={`/leveranciers/${l.id}`}
-                        className="font-semibold text-brand-700 hover:underline"
+                        className="font-semibold text-brandtext hover:underline"
                       >
                         {l.naam}
                       </Link>
@@ -195,7 +195,7 @@ export default function Leveranciers() {
                 <div className="mt-4 pt-3 border-t border-line text-right">
                   <button
                     onClick={() => verwijder(l.id)}
-                    className="text-red-500 hover:text-red-700 text-xs"
+                    className="text-danger-text hover:text-danger-text text-xs"
                   >
                     {t("actie.verwijderen")}
                   </button>
@@ -251,7 +251,7 @@ function BulkDataverzoekModal({ ids, onClose, onKlaar }) {
         </div>
         <div className="p-6 space-y-4">
           {resultaat ? (
-            <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
+            <div className="rounded-lg bg-success-soft border border-success-line px-4 py-3 text-sm text-success-text">
               ✅ {t("leveranciers.aangemaakt", { n: resultaat.aantal })}
             </div>
           ) : (

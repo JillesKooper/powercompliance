@@ -120,7 +120,7 @@ export default function Dashboard() {
             </h2>
             <Link
               to="/wetgeving"
-              className="text-sm text-brand-600 hover:underline"
+              className="text-sm text-brandtext hover:underline"
             >
               {t("dashboard.bekijkWetgeving")}
             </Link>
@@ -160,7 +160,7 @@ export default function Dashboard() {
             {ongelezen > 0 && (
               <button
                 onClick={markeerAllesGelezen}
-                className="text-xs text-brand-600 hover:underline"
+                className="text-xs text-brandtext hover:underline"
               >
                 {t("dashboard.allesGelezen")}
               </button>
@@ -172,14 +172,24 @@ export default function Dashboard() {
                 {t("dashboard.geenNotificaties")}
               </div>
             )}
-            {notificaties.map((n) => (
+            {notificaties.map((n) => {
+              // Ongelezen notificaties krijgen een zacht statusvlak per type
+              // (geel/groen/rood/blauw). De soft/line-tokens flippen mee met
+              // darkmode, dus text-ink houdt overal ≥ 4.5:1 contrast.
+              const tint =
+                n.type === "waarschuwing"
+                  ? "border-warning-line bg-warning-soft"
+                  : n.type === "succes"
+                  ? "border-success-line bg-success-soft"
+                  : n.type === "fout"
+                  ? "border-danger-line bg-danger-soft"
+                  : "border-info-line bg-info-soft";
+              return (
               <button
                 key={n.id}
                 onClick={() => setGekozenId(n.id)}
                 className={`w-full text-left rounded-lg border p-3 text-sm cursor-pointer transition-colors hover:border-brand-300 hover:bg-hover ${
-                  n.gelezen
-                    ? "border-line bg-hover"
-                    : "border-brand-100 bg-brand-50"
+                  n.gelezen ? "border-line bg-hover" : tint
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -214,7 +224,8 @@ export default function Dashboard() {
                   </div>
                 )}
               </button>
-            ))}
+              );
+            })}
           </div>
         </Card>
       </div>
@@ -224,7 +235,7 @@ export default function Dashboard() {
 
 function DocumentWidget({ titel, icoon, kleur, items, leeg, metDagen }) {
   const { t } = useTaal();
-  const tekstKleur = kleur === "red" ? "text-red-600" : "text-amber-600";
+  const tekstKleur = kleur === "red" ? "text-danger-text" : "text-warning-text";
   return (
     <Card className="p-5">
       <div className="flex items-center justify-between mb-3">
@@ -235,8 +246,8 @@ function DocumentWidget({ titel, icoon, kleur, items, leeg, metDagen }) {
         <span
           className={`inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-xs font-semibold ${
             kleur === "red"
-              ? "bg-red-50 text-red-600"
-              : "bg-amber-50 text-amber-600"
+              ? "bg-danger-soft text-danger-text"
+              : "bg-warning-soft text-warning-text"
           }`}
         >
           {items.length}

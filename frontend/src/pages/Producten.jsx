@@ -221,7 +221,7 @@ export default function Producten() {
         {!producten ? (
           <Loading />
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-zebra">
             <thead>
               <tr className="text-left text-muted border-b border-line">
                 <th className="px-5 py-3 font-medium">{t("producten.kolomProduct")}</th>
@@ -240,7 +240,7 @@ export default function Producten() {
                   <td className="px-5 py-3">
                     <Link
                       to={`/producten/${p.id}`}
-                      className="font-medium text-brand-700 hover:underline"
+                      className="font-medium text-brandtext hover:underline"
                     >
                       {p.naam}
                     </Link>
@@ -261,7 +261,7 @@ export default function Producten() {
                   <td className="px-5 py-3">
                     <ProgressBar value={p.compliance_percentage} />
                     {p.aantal_ontbrekend > 0 && (
-                      <div className="text-xs text-red-500 mt-1">
+                      <div className="text-xs text-danger-text mt-1">
                         {t("producten.veldenOntbreken", { n: p.aantal_ontbrekend })}
                       </div>
                     )}
@@ -269,7 +269,7 @@ export default function Producten() {
                   <td className="px-5 py-3 text-right">
                     <button
                       onClick={() => verwijder(p.id)}
-                      className="text-red-500 hover:text-red-700 text-xs"
+                      className="text-danger-text hover:text-danger-text text-xs"
                     >
                       {t("actie.verwijderen")}
                     </button>

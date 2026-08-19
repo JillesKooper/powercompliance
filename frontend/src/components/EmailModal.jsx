@@ -181,7 +181,7 @@ export default function EmailModal({
           </div>
 
           {fout && (
-            <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm">
+            <div className="rounded-lg bg-danger-soft border border-danger-line text-danger-text px-4 py-2 text-sm">
               {fout}
             </div>
           )}
@@ -221,7 +221,7 @@ export default function EmailModal({
                         setFout(t("email.bijlageDownloadFout", { fout: e.message }));
                       }
                     }}
-                    className="inline-flex items-center gap-1 text-brand-700 hover:underline"
+                    className="inline-flex items-center gap-1 text-brandtext hover:underline"
                   >
                     📎 {data.bestandsnaam}
                   </button>
@@ -268,7 +268,7 @@ export default function EmailModal({
           </Button>
           <div className="ml-auto flex items-center gap-2">
             {verzonden && (
-              <span className="text-sm text-emerald-600">
+              <span className="text-sm text-success-text">
                 {aflevering?.kanaal === "gmail" && aflevering?.verzonden
                   ? t("email.verzondenGmail", { ontvanger: aflevering.ontvanger })
                   : t("email.verzonden")}

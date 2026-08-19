@@ -119,7 +119,7 @@ export default function ProductDocumenten({ productId }) {
           </Button>
         </div>
         {fout && (
-          <div className="md:col-span-4 rounded-md bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-sm">
+          <div className="md:col-span-4 rounded-md bg-danger-soft border border-danger-line text-danger-text px-3 py-2 text-sm">
             {fout}
           </div>
         )}
@@ -153,13 +153,13 @@ export default function ProductDocumenten({ productId }) {
               <div className="flex items-center gap-3 shrink-0">
                 <button
                   onClick={() => api.downloadDocument(d.id)}
-                  className="text-brand-600 hover:underline text-xs"
+                  className="text-brandtext hover:underline text-xs"
                 >
                   {t("actie.download")}
                 </button>
                 <button
                   onClick={() => verwijder(d.id)}
-                  className="text-red-500 hover:text-red-700 text-xs"
+                  className="text-danger-text hover:text-danger-text text-xs"
                 >
                   {t("actie.verwijderen")}
                 </button>

@@ -4,11 +4,11 @@ import { useTaal } from "../context/taal";
 import { Loading, ErrorBox } from "./ui";
 
 const TYPES = {
-  mail_verstuurd: { icoon: "✉️", labelKey: "widgets.activiteit.type.mailVerstuurd", kleur: "bg-brand-50 text-brand-700 border-brand-200", stip: "bg-brand-500" },
-  reply_ontvangen: { icoon: "📥", labelKey: "widgets.activiteit.type.replyOntvangen", kleur: "bg-emerald-50 text-emerald-700 border-emerald-200", stip: "bg-emerald-500" },
-  data_aangevuld: { icoon: "✨", labelKey: "widgets.activiteit.type.dataAangevuld", kleur: "bg-emerald-50 text-emerald-700 border-emerald-200", stip: "bg-emerald-500" },
-  status_gewijzigd: { icoon: "🔄", labelKey: "widgets.activiteit.type.statusGewijzigd", kleur: "bg-amber-50 text-amber-700 border-amber-200", stip: "bg-amber-500" },
-  notificatie: { icoon: "🔔", labelKey: "widgets.activiteit.type.notificatie", kleur: "bg-hover text-muted border-line", stip: "bg-slate-400" },
+  mail_verstuurd: { icoon: "✉️", labelKey: "widgets.activiteit.type.mailVerstuurd", kleur: "bg-info-soft text-info-text border-info-line", stip: "bg-brand-500" },
+  reply_ontvangen: { icoon: "📥", labelKey: "widgets.activiteit.type.replyOntvangen", kleur: "bg-success-soft text-success-text border-success-line", stip: "bg-emerald-500" },
+  data_aangevuld: { icoon: "✨", labelKey: "widgets.activiteit.type.dataAangevuld", kleur: "bg-success-soft text-success-text border-success-line", stip: "bg-emerald-500" },
+  status_gewijzigd: { icoon: "🔄", labelKey: "widgets.activiteit.type.statusGewijzigd", kleur: "bg-warning-soft text-warning-text border-warning-line", stip: "bg-amber-500" },
+  notificatie: { icoon: "🔔", labelKey: "widgets.activiteit.type.notificatie", kleur: "bg-hover text-muted border-line", stip: "bg-faint" },
 };
 
 function formatteerDatum(iso) {
@@ -59,7 +59,7 @@ export default function ActiviteitTijdlijn({ leverancierId }) {
             <div key={a.id} className="relative animate-fadeIn">
               {/* stip */}
               <span
-                className={`absolute -left-6 top-1.5 h-[13px] w-[13px] rounded-full border-2 border-white ${cfg.stip}`}
+                className={`absolute -left-6 top-1.5 h-[13px] w-[13px] rounded-full border-2 border-surface ${cfg.stip}`}
               />
               <div className="flex items-center gap-2 flex-wrap">
                 <span
@@ -79,7 +79,7 @@ export default function ActiviteitTijdlijn({ leverancierId }) {
                     onClick={() =>
                       setOpen((o) => ({ ...o, [a.id]: !o[a.id] }))
                     }
-                    className="text-xs text-brand-600 hover:underline"
+                    className="text-xs text-brandtext hover:underline"
                   >
                     {isOpen ? `▲ ${t("widgets.activiteit.verbergDetails")}` : `▼ ${t("widgets.activiteit.toonDetails")}`}
                   </button>

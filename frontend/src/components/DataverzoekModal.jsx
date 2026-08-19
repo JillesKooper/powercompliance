@@ -110,7 +110,7 @@ export default function DataverzoekModal({ id, onClose }) {
                   <Rij label={t("modals.dataverzoek.email")}>
                     <a
                       href={`mailto:${lev.email}`}
-                      className="text-brand-700 hover:underline"
+                      className="text-brandtext hover:underline"
                     >
                       {lev.email}
                     </a>
@@ -183,7 +183,7 @@ export default function DataverzoekModal({ id, onClose }) {
               {/* Ontvangen reply */}
               <Sectie titel={t("modals.dataverzoek.reply")}>
                 {verzoek.reply_bericht ? (
-                  <pre className="whitespace-pre-wrap font-sans text-sm text-ink rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <pre className="whitespace-pre-wrap font-sans text-sm text-ink rounded-lg border border-success-line bg-success-soft px-4 py-3">
                     {verzoek.reply_bericht}
                   </pre>
                 ) : (

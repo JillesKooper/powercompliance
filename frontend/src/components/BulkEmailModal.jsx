@@ -88,14 +88,14 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
 
         <div className="p-6 space-y-4">
           {fout && (
-            <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm">
+            <div className="rounded-lg bg-danger-soft border border-danger-line text-danger-text px-4 py-2 text-sm">
               {fout}
             </div>
           )}
 
           {resultaat ? (
             <div className="space-y-3">
-              <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
+              <div className="rounded-lg bg-success-soft border border-success-line px-4 py-3 text-sm text-success-text">
                 {t("email.bulkResultaat", {
                   aantal: resultaat.aantal,
                   code: wetCodeLabel(resultaat.wetgeving_code, appTaal),
@@ -188,7 +188,7 @@ export default function BulkEmailModal({ wetgevingCode, wetgevingNaam, onClose }
                         e.preventDefault();
                         setBekijk({ id: l.id, naam: l.naam });
                       }}
-                      className="text-brand-600 hover:underline text-xs"
+                      className="text-brandtext hover:underline text-xs"
                     >
                       {t("email.bulkBekijk")}
                     </button>
