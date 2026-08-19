@@ -47,10 +47,14 @@ WETGEVING = [
         date(2026, 8, 12),
         "aankomend",
         [
-            ("Verpakkingsmateriaal", "ppwr_materiaal", "tekst"),
-            ("Recycleerbaarheid (%)", "ppwr_recycleerbaarheid", "getal"),
+            ("Verpakkingsmateriaal type", "ppwr_materiaal", "tekst"),
             ("Aandeel gerecycled materiaal (%)", "ppwr_recyclaat", "getal"),
+            ("Recycleerbaarheid (%)", "ppwr_recycleerbaarheid", "getal"),
             ("Verpakkingsgewicht (g)", "ppwr_gewicht", "getal"),
+            ("Minimale verpakkingsdikte (mm)", "ppwr_dikte", "getal"),
+            ("Is verpakking herbruikbaar", "ppwr_herbruikbaar", "boolean"),
+            ("Biobased materiaal percentage (%)", "ppwr_biobased", "getal"),
+            ("Gevaarlijke stoffen in verpakking", "ppwr_gevaarlijk", "boolean"),
         ],
         ALLE,
     ),
@@ -61,9 +65,12 @@ WETGEVING = [
         date(2024, 1, 1),
         "van kracht",
         [
-            ("ESG-rapportagecode", "csrd_code", "tekst"),
             ("CO2-voetafdruk scope 1+2 (kg CO2e)", "csrd_co2", "getal"),
+            ("CO2-voetafdruk scope 3 (kg CO2e)", "csrd_co2_scope3", "getal"),
+            ("Energieverbruik productie (kWh)", "csrd_energie", "getal"),
+            ("Waterverbruik productie (liter)", "csrd_water", "getal"),
             ("Duurzaamheidsverslag (URL)", "csrd_verslag", "tekst"),
+            ("ESG-rapportagecode", "csrd_code", "tekst"),
         ],
         ALLE,
     ),
@@ -74,10 +81,15 @@ WETGEVING = [
         date(2024, 2, 18),
         "van kracht",
         [
-            ("Batterijchemie", "bat_chemie", "tekst"),
+            ("Batterijtype (chemie)", "bat_chemie", "tekst"),
             ("Capaciteit (Wh)", "bat_capaciteit", "getal"),
-            ("CO2-voetafdruk (kg CO2e)", "bat_co2", "getal"),
             ("Batterijpaspoort-ID", "bat_paspoort", "tekst"),
+            ("CO2-voetafdruk batterij (kg CO2e)", "bat_co2", "getal"),
+            ("Gerecycled cobalt percentage (%)", "bat_cobalt", "getal"),
+            ("Gerecycled lithium percentage (%)", "bat_lithium", "getal"),
+            ("Gerecycled nikkel percentage (%)", "bat_nikkel", "getal"),
+            ("Fabrikant batterij", "bat_fabrikant", "tekst"),
+            ("Land van productie batterij", "bat_land", "tekst"),
         ],
         ["Elektronica"],
     ),
@@ -89,8 +101,13 @@ WETGEVING = [
         "van kracht",
         [
             ("SVHC-stoffen aanwezig", "reach_svhc", "boolean"),
-            ("Veiligheidsinformatieblad (SDS)", "reach_sds", "bestand"),
+            ("Lijst SVHC-stoffen", "reach_svhc_lijst", "tekst"),
             ("CLP-gevarenpictogrammen", "reach_clp", "tekst"),
+            ("H-zinnen (gevarenaanduidingen)", "reach_hzinnen", "tekst"),
+            ("P-zinnen (voorzorgsmaatregelen)", "reach_pzinnen", "tekst"),
+            ("Veiligheidsinformatieblad beschikbaar", "reach_sds_beschikbaar", "boolean"),
+            ("Veiligheidsinformatieblad (URL)", "reach_sds_url", "tekst"),
+            ("SCIP-nummer", "reach_scip", "tekst"),
         ],
         ["Chemie", "Cosmetica", "Textiel", "Bouwmaterialen", "Speelgoed", "Elektronica"],
     ),
@@ -114,9 +131,16 @@ WETGEVING = [
         date(2024, 12, 13),
         "van kracht",
         [
-            ("Verantwoordelijke EU-marktdeelnemer", "gpsr_marktdeelnemer", "tekst"),
+            ("Naam en adres EU-verantwoordelijke marktdeelnemer", "gpsr_marktdeelnemer", "tekst"),
+            ("Postadres leverancier", "gpsr_postadres", "tekst"),
+            ("Land van oorsprong product", "gpsr_oorsprong", "tekst"),
+            ("Technisch dossier aanwezig", "gpsr_technisch_dossier", "boolean"),
             ("Veiligheidswaarschuwingen", "gpsr_waarschuwingen", "tekst"),
             ("Gebruiksaanwijzing aanwezig", "gpsr_handleiding", "boolean"),
+            ("CE-markering aanwezig", "gpsr_ce", "boolean"),
+            ("Leeftijdsaanduiding", "gpsr_leeftijd", "tekst"),
+            ("Serienummer/batchnummer format", "gpsr_batch", "tekst"),
+            ("Contactpunt voor productterugroepingen (e-mail/URL)", "gpsr_recall_contact", "tekst"),
         ],
         ["Elektronica", "Speelgoed", "Meubels", "Textiel", "Cosmetica"],
     ),
@@ -127,9 +151,12 @@ WETGEVING = [
         date(2009, 11, 20),
         "van kracht",
         [
-            ("Energie-efficiëntieklasse", "erp_energieklasse", "tekst"),
-            ("Energieverbruik (kWh/jaar)", "erp_verbruik", "getal"),
+            ("Energieklasse (A-G)", "erp_energieklasse", "tekst"),
+            ("Jaarlijks energieverbruik (kWh)", "erp_verbruik", "getal"),
             ("EPREL-registratienummer", "erp_eprel", "tekst"),
+            ("Geluidsniveau (dB)", "erp_geluid", "getal"),
+            ("Standby-verbruik (W)", "erp_standby", "getal"),
+            ("Reparatie-index score", "erp_reparatie", "tekst"),
         ],
         ["Elektronica"],
     ),
@@ -141,7 +168,11 @@ WETGEVING = [
         "aankomend",
         [
             ("Digitaal productpaspoort-ID", "espr_dpp", "tekst"),
-            ("Repareerbaarheidsscore", "espr_repareerbaarheid", "tekst"),
+            ("Repareerbaarheidsscore (0-10)", "espr_repareerbaarheid", "tekst"),
+            ("Levensduur (jaren)", "espr_levensduur", "getal"),
+            ("Gedemonteerd in (minuten)", "espr_demontage", "getal"),
+            ("Beschikbaarheid reserveonderdelen", "espr_reserveonderdelen", "boolean"),
+            ("Softwareondersteuning tot (datum)", "espr_software_tot", "datum"),
             ("Aandeel gerecycled materiaal (%)", "espr_recyclaat", "getal"),
         ],
         ["Elektronica", "Textiel", "Meubels", "Bouwmaterialen"],
@@ -156,8 +187,9 @@ WETGEVING = [
         [
             ("Herkomstland grondstof", "eudr_herkomst", "tekst"),
             ("Geolocatie productie (coördinaten)", "eudr_geo", "tekst"),
-            ("Ontbossingsvrij verklaard", "eudr_ontbossingsvrij", "boolean"),
             ("Due-diligence verklaringsnummer", "eudr_dds", "tekst"),
+            ("Ontbossingsvrij verklaard", "eudr_ontbossingsvrij", "boolean"),
+            ("Certificering (FSC/PEFC/etc.)", "eudr_certificering", "tekst"),
         ],
         ["Bouwmaterialen", "Verpakkingen", "Voedsel", "Meubels"],
     ),
@@ -316,19 +348,21 @@ WET_INFO = {
     ),
 }
 
-# (naam, contactpersoon, email, telefoon, adres, land)
+# (naam, contactpersoon, email, telefoon, adres, postcode, stad, land, kvk_nummer, btw_nummer)
+# "Koper Handel Jilles" mist bewust KvK- en BTW-nummer, zodat de GPSR-uitvraag
+# van de verantwoordelijke EU-marktdeelnemer (bedrijfsgegevens) demonstreerbaar is.
 LEVERANCIERS = [
-    ("Van der Berg Elektronica B.V.", "Jan van der Berg", "j.vandenberg@vdberg-elektro.nl", "010-2345678", "Industrieweg 12, 3044 AS Rotterdam", "NL"),
-    ("Koninklijke Jansen Chemie N.V.", "Petra Jansen", "p.jansen@jansenchemie.nl", "040-7654321", "Chemiepark 5, 5651 GH Eindhoven", "NL"),
-    ("Bouwgroep De Vries", "Mark de Vries", "info@bouwgroepdevries.nl", "030-1122334", "Betonlaan 88, 3542 AD Utrecht", "NL"),
-    ("GreenPack Verpakkingen B.V.", "Lisa Bakker", "lisa@greenpack.nl", "020-9988776", "Kartonstraat 3, 1043 AN Amsterdam", "NL"),
-    ("Textielhandel Bakker & Zonen", "Henk Bakker", "verkoop@bakkertextiel.nl", "013-4455667", "Weverijplein 21, 5041 EA Tilburg", "NL"),
-    ("Meubelfabriek Hendriks", "Sophie Hendriks", "s.hendriks@meubelhendriks.nl", "0499-556677", "Houtweg 47, 5688 KL Oirschot", "NL"),
-    ("Smit Foods Nederland B.V.", "Karel Smit", "k.smit@smitfoods.nl", "0345-778899", "Voedselstraat 9, 4001 LK Tiel", "NL"),
-    ("Visser Trading B.V.", "Anouk Visser", "a.visser@vissertrading.nl", "058-2233445", "Havenkade 14, 8861 NL Harlingen", "NL"),
-    ("De Groot Groothandel", "Thomas de Groot", "thomas@degrootgroothandel.nl", "073-6677889", "Groothandelweg 30, 5222 AR 's-Hertogenbosch", "NL"),
-    ("Mulder Industriële Supplies", "Ellen Mulder", "e.mulder@mulder-supplies.nl", "038-3344556", "Fabrieksstraat 7, 8011 CV Zwolle", "NL"),
-    ("Koper Handel Jilles", "Jilles Kooper", "jilles@koperhandel.nl", "071-5566778", "Koperslagerstraat 2, 2312 HN Leiden", "NL"),
+    ("Van der Berg Elektronica B.V.", "Jan van der Berg", "j.vandenberg@vdberg-elektro.nl", "010-2345678", "Industrieweg 12", "3044 AS", "Rotterdam", "NL", "24123456", "NL812345678B01"),
+    ("Koninklijke Jansen Chemie N.V.", "Petra Jansen", "p.jansen@jansenchemie.nl", "040-7654321", "Chemiepark 5", "5651 GH", "Eindhoven", "NL", "17234567", "NL823456789B01"),
+    ("Bouwgroep De Vries", "Mark de Vries", "info@bouwgroepdevries.nl", "030-1122334", "Betonlaan 88", "3542 AD", "Utrecht", "NL", "30345678", "NL834567890B01"),
+    ("GreenPack Verpakkingen B.V.", "Lisa Bakker", "lisa@greenpack.nl", "020-9988776", "Kartonstraat 3", "1043 AN", "Amsterdam", "NL", "34456789", "NL845678901B01"),
+    ("Textielhandel Bakker & Zonen", "Henk Bakker", "verkoop@bakkertextiel.nl", "013-4455667", "Weverijplein 21", "5041 EA", "Tilburg", "NL", "18567890", "NL856789012B01"),
+    ("Meubelfabriek Hendriks", "Sophie Hendriks", "s.hendriks@meubelhendriks.nl", "0499-556677", "Houtweg 47", "5688 KL", "Oirschot", "NL", "16678901", "NL867890123B01"),
+    ("Smit Foods Nederland B.V.", "Karel Smit", "k.smit@smitfoods.nl", "0345-778899", "Voedselstraat 9", "4001 LK", "Tiel", "NL", "11789012", "NL878901234B01"),
+    ("Visser Trading B.V.", "Anouk Visser", "a.visser@vissertrading.nl", "058-2233445", "Havenkade 14", "8861 NL", "Harlingen", "NL", "01890123", "NL889012345B01"),
+    ("De Groot Groothandel", "Thomas de Groot", "thomas@degrootgroothandel.nl", "073-6677889", "Groothandelweg 30", "5222 AR", "'s-Hertogenbosch", "NL", "16901234", "NL890123456B01"),
+    ("Mulder Industriële Supplies", "Ellen Mulder", "e.mulder@mulder-supplies.nl", "038-3344556", "Fabrieksstraat 7", "8011 CV", "Zwolle", "NL", "05012345", "NL801234567B01"),
+    ("Koper Handel Jilles", "Jilles Kooper", "jilles@koperhandel.nl", "071-5566778", "Koperslagerstraat 2", "2312 HN", "Leiden", "NL", None, None),
 ]
 
 # Extra elektronicaproducten voor "Koper Handel Jilles". Deze leverancier krijgt
@@ -407,12 +441,26 @@ _TEKST_KEUZES = {
     "bat_chemie": ["Li-ion (NMC)", "LiFePO4", "NiMH", "Loodzuur"],
     "reach_clp": ["GHS02, GHS07", "GHS05", "GHS07, GHS08", "Geen pictogram vereist"],
     "cpr_brandklasse": ["A1", "A2-s1,d0", "B-s1,d0", "C-s2,d0"],
-    "gpsr_marktdeelnemer": ["EU-Importeur B.V., Rotterdam", "Compliance Partners GmbH, Keulen", "EuroDistributie N.V., Antwerpen"],
+    "gpsr_marktdeelnemer": ["EU-Importeur B.V., Industrieweg 12, 3044 AS Rotterdam", "Compliance Partners GmbH, Domstraße 8, 50668 Keulen", "EuroDistributie N.V., Havenlaan 40, 2030 Antwerpen"],
+    "gpsr_postadres": ["Postbus 1234, 3000 AA Rotterdam", "Postbus 88, 5600 AB Eindhoven", "Postbus 501, 1000 AM Amsterdam"],
+    "gpsr_oorsprong": ["Nederland", "Duitsland", "China", "Vietnam", "Polen"],
     "gpsr_waarschuwingen": ["Niet geschikt voor kinderen < 3 jaar", "Buiten bereik van kinderen houden", "Niet blootstellen aan vocht"],
-    "erp_energieklasse": ["A", "B", "C", "A+"],
+    "gpsr_leeftijd": ["Geen leeftijdsbeperking", "14+", "3+", "Niet voor kinderen < 3 jaar"],
+    "gpsr_batch": ["BATCH-JJJJMMDD-####", "LOT-2026-0457", "SN: AA-000123456", "YYWW-serienr."],
+    "gpsr_recall_contact": ["recall@uwbedrijf.nl", "https://uwbedrijf.nl/terugroepacties", "veiligheid@uwbedrijf.nl"],
+    "erp_energieklasse": ["A", "B", "C", "D"],
+    "erp_reparatie": ["8,2 / 10", "7,0 / 10", "5,8 / 10", "9,0 / 10"],
     "espr_repareerbaarheid": ["8,5 / 10", "7,2 / 10", "6,0 / 10", "9,1 / 10"],
     "eudr_herkomst": ["Brazilië", "Indonesië", "Ghana", "Zweden", "Duitsland"],
     "eudr_geo": ["-3.4653, -62.2159", "1.3521, 103.8198", "5.6037, -0.1870"],
+    "eudr_certificering": ["FSC 100%", "FSC Mix", "PEFC-gecertificeerd", "Rainforest Alliance"],
+    "reach_svhc_lijst": ["Geen SVHC-stoffen boven 0,1%", "Lood (CAS 7439-92-1) < 0,1%", "DEHP (CAS 117-81-7)", "Boorzuur (CAS 10043-35-3)"],
+    "reach_hzinnen": ["H315, H319", "H302, H411", "H225, H336", "Geen H-zinnen van toepassing"],
+    "reach_pzinnen": ["P264, P280", "P210, P233, P303+P361+P353", "P305+P351+P338", "Geen P-zinnen van toepassing"],
+    "reach_sds_url": ["https://example.com/sds/product-nl.pdf", "https://example.com/veiligheidsblad.pdf"],
+    "reach_scip": ["SCIP-3f2a9b74-1c8e-4d6a", "SCIP-a71c0e93-55bd-42f1", "Niet SCIP-plichtig"],
+    "bat_fabrikant": ["CATL", "LG Energy Solution", "Samsung SDI", "Panasonic", "BYD"],
+    "bat_land": ["China", "Zuid-Korea", "Japan", "Polen", "Hongarije"],
     "tex_vezels": ["80% katoen, 20% polyester", "100% biologisch katoen", "65% polyester, 35% viscose"],
     "tex_onderhoud": ["30°C, niet bleken, strijken op lage temperatuur", "Handwas, niet in de droger"],
     "tex_land": ["Portugal", "Turkije", "India", "Bangladesh"],
@@ -430,9 +478,14 @@ def _voorbeeld_waarde(veld: "models.ComplianceVeld", product: "models.Product") 
     h = (product.id * 31 + veld.id * 7) % 9973  # deterministische variatie per product/veld
 
     if veld.veld_type == "boolean":
-        if "svhc" in veld.sleutel:
-            return "Nee" if h % 5 else "Ja"  # meestal geen SVHC-stoffen aanwezig
+        # Velden waar "Nee" het gewenste/gebruikelijke antwoord is
+        # (geen gevaarlijke/SVHC-stoffen aanwezig).
+        if "svhc" in veld.sleutel or "gevaarlijk" in veld.sleutel:
+            return "Nee" if h % 5 else "Ja"
         return "Ja" if h % 4 else "Nee"
+    if veld.veld_type == "datum":
+        # bv. "Softwareondersteuning tot": 1–5 jaar in de toekomst
+        return (date.today() + timedelta(days=365 + h % 1460)).isoformat()
     if veld.veld_type == "bestand":
         ref = product.artikelnummer or f"P{product.id}"
         return f"{veld.sleutel}_{ref}.pdf"
@@ -447,6 +500,18 @@ def _voorbeeld_waarde(veld: "models.ComplianceVeld", product: "models.Product") 
             return str(800 + h % 4200)  # Wh
         if "(g)" in naam or "gewicht" in naam:
             return str(20 + h % 480)  # gram
+        if "(mm)" in naam or "dikte" in naam:
+            return str(1 + h % 5)  # mm (verpakkingsdikte)
+        if "(db)" in naam or "geluid" in naam:
+            return str(20 + h % 56)  # dB
+        if "(w)" in naam:
+            return str(h % 6)  # W (standby-verbruik)
+        if "liter" in naam:
+            return str(100 + h % 9900)  # liter (waterverbruik)
+        if "jaren" in naam or "levensduur" in naam:
+            return str(3 + h % 13)  # jaren (levensduur)
+        if "minuten" in naam:
+            return str(2 + h % 59)  # minuten (demontagetijd)
         return str(1 + h % 999)
     # tekst
     if veld.sleutel in _ID_PREFIX:
@@ -504,10 +569,12 @@ def seed():
 
         # leveranciers
         leveranciers = []
-        for naam, contact, email, telefoon, adres, land in LEVERANCIERS:
+        for (naam, contact, email, telefoon, adres, postcode, stad, land,
+             kvk, btw) in LEVERANCIERS:
             lev = models.Leverancier(
                 naam=naam, contactpersoon=contact, email=email,
-                telefoon=telefoon, adres=adres, land=land, actief=True,
+                telefoon=telefoon, adres=adres, postcode=postcode, stad=stad,
+                land=land, kvk_nummer=kvk, btw_nummer=btw, actief=True,
             )
             db.add(lev)
             leveranciers.append(lev)

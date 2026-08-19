@@ -92,8 +92,22 @@ export default function LeverancierDetail() {
             {lev.telefoon && (
               <div className="text-sm text-muted">{lev.telefoon}</div>
             )}
-            {lev.adres && (
-              <div className="text-sm text-muted">{lev.adres}</div>
+            {(lev.adres || lev.postcode || lev.stad) && (
+              <div className="text-sm text-muted">
+                {[lev.adres, [lev.postcode, lev.stad].filter(Boolean).join(" ")]
+                  .filter(Boolean)
+                  .join(", ")}
+              </div>
+            )}
+            {(lev.kvk_nummer || lev.btw_nummer) && (
+              <div className="text-sm text-muted">
+                {[
+                  lev.kvk_nummer && `${t("leverancierDetail.veldKvk")}: ${lev.kvk_nummer}`,
+                  lev.btw_nummer && `${t("leverancierDetail.veldBtw")}: ${lev.btw_nummer}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </div>
             )}
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -265,6 +279,11 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
   const [email, setEmail] = useState(leverancier.email || "");
   const [telefoon, setTelefoon] = useState(leverancier.telefoon || "");
   const [adres, setAdres] = useState(leverancier.adres || "");
+  const [postcode, setPostcode] = useState(leverancier.postcode || "");
+  const [stad, setStad] = useState(leverancier.stad || "");
+  const [land, setLand] = useState(leverancier.land || "");
+  const [kvk, setKvk] = useState(leverancier.kvk_nummer || "");
+  const [btw, setBtw] = useState(leverancier.btw_nummer || "");
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState(null);
 
@@ -282,6 +301,11 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
         email: email.trim() || null,
         telefoon: telefoon.trim() || null,
         adres: adres.trim() || null,
+        postcode: postcode.trim() || null,
+        stad: stad.trim() || null,
+        land: land.trim() || null,
+        kvk_nummer: kvk.trim() || null,
+        btw_nummer: btw.trim() || null,
       });
       onOpgeslagen(bijgewerkt);
     } catch (e) {
@@ -340,6 +364,25 @@ function LeverancierBewerkModal({ leverancier, onClose, onOpgeslagen }) {
           <Veld label={t("leverancierDetail.veldAdres")}>
             <input value={adres} onChange={(e) => setAdres(e.target.value)} className="input" />
           </Veld>
+          <div className="grid grid-cols-2 gap-3">
+            <Veld label={t("leverancierDetail.veldPostcode")}>
+              <input value={postcode} onChange={(e) => setPostcode(e.target.value)} className="input" />
+            </Veld>
+            <Veld label={t("leverancierDetail.veldStad")}>
+              <input value={stad} onChange={(e) => setStad(e.target.value)} className="input" />
+            </Veld>
+          </div>
+          <Veld label={t("leverancierDetail.veldLand")}>
+            <input value={land} onChange={(e) => setLand(e.target.value)} className="input" />
+          </Veld>
+          <div className="grid grid-cols-2 gap-3">
+            <Veld label={t("leverancierDetail.veldKvk")}>
+              <input value={kvk} onChange={(e) => setKvk(e.target.value)} className="input" />
+            </Veld>
+            <Veld label={t("leverancierDetail.veldBtw")}>
+              <input value={btw} onChange={(e) => setBtw(e.target.value)} className="input" />
+            </Veld>
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">

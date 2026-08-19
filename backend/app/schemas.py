@@ -24,7 +24,11 @@ class LeverancierBase(BaseModel):
     email: Optional[str] = None
     telefoon: Optional[str] = None
     adres: Optional[str] = None
+    postcode: Optional[str] = None
+    stad: Optional[str] = None
     land: Optional[str] = "NL"
+    kvk_nummer: Optional[str] = None
+    btw_nummer: Optional[str] = None
     actief: bool = True
 
 
@@ -38,7 +42,11 @@ class LeverancierUpdate(BaseModel):
     email: Optional[str] = None
     telefoon: Optional[str] = None
     adres: Optional[str] = None
+    postcode: Optional[str] = None
+    stad: Optional[str] = None
     land: Optional[str] = None
+    kvk_nummer: Optional[str] = None
+    btw_nummer: Optional[str] = None
     actief: Optional[bool] = None
 
 

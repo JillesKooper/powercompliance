@@ -25,6 +25,36 @@ CC_ADRES = "compliance@uwbedrijf.nl"
 PORTAAL_BASIS = "https://portaal.powercompliance.nl/leverancier"
 MODEL = "claude-sonnet-4-6"
 
+# GPSR (EU 2023/988) vereist een verantwoordelijke marktdeelnemer in de EU met
+# naam én adres. Ontbreken die bedrijfsgegevens bij de leverancier zelf, dan
+# vragen we ze mee uit onder de GPSR-noemer. (attribuut, NL-label, EN-label).
+GPSR_CODE = "GPSR"
+LEVERANCIER_CONTACTVELDEN = [
+    ("naam", "Bedrijfsnaam", "Company name"),
+    ("adres", "Postadres (straat + huisnummer)", "Postal address (street + number)"),
+    ("postcode", "Postcode", "Postal code"),
+    ("stad", "Plaats", "City"),
+    ("land", "Land", "Country"),
+    ("telefoon", "Telefoonnummer", "Phone number"),
+    ("email", "E-mailadres", "Email address"),
+    ("kvk_nummer", "KvK-nummer", "Chamber of Commerce number"),
+    ("btw_nummer", "BTW-nummer", "VAT number"),
+]
+
+
+def ontbrekende_leverancier_gegevens(
+    leverancier: models.Leverancier, taal: str = "nl"
+) -> list:
+    """Geef de labels van de bedrijfscontactgegevens die bij de leverancier nog
+    ontbreken (leeg of niet ingevuld). Gekoppeld aan de GPSR-vereiste voor de
+    verantwoordelijke EU-marktdeelnemer."""
+    ontbrekend = []
+    for attr, nl_label, en_label in LEVERANCIER_CONTACTVELDEN:
+        waarde = getattr(leverancier, attr, None)
+        if waarde is None or (isinstance(waarde, str) and not waarde.strip()):
+            ontbrekend.append(en_label if taal == "en" else nl_label)
+    return ontbrekend
+
 
 # ---------- data verzamelen ----------
 def verzamel_ontbrekend(
@@ -65,6 +95,13 @@ def verzamel_ontbrekend(
             for v in ontbrekend:
                 code = v.wetgeving.code if v.wetgeving else "—"
                 per_wet[code].add(veld_vertaling.veld_naam(v, taal))
+    # Leverancier-brede bedrijfsgegevens (GPSR: verantwoordelijke EU-marktdeelnemer).
+    # Alleen op leverancier-scope meenemen (niet bij een uitvraag voor één product),
+    # en alleen als de uitvraag GPSR omvat (geen filter, of expliciet GPSR).
+    if product_id is None and wetgeving_code in (None, GPSR_CODE):
+        prefix = "Company details: " if taal == "en" else "Bedrijfsgegevens: "
+        for label in ontbrekende_leverancier_gegevens(leverancier, taal):
+            per_wet[GPSR_CODE].add(prefix + label)
     totaal = sum(len(v) for _, v in per_product)
     log.info(
         "verzamel_ontbrekend(leverancier=%r, wetgeving=%s, product_id=%s): %d producten met samen %d ontbrekende velden",
@@ -80,6 +117,10 @@ def leveranciers_met_ontbrekend_voor_wetgeving(db: Session, wetgeving_code: str)
     for lev in leveranciers:
         per_product, _ = verzamel_ontbrekend(db, lev, wetgeving_code)
         aantal_velden = sum(len(velden) for _, velden in per_product)
+        # Bij GPSR tellen ook ontbrekende bedrijfsgegevens mee, zodat een
+        # leverancier met alleen incomplete contactdata óók wordt uitgevraagd.
+        if wetgeving_code == GPSR_CODE:
+            aantal_velden += len(ontbrekende_leverancier_gegevens(lev))
         if aantal_velden > 0:
             result.append(
                 {

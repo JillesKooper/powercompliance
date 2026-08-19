@@ -59,8 +59,15 @@ class Leverancier(Base):
     contactpersoon = Column(String, nullable=True)
     email = Column(String, nullable=True)
     telefoon = Column(String, nullable=True)
-    adres = Column(String, nullable=True)
+    adres = Column(String, nullable=True)  # straat + huisnummer
+    postcode = Column(String, nullable=True)
+    stad = Column(String, nullable=True)
     land = Column(String, nullable=True, default="NL")
+    # Bedrijfsidentificatie — o.a. nodig voor de GPSR-vereiste "verantwoordelijke
+    # EU-marktdeelnemer" (naam + adres). Wordt bij de leverancier uitgevraagd als
+    # deze nog ontbreekt (zie email_generator.ontbrekende_leverancier_gegevens).
+    kvk_nummer = Column(String, nullable=True)
+    btw_nummer = Column(String, nullable=True)
     actief = Column(Boolean, default=True)
     aangemaakt_op = Column(DateTime, default=datetime.utcnow)
 
