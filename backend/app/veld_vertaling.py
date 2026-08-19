@@ -49,6 +49,9 @@ EN_VELD_NAAM = {
     "cpr_dop": "Declaration of Performance (DoP)",
     "cpr_ce": "CE marking",
     "cpr_brandklasse": "Fire class",
+    "cpr_epd": "Environmental Product Declaration (EPD) URL",
+    "cpr_lca": "Life cycle assessment available",
+    "cpr_co2": "Product CO2 footprint (kg CO2e per m2)",
     # GPSR
     "gpsr_marktdeelnemer": "Name and address of responsible EU economic operator",
     "gpsr_postadres": "Supplier postal address",
@@ -107,6 +110,50 @@ EN_VELD_NAAM = {
     "cos_cpnp": "CPNP notification number",
     "cos_rp": "Responsible person (EU)",
     "cos_pif": "Product information file (PIF)",
+    # RoHS
+    "rohs_conformiteit": "RoHS declaration of conformity",
+    "rohs_lood": "Lead present",
+    "rohs_kwik": "Mercury present",
+    "rohs_cadmium": "Cadmium present",
+    "rohs_chroom": "Hexavalent chromium present",
+    "rohs_ftalaten": "Phthalates present",
+    "rohs_uitzondering": "Exemption code",
+    "rohs_dossier": "RoHS technical file (URL)",
+    # WEEE
+    "weee_registratie": "WEEE registration number",
+    "weee_categorie": "WEEE product category",
+    "weee_gewicht": "Device weight (grams)",
+    "weee_inzamelschema": "Collection scheme",
+    "weee_afvalbak": "Crossed-out wheelie bin symbol on product",
+    # PFAS
+    "pfas_aanwezig": "PFAS substances present",
+    "pfas_concentratie": "PFAS concentration",
+    "pfas_vrij": "PFAS-free declaration",
+    "pfas_alternatief": "Alternative material used",
+    # Voeding (EU 1169/2011)
+    "voeding_ingredienten": "Ingredient list",
+    "voeding_allergenen": "Allergens",
+    "voeding_voedingswaarde": "Nutritional value per 100g",
+    "voeding_energie": "Energy value (kcal)",
+    "voeding_houdbaarheid": "Best-before date format",
+    "voeding_bewaar": "Storage instructions",
+    "voeding_nettogewicht": "Net weight/volume",
+    "voeding_herkomst": "Country of origin",
+    # AVG/GDPR
+    "avg_privacy": "Privacy statement URL",
+    "avg_verwerkers": "Data processing agreement in place",
+    "avg_fg": "Data protection officer",
+    "avg_derde_landen": "Transfer to third countries",
+    "avg_bewaartermijn": "Customer data retention period",
+    # DSA
+    "dsa_klachten": "Complaint mechanism URL",
+    "dsa_transparantie": "Transparency report URL",
+    "dsa_moderatie": "Moderation policy URL",
+    "dsa_contact": "DSA contact point (email)",
+    # Omnibus
+    "omnibus_laagste_prijs": "Lowest price in last 30 days tracked",
+    "omnibus_reviews": "Reviews verified",
+    "omnibus_perso_prijs": "Personalised pricing disclosed",
 }
 
 # Product-basisveldlabels (export): NL-label -> Engelse weergave, op sleutel.

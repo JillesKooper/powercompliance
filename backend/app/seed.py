@@ -121,6 +121,9 @@ WETGEVING = [
             ("Prestatieverklaring (DoP)", "cpr_dop", "bestand"),
             ("CE-markering", "cpr_ce", "boolean"),
             ("Brandklasse", "cpr_brandklasse", "tekst"),
+            ("Milieuprestatieverklaring (EPD) URL", "cpr_epd", "tekst"),
+            ("Levenscyclusanalyse beschikbaar", "cpr_lca", "boolean"),
+            ("CO2-voetafdruk product (kg CO2e per m2)", "cpr_co2", "getal"),
         ],
         ["Bouwmaterialen"],
     ),
@@ -265,7 +268,122 @@ WETGEVING = [
         ],
         ["Elektronica"],
     ),
+    (
+        "ROHS",
+        "RoHS-richtlijn (2011/65/EU)",
+        "Beperkt gebruik van gevaarlijke stoffen in elektrische en "
+        "elektronische apparatuur.",
+        date(2011, 7, 1),
+        "van kracht",
+        [
+            ("RoHS-conformiteitsverklaring", "rohs_conformiteit", "boolean"),
+            ("Lood aanwezig", "rohs_lood", "boolean"),
+            ("Kwik aanwezig", "rohs_kwik", "boolean"),
+            ("Cadmium aanwezig", "rohs_cadmium", "boolean"),
+            ("Zeswaardig chroom aanwezig", "rohs_chroom", "boolean"),
+            ("Ftalaten aanwezig", "rohs_ftalaten", "boolean"),
+            ("Uitzonderingscode", "rohs_uitzondering", "tekst"),
+            ("Technisch dossier RoHS (URL)", "rohs_dossier", "tekst"),
+        ],
+        ["Elektronica"],
+    ),
+    (
+        "WEEE",
+        "WEEE-richtlijn (2012/19/EU)",
+        "Regels voor inzameling en recycling van afgedankte elektrische "
+        "apparatuur.",
+        date(2014, 2, 14),
+        "van kracht",
+        [
+            ("WEEE-registratienummer", "weee_registratie", "tekst"),
+            ("Productcategorie WEEE", "weee_categorie", "tekst"),
+            ("Gewicht apparaat (gram)", "weee_gewicht", "getal"),
+            ("Inzamelschema", "weee_inzamelschema", "tekst"),
+            ("Doorgestreepte afvalbak aanwezig op product", "weee_afvalbak", "boolean"),
+        ],
+        ["Elektronica"],
+    ),
+    (
+        "PFAS",
+        "PFAS-restrictie (REACH bijlage XVII)",
+        "Verbod op PFAS-stoffen in producten boven drempelwaarden.",
+        date(2025, 9, 15),
+        "aankomend",
+        [
+            ("PFAS-stoffen aanwezig", "pfas_aanwezig", "boolean"),
+            ("PFAS concentratie", "pfas_concentratie", "tekst"),
+            ("PFAS-vrij verklaring", "pfas_vrij", "boolean"),
+            ("Alternatief materiaal gebruikt", "pfas_alternatief", "tekst"),
+        ],
+        ["Chemie", "Textiel", "Elektronica", "Cosmetica", "Bouwmaterialen"],
+    ),
+    (
+        "VOEDING",
+        "Voedselinformatieverordening (EU) 1169/2011",
+        "Verplichte voedingsinformatie op etiketten voor levensmiddelen.",
+        date(2014, 12, 13),
+        "van kracht",
+        [
+            ("Ingrediëntenlijst", "voeding_ingredienten", "tekst"),
+            ("Allergenen", "voeding_allergenen", "tekst"),
+            ("Voedingswaarde per 100g", "voeding_voedingswaarde", "tekst"),
+            ("Energiewaarde (kcal)", "voeding_energie", "getal"),
+            ("Houdbaarheidsdatum format", "voeding_houdbaarheid", "tekst"),
+            ("Bewaarinstructies", "voeding_bewaar", "tekst"),
+            ("Nettogewicht/volume", "voeding_nettogewicht", "tekst"),
+            ("Land van herkomst", "voeding_herkomst", "tekst"),
+        ],
+        ["Voedsel"],
+    ),
+    (
+        "AVG",
+        "Algemene Verordening Gegevensbescherming (AVG/GDPR)",
+        "Regels voor verwerking van persoonsgegevens van klanten.",
+        date(2018, 5, 25),
+        "van kracht",
+        [
+            ("Privacyverklaring URL", "avg_privacy", "tekst"),
+            ("Verwerkersovereenkomst aanwezig", "avg_verwerkers", "boolean"),
+            ("Functionaris gegevensbescherming", "avg_fg", "tekst"),
+            ("Derde landen doorgifte", "avg_derde_landen", "boolean"),
+            ("Bewaartermijn klantdata", "avg_bewaartermijn", "tekst"),
+        ],
+        ALLE,
+    ),
+    (
+        "DSA",
+        "Digital Services Act (EU) 2022/2065",
+        "Regels voor online platforms en marketplaces over illegale content "
+        "en transparantie.",
+        date(2024, 2, 17),
+        "van kracht",
+        [
+            ("Klachtenmechanisme URL", "dsa_klachten", "tekst"),
+            ("Transparantierapport URL", "dsa_transparantie", "tekst"),
+            ("Moderatiebeleid URL", "dsa_moderatie", "tekst"),
+            ("Contactpunt DSA (e-mail)", "dsa_contact", "tekst"),
+        ],
+        ALLE,
+    ),
+    (
+        "OMNIBUS",
+        "Omnibus Richtlijn (EU) 2019/2161",
+        "Verplichtingen rond prijstransparantie, kortingsaanduidingen en "
+        "consumentenbescherming.",
+        date(2022, 5, 28),
+        "van kracht",
+        [
+            ("Laagste prijs afgelopen 30 dagen bijgehouden", "omnibus_laagste_prijs", "boolean"),
+            ("Beoordelingen geverifieerd", "omnibus_reviews", "boolean"),
+            ("Gepersonaliseerde prijzen meegedeeld", "omnibus_perso_prijs", "boolean"),
+        ],
+        ALLE,
+    ),
 ]
+
+# Nieuwe wetgevingen die standaard INACTIEF starten (handmatig te activeren in de
+# app), ongeacht of er producten in hun categorieën vallen. Zie WET_INFO/seed().
+STANDAARD_INACTIEF = {"EAA", "PFAS", "VOEDING", "AVG", "DSA", "OMNIBUS"}
 
 # code -> (info_url naar officiële bron, korte NL-samenvatting)
 EURLEX = "https://eur-lex.europa.eu/legal-content/NL/TXT/?uri=CELEX:"
@@ -345,6 +463,37 @@ WET_INFO = {
         "producten en diensten (zoals computers, smartphones, e-readers en "
         "e-commerce) zodat mensen met een beperking ze zelfstandig kunnen gebruiken. "
         "Van toepassing vanaf 28 juni 2025.",
+    ),
+    "ROHS": (
+        EURLEX + "32011L0065",
+        "Beperkt gebruik van gevaarlijke stoffen in elektrische en elektronische "
+        "apparatuur.",
+    ),
+    "WEEE": (
+        EURLEX + "32012L0019",
+        "Regels voor inzameling en recycling van afgedankte elektrische apparatuur.",
+    ),
+    "PFAS": (
+        "https://echa.europa.eu/nl/hot-topics/perfluoroalkyl-chemicals-pfas",
+        "Verbod op PFAS-stoffen in producten boven drempelwaarden.",
+    ),
+    "VOEDING": (
+        EURLEX + "32011R1169",
+        "Verplichte voedingsinformatie op etiketten voor levensmiddelen.",
+    ),
+    "AVG": (
+        EURLEX + "32016R0679",
+        "Regels voor verwerking van persoonsgegevens van klanten.",
+    ),
+    "DSA": (
+        EURLEX + "32022R2065",
+        "Regels voor online platforms en marketplaces over illegale content en "
+        "transparantie.",
+    ),
+    "OMNIBUS": (
+        EURLEX + "32019L2161",
+        "Verplichtingen rond prijstransparantie, kortingsaanduidingen en "
+        "consumentenbescherming.",
     ),
 }
 
@@ -434,6 +583,14 @@ _ID_PREFIX = {
     "mdr_udi": "UDI",
     "cos_cpnp": "CPNP",
 }
+# Booleanvelden die een schadelijke stof/eigenschap aanduiden: meestal "Nee"
+# (het compliant antwoord). Zie _voorbeeld_waarde.
+_MEESTAL_NEE = {
+    "reach_svhc",
+    "rohs_lood", "rohs_kwik", "rohs_cadmium", "rohs_chroom", "rohs_ftalaten",
+    "pfas_aanwezig",
+    "avg_derde_landen",
+}
 _TEKST_KEUZES = {
     "ppwr_materiaal": ["Karton (FSC-gecertificeerd)", "PET (mono-materiaal)", "Polypropyleen (PP)", "Glas", "Aluminium"],
     "csrd_code": ["ESRS-E1", "ESRS-E5", "ESRS-S1", "ESRS-G1"],
@@ -469,6 +626,35 @@ _TEKST_KEUZES = {
     "mdr_klasse": ["Klasse I", "Klasse IIa", "Klasse IIb", "Klasse III"],
     "cos_inci": ["Aqua, Glycerin, Parfum", "Aqua, Sodium Laureth Sulfate, Cocamidopropyl Betaine"],
     "cos_rp": ["CosmeSafe EU B.V., Amsterdam", "Beauty Compliance GmbH, München"],
+    # RoHS
+    "rohs_uitzondering": ["6(c) — Lood in koperlegering", "7(a) — Lood in soldeer", "Geen uitzondering van toepassing"],
+    "rohs_dossier": ["https://example.com/rohs/technisch-dossier.pdf", "https://example.com/rohs/dof.pdf"],
+    # WEEE
+    "weee_registratie": ["WEEECAT-NL-12345", "NL-WEEE-084512", "WEEE-Reg-NL-33017"],
+    "weee_categorie": ["4. Grote apparaten", "5. Kleine apparaten", "6. Kleine IT- en telecomapparatuur", "3. Lampen"],
+    "weee_inzamelschema": ["Wecycle (NL)", "Retourdienst leverancier", "Gemeentelijk milieustation"],
+    # PFAS
+    "pfas_concentratie": ["< 25 ppb (som PFAS)", "Niet detecteerbaar", "50 ppb (som PFAS)", "< 1 ppm PFOA"],
+    "pfas_alternatief": ["Siliconencoating", "Geen PFAS gebruikt", "Fluorvrije impregnering", "Wax-coating"],
+    # Voeding
+    "voeding_ingredienten": ["Tarwebloem, water, zout, gist", "Suiker, cacaomassa, cacaoboter, emulgator (sojalecithine)", "Water, tomaten, ui, kruiden"],
+    "voeding_allergenen": ["Gluten, noten", "Melk, soja", "Geen bekende allergenen", "Gluten, ei, melk"],
+    "voeding_voedingswaarde": ["Vet 12g, koolhydraten 30g, eiwit 8g", "Vet 3g, koolhydraten 45g, eiwit 6g"],
+    "voeding_houdbaarheid": ["THT: DD-MM-JJJJ", "TGT: DD-MM-JJJJ", "Ten minste houdbaar tot: zie verpakking"],
+    "voeding_bewaar": ["Koel en droog bewaren", "Na opening gekoeld bewaren (2-7°C)", "Buiten bereik van zonlicht bewaren"],
+    "voeding_nettogewicht": ["500 g", "1 L", "250 ml", "750 g"],
+    "voeding_herkomst": ["Nederland", "België", "Duitsland", "Spanje", "Italië"],
+    # AVG
+    "avg_privacy": ["https://example.com/privacyverklaring", "https://example.com/privacy-nl"],
+    "avg_fg": ["J. de Vries (fg@uwbedrijf.nl)", "Niet verplicht (geen FG aangesteld)", "Privacy Officer B.V."],
+    "avg_bewaartermijn": ["7 jaar (fiscale bewaarplicht)", "24 maanden na laatste aankoop", "Tot intrekking toestemming"],
+    # DSA
+    "dsa_klachten": ["https://example.com/klachten", "https://example.com/notice-and-action"],
+    "dsa_transparantie": ["https://example.com/transparantierapport-2025.pdf"],
+    "dsa_moderatie": ["https://example.com/moderatiebeleid"],
+    "dsa_contact": ["dsa@uwbedrijf.nl", "compliance@uwbedrijf.nl"],
+    # CPR (EPD)
+    "cpr_epd": ["https://example.com/epd/product.pdf", "https://www.environdec.com/library"],
 }
 
 
@@ -478,9 +664,9 @@ def _voorbeeld_waarde(veld: "models.ComplianceVeld", product: "models.Product") 
     h = (product.id * 31 + veld.id * 7) % 9973  # deterministische variatie per product/veld
 
     if veld.veld_type == "boolean":
-        # Velden waar "Nee" het gewenste/gebruikelijke antwoord is
-        # (geen gevaarlijke/SVHC-stoffen aanwezig).
-        if "svhc" in veld.sleutel or "gevaarlijk" in veld.sleutel:
+        # Velden waar "Nee" het gewenste/gebruikelijke antwoord is (geen
+        # gevaarlijke stof aanwezig / geen doorgifte). Meestal "Nee".
+        if veld.sleutel in _MEESTAL_NEE or "gevaarlijk" in veld.sleutel:
             return "Nee" if h % 5 else "Ja"
         return "Ja" if h % 4 else "Nee"
     if veld.veld_type == "datum":
@@ -498,6 +684,8 @@ def _voorbeeld_waarde(veld: "models.ComplianceVeld", product: "models.Product") 
             return str(15 + h % 285)  # kWh/jaar
         if "wh" in naam:
             return str(800 + h % 4200)  # Wh
+        if "kcal" in naam:
+            return str(20 + h % 580)  # kcal per 100 g
         if "(g)" in naam or "gewicht" in naam:
             return str(20 + h % 480)  # gram
         if "(mm)" in naam or "dikte" in naam:
@@ -677,9 +865,10 @@ def seed():
         product_cat_namen = {cat for _, cat in prod_objs}
         for code, w in wet_map.items():
             w.actief = bool(set(wetcode_to_catnamen[code]) & product_cat_namen)
-        # EAA staat standaard uit; handmatig te activeren in de app
-        if "EAA" in wet_map:
-            wet_map["EAA"].actief = False
+        # Enkele wetgevingen staan standaard uit; handmatig te activeren in de app.
+        for code in STANDAARD_INACTIEF:
+            if code in wet_map:
+                wet_map[code].actief = False
         db.flush()
 
         # --- Data-onderbouwing voor de demo-notificaties --------------------
