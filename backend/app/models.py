@@ -28,6 +28,26 @@ from sqlalchemy.orm import relationship
 from .database import Base
 
 
+class Organisatie(Base):
+    """Een klant-organisatie (tenant) binnen het SaaS-platform.
+
+    Alle tenant-data (leveranciers, producten, wetgeving, …) is via
+    ``organisatie_id`` aan één organisatie gekoppeld. De ``slug`` is een unieke,
+    URL-vriendelijke identifier (bv. "koper-handel"). ``max_producten`` dient als
+    limiet voor pricing-tiers."""
+
+    __tablename__ = "organisaties"
+
+    id = Column(Integer, primary_key=True, index=True)
+    naam = Column(String, nullable=False)
+    slug = Column(String, nullable=False, unique=True, index=True)
+    domein = Column(String, nullable=True)
+    logo_url = Column(String, nullable=True)
+    actief = Column(Boolean, default=True)
+    max_producten = Column(Integer, default=1000)  # pricing-tier limiet
+    aangemaakt_op = Column(DateTime, default=datetime.utcnow)
+
+
 # Koppeltabel: welke categorieën vallen onder welke wetgeving (m-op-n).
 # Bepaalt welke wetgeving automatisch van toepassing is op een product.
 wetgeving_categorie = Table(
@@ -55,6 +75,9 @@ class Leverancier(Base):
     __tablename__ = "leveranciers"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     naam = Column(String, nullable=False, index=True)
     contactpersoon = Column(String, nullable=True)
     email = Column(String, nullable=True)
@@ -93,6 +116,9 @@ class Product(Base):
     __tablename__ = "producten"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     naam = Column(String, nullable=False, index=True)
     artikelnummer = Column(String, nullable=True, index=True)
     ean = Column(String, nullable=True, index=True)
@@ -132,7 +158,12 @@ class Wetgeving(Base):
     __tablename__ = "wetgeving"
 
     id = Column(Integer, primary_key=True, index=True)
-    code = Column(String, nullable=False, unique=True)  # bv. PPWR, REACH
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
+    # code is per-organisatie (elke org heeft haar eigen wetgevingset), dus niet
+    # langer globaal uniek — meerdere orgs mogen dezelfde code (bv. PPWR) hebben.
+    code = Column(String, nullable=False, index=True)  # bv. PPWR, REACH
     naam = Column(String, nullable=False)
     beschrijving = Column(Text, nullable=True)
     van_kracht_vanaf = Column(Date, nullable=True)
@@ -157,6 +188,9 @@ class ComplianceVeld(Base):
     __tablename__ = "compliance_velden"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     naam = Column(String, nullable=False)
     sleutel = Column(String, nullable=False)  # technische sleutel
     beschrijving = Column(Text, nullable=True)
@@ -182,6 +216,9 @@ class ProductComplianceWaarde(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     product_id = Column(Integer, ForeignKey("producten.id"), nullable=False, index=True)
     compliance_veld_id = Column(
         Integer, ForeignKey("compliance_velden.id"), nullable=False
@@ -204,6 +241,9 @@ class Dataverzoek(Base):
     __tablename__ = "dataverzoeken"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     leverancier_id = Column(
         Integer, ForeignKey("leveranciers.id"), nullable=False, index=True
     )
@@ -230,6 +270,9 @@ class DataverzoekRegel(Base):
     __tablename__ = "dataverzoek_regels"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     dataverzoek_id = Column(Integer, ForeignKey("dataverzoeken.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("producten.id"), nullable=True)
     compliance_veld_id = Column(
@@ -249,6 +292,9 @@ class ProductDocument(Base):
     __tablename__ = "product_documenten"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     product_id = Column(Integer, ForeignKey("producten.id"), nullable=False, index=True)
     documenttype = Column(String, nullable=False)  # veiligheidsblad | ce-certificaat | dop | energielabel | overig
     bestandsnaam = Column(String, nullable=False)  # opgeslagen bestandsnaam (uniek)
@@ -268,6 +314,9 @@ class ExportLog(Base):
     __tablename__ = "export_logs"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     formaat = Column(String, nullable=False)  # csv | xlsx | json
     bestandsnaam = Column(String, nullable=False)
     aantal_producten = Column(Integer, default=0)
@@ -285,6 +334,9 @@ class WebhookAbonnement(Base):
     __tablename__ = "webhook_abonnementen"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     url = Column(String, nullable=False)
     beschrijving = Column(String, nullable=True)
     geheim = Column(String, nullable=True)  # optioneel gedeeld geheim (header)
@@ -298,6 +350,9 @@ class Notificatie(Base):
     __tablename__ = "notificaties"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     titel = Column(String, nullable=False)
     bericht = Column(Text, nullable=True)
     type = Column(String, default="info")  # info | waarschuwing | fout | succes (kleur/ernst)
@@ -326,6 +381,9 @@ class LeverancierActiviteit(Base):
     __tablename__ = "leverancier_activiteiten"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     leverancier_id = Column(
         Integer, ForeignKey("leveranciers.id"), nullable=False, index=True
     )
@@ -349,6 +407,9 @@ class Sequence(Base):
     __tablename__ = "sequences"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     naam = Column(String, nullable=False)
     beschrijving = Column(Text, nullable=True)
     trigger_type = Column(String, default="leverancier")  # leverancier | wetgeving
@@ -373,6 +434,9 @@ class SequenceStap(Base):
     __tablename__ = "sequence_stappen"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     sequence_id = Column(Integer, ForeignKey("sequences.id"), nullable=False, index=True)
     volgorde = Column(Integer, default=0)  # stapnummer (0-gebaseerd)
     wachttijd_dagen = Column(Integer, default=7)  # dagen na de vorige stap/inschrijving
@@ -397,6 +461,9 @@ class SequenceInschrijving(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     sequence_id = Column(Integer, ForeignKey("sequences.id"), nullable=False, index=True)
     leverancier_id = Column(
         Integer, ForeignKey("leveranciers.id"), nullable=False, index=True
@@ -429,6 +496,9 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, index=True)
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     tijdstip = Column(DateTime, default=datetime.utcnow, index=True)
     gebruiker = Column(String, nullable=False, default="Systeem")
     # actie: compliance_gewijzigd | leverancier_gewijzigd | product_toegevoegd |
@@ -449,19 +519,39 @@ class Gebruiker(Base):
     """Applicatiegebruiker voor authenticatie (login).
 
     Wachtwoorden worden NOOIT in platte tekst bewaard: alleen de bcrypt-hash
-    staat in ``wachtwoord_hash``. De rol bepaalt (later) de rechten binnen de
-    app; standaard "user", de geseede beheerder krijgt "admin".
+    staat in ``wachtwoord_hash``. Bij een openstaande uitnodiging is de hash nog
+    leeg (None) tot de gebruiker via de uitnodigingslink een wachtwoord instelt.
+
+    Rollen:
+    - ``superadmin``: platformbeheer, hoort bij GEEN organisatie (ziet alles).
+    - ``owner``: eigenaar van een organisatie (volledige rechten + gebruikersbeheer).
+    - ``admin``: beheerder binnen een organisatie (o.a. gebruikersbeheer).
+    - ``user``: normale gebruiker binnen een organisatie.
     """
 
     __tablename__ = "gebruikers"
 
     id = Column(Integer, primary_key=True, index=True)
+    # Superadmin heeft geen organisatie (NULL); alle andere rollen wél.
+    organisatie_id = Column(
+        Integer, ForeignKey("organisaties.id"), nullable=True, index=True
+    )
     email = Column(String, nullable=False, unique=True, index=True)
-    wachtwoord_hash = Column(String, nullable=False)
+    # Leeg tijdens een openstaande uitnodiging (nog geen wachtwoord ingesteld).
+    wachtwoord_hash = Column(String, nullable=True)
     naam = Column(String, nullable=True)
     bedrijf = Column(String, nullable=True)
-    rol = Column(String, nullable=False, default="user")  # admin | user
+    rol = Column(String, nullable=False, default="user")  # superadmin | owner | admin | user
+    actief = Column(Boolean, default=True)
+    # id van de gebruiker die deze persoon heeft uitgenodigd (None bij seed).
+    uitgenodigd_door = Column(Integer, ForeignKey("gebruikers.id"), nullable=True)
+    laatste_login = Column(DateTime, nullable=True)
+    # Uitnodigingsflow: uniek token + verloopmoment (48 uur na aanmaak).
+    uitnodiging_token = Column(String, nullable=True, index=True)
+    uitnodiging_verloopt = Column(DateTime, nullable=True)
     aangemaakt_op = Column(DateTime, default=datetime.utcnow)
+
+    organisatie = relationship("Organisatie")
 
 
 class AppInstelling(Base):
@@ -476,3 +566,32 @@ class AppInstelling(Base):
     sleutel = Column(String, primary_key=True)
     waarde = Column(String, nullable=True)
     bijgewerkt_op = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ---------------------------------------------------------------------------
+# Tenant-scoping
+# ---------------------------------------------------------------------------
+# Alle modellen met een ``organisatie_id``-kolom. Deze lijst stuurt de
+# automatische tenant-filtering (zie tenant.py): bij elke query worden rijen
+# beperkt tot de organisatie van de ingelogde gebruiker, en bij inserts wordt
+# ``organisatie_id`` automatisch gezet. ``Organisatie`` zelf staat er NIET in
+# (dat ÍS de tenant) en ``Categorie``/``AppInstelling`` zijn bewust globaal.
+TENANT_MODELS = [
+    Leverancier,
+    Product,
+    Wetgeving,
+    ComplianceVeld,
+    ProductComplianceWaarde,
+    Dataverzoek,
+    DataverzoekRegel,
+    ProductDocument,
+    ExportLog,
+    WebhookAbonnement,
+    Notificatie,
+    LeverancierActiviteit,
+    Sequence,
+    SequenceStap,
+    SequenceInschrijving,
+    AuditLog,
+    Gebruiker,
+]

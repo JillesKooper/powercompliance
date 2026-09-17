@@ -5,6 +5,9 @@ import { LanguageProvider, useLanguage } from "./context/language";
 import { ThemeProvider } from "./context/theme";
 import Layout from "./components/Layout.jsx";
 import Login from "./pages/Login.jsx";
+import UitnodigingAccepteren from "./pages/UitnodigingAccepteren.jsx";
+import Gebruikers from "./pages/Gebruikers.jsx";
+import Superadmin from "./pages/Superadmin.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Producten from "./pages/Producten.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
@@ -40,6 +43,17 @@ function LoginRoute() {
   return <Login />;
 }
 
+// Rol-guards: sturen terug naar het dashboard als de rol onvoldoende is.
+function RequireBeheerder({ children }) {
+  const { isBeheerder } = useAuth();
+  return isBeheerder ? children : <Navigate to="/dashboard" replace />;
+}
+
+function RequireSuperadmin({ children }) {
+  const { isSuperadmin } = useAuth();
+  return isSuperadmin ? children : <Navigate to="/dashboard" replace />;
+}
+
 // De volledige (beveiligde) applicatie: notificaties + layout + pagina-routes.
 function BeveiligdeApp() {
   return (
@@ -58,6 +72,22 @@ function BeveiligdeApp() {
           <Route path="/rapportages" element={<Rapportages />} />
           <Route path="/activiteit" element={<Activiteit />} />
           <Route path="/instellingen" element={<Instellingen />} />
+          <Route
+            path="/gebruikers"
+            element={
+              <RequireBeheerder>
+                <Gebruikers />
+              </RequireBeheerder>
+            }
+          />
+          <Route
+            path="/superadmin"
+            element={
+              <RequireSuperadmin>
+                <Superadmin />
+              </RequireSuperadmin>
+            }
+          />
         </Routes>
       </Layout>
     </NotificatiesProvider>
@@ -71,6 +101,10 @@ export default function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginRoute />} />
+            <Route
+              path="/uitnodiging/:token"
+              element={<UitnodigingAccepteren />}
+            />
             <Route
               path="/*"
               element={

@@ -134,6 +134,37 @@ export const api = {
     }),
   me: () => request("/auth/me", { method: "POST" }),
 
+  // ---------- Uitnodigingen (publiek) ----------
+  uitnodigingInfo: (token) =>
+    request(`/auth/uitnodiging/${encodeURIComponent(token)}`),
+  uitnodigingAccepteren: (token, wachtwoord, naam) =>
+    request("/auth/uitnodiging/accepteer", {
+      method: "POST",
+      body: JSON.stringify({ token, wachtwoord, naam: naam || null }),
+    }),
+
+  // ---------- Gebruikersbeheer (owner/admin) ----------
+  gebruikers: () => request("/gebruikers"),
+  nodigGebruikerUit: (data) =>
+    request("/gebruikers/uitnodigen", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  wijzigGebruiker: (id, data) =>
+    request(`/gebruikers/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  verwijderGebruiker: (id) =>
+    request(`/gebruikers/${id}`, { method: "DELETE" }),
+
+  // ---------- Superadmin (platform) ----------
+  organisaties: () => request("/superadmin/organisaties"),
+  maakOrganisatie: (data) =>
+    request("/superadmin/organisaties", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  impersonateOrganisatie: (id) =>
+    request(`/superadmin/organisaties/${id}/impersonate`, { method: "POST" }),
+
   dashboard: () => request("/dashboard"),
   leveranciers: (params = {}) => {
     const qs = new URLSearchParams(

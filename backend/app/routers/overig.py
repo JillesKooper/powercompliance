@@ -12,6 +12,7 @@ from .. import (
     veld_vertaling,
     wetgeving_refresh_service,
     audit_service,
+    tenant,
 )
 from ..database import get_db
 
@@ -380,11 +381,13 @@ def markeer_gelezen(
 
 @router.post("/notificaties/gelezen-alles")
 def markeer_alles_gelezen(db: Session = Depends(get_db)):
-    aantal = (
-        db.query(models.Notificatie)
-        .filter(models.Notificatie.gelezen.is_(False))
-        .update({models.Notificatie.gelezen: True})
-    )
+    # Bulk-update wordt NIET door de tenant-filter (SELECT-only) geraakt, dus hier
+    # expliciet op de eigen organisatie beperken om cross-tenant lekken te voorkomen.
+    q = db.query(models.Notificatie).filter(models.Notificatie.gelezen.is_(False))
+    org = tenant.huidige_org_id()
+    if org is not None:
+        q = q.filter(models.Notificatie.organisatie_id == org)
+    aantal = q.update({models.Notificatie.gelezen: True})
     db.commit()
     return {"gemarkeerd": aantal}
 

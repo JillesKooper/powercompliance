@@ -23,10 +23,15 @@ from .routers import (
     documenten,
     audit,
     auth,
+    gebruikers,
+    superadmin,
 )
-from . import scheduler
+from . import scheduler, models, tenant
 
 Base.metadata.create_all(bind=engine)
+
+# Registreer de multi-tenant events (automatische filtering + insert-defaulting).
+tenant.registreer_events(SessionLocal)
 
 
 def _migreer_notificatie_kolommen():
@@ -126,16 +131,130 @@ def _migreer_leverancier_kolommen():
                 pass
 
 
-def _zorg_admin_gebruiker():
-    """Maak bij het opstarten de standaard admin-gebruiker aan (idempotent).
+# Tenant-tabellen die een ``organisatie_id``-kolom (moeten) hebben.
+_TENANT_TABELLEN = [
+    "leveranciers",
+    "producten",
+    "wetgeving",
+    "compliance_velden",
+    "product_compliance_waarden",
+    "dataverzoeken",
+    "dataverzoek_regels",
+    "product_documenten",
+    "export_logs",
+    "webhook_abonnementen",
+    "notificaties",
+    "leverancier_activiteiten",
+    "sequences",
+    "sequence_stappen",
+    "sequence_inschrijvingen",
+    "audit_logs",
+]
 
-    Zo bestaat er in elke omgeving (ook een verse productie-DB) direct een
-    account om mee in te loggen, zonder dat de volledige seed hoeft te draaien."""
+
+def _migreer_multitenant():
+    """Migreer een bestaande database naar de multi-tenant structuur (idempotent).
+
+    - Voegt ``organisatie_id`` toe aan alle tenant-tabellen die het nog missen.
+    - Voegt de nieuwe gebruikers-kolommen toe (rol/uitnodiging/laatste_login/…).
+    - Maakt de standaard "Demo Organisatie" aan en koppelt alle bestaande data
+      (en bestaande gebruikers) daaraan, zodat niets "org-loos" achterblijft.
+    - Zorgt voor de standaardgebruikers (superadmin + owner).
+
+    Draait bij het opstarten buiten elke request/tenant-context, dus zonder
+    automatische filtering."""
+    from sqlalchemy import inspect, text
     from . import auth_service
 
+    try:
+        insp = inspect(engine)
+        tabellen = set(insp.get_table_names())
+    except Exception:
+        return
+
+    # 1. Ontbrekende kolommen toevoegen (SQLite: ADD COLUMN is niet-blokkerend).
+    with engine.begin() as conn:
+        for tabel in _TENANT_TABELLEN:
+            if tabel not in tabellen:
+                continue
+            cols = {c["name"] for c in insp.get_columns(tabel)}
+            if "organisatie_id" not in cols:
+                try:
+                    conn.execute(
+                        text(f"ALTER TABLE {tabel} ADD COLUMN organisatie_id INTEGER")
+                    )
+                except Exception:
+                    pass
+        if "gebruikers" in tabellen:
+            gcols = {c["name"] for c in insp.get_columns("gebruikers")}
+            nieuw = {
+                "organisatie_id": "INTEGER",
+                "actief": "BOOLEAN",
+                "uitgenodigd_door": "INTEGER",
+                "laatste_login": "DATETIME",
+                "uitnodiging_token": "VARCHAR",
+                "uitnodiging_verloopt": "DATETIME",
+            }
+            for kolom, typ in nieuw.items():
+                if kolom not in gcols:
+                    try:
+                        conn.execute(
+                            text(f"ALTER TABLE gebruikers ADD COLUMN {kolom} {typ}")
+                        )
+                    except Exception:
+                        pass
+
+    # 2. Demo-organisatie + backfill van bestaande rijen.
     db = SessionLocal()
     try:
-        auth_service.zorg_admin_gebruiker(db)
+        demo = (
+            db.query(models.Organisatie)
+            .filter(models.Organisatie.slug == "demo")
+            .first()
+        )
+        if not demo:
+            demo = models.Organisatie(
+                naam="Demo Organisatie", slug="demo", actief=True, max_producten=1000
+            )
+            db.add(demo)
+            db.commit()
+
+        with engine.begin() as conn:
+            for tabel in _TENANT_TABELLEN:
+                if tabel in tabellen:
+                    try:
+                        conn.execute(
+                            text(
+                                f"UPDATE {tabel} SET organisatie_id = :o "
+                                "WHERE organisatie_id IS NULL"
+                            ),
+                            {"o": demo.id},
+                        )
+                    except Exception:
+                        pass
+            # Bestaande gebruikers activeren + aan de demo-org koppelen (behalve de
+            # superadmin), en de oude "admin"-rol promoveren tot org-owner.
+            try:
+                conn.execute(text("UPDATE gebruikers SET actief = 1 WHERE actief IS NULL"))
+                conn.execute(
+                    text(
+                        "UPDATE gebruikers SET organisatie_id = :o "
+                        "WHERE organisatie_id IS NULL "
+                        "AND email <> 'superadmin@powercompliance.nl'"
+                    ),
+                    {"o": demo.id},
+                )
+                conn.execute(
+                    text(
+                        "UPDATE gebruikers SET rol = 'owner' "
+                        "WHERE email = 'admin@powercompliance.nl' AND rol = 'admin'"
+                    )
+                )
+            except Exception:
+                pass
+
+        # 3. Standaardgebruikers borgen (superadmin + owner).
+        auth_service.zorg_standaard_data(db)
     except Exception:
         pass
     finally:
@@ -146,7 +265,7 @@ _migreer_notificatie_kolommen()
 _migreer_wetgeving_kolommen()
 _migreer_dataverzoek_kolommen()
 _migreer_leverancier_kolommen()
-_zorg_admin_gebruiker()
+_migreer_multitenant()
 
 app = FastAPI(
     title="PowerCompliance API",
@@ -158,39 +277,76 @@ app = FastAPI(
 # de health-check. OPTIONS-verzoeken (CORS-preflight) en de API-docs blijven ook
 # vrij toegankelijk.
 PUBLIEKE_PADEN = {"/api/auth/login", "/api/seed", "/api/health"}
-PUBLIEKE_PREFIXEN = ("/docs", "/redoc", "/openapi.json")
+# Prefix-gebaseerde publieke paden: de API-docs en de uitnodigingsflow (het
+# valideren/accepteren van een uitnodiging gebeurt vóór het inloggen).
+PUBLIEKE_PREFIXEN = (
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+    "/api/auth/uitnodiging",
+)
 
 
-@app.middleware("http")
-async def vereis_authenticatie(request: Request, call_next):
-    """Beveilig alle /api-endpoints: zonder geldig JWT-token → 401.
+class TenantMiddleware:
+    """Beveiligt /api-endpoints én zet per request de tenant-context.
 
-    Uitzonderingen: de publieke paden hierboven en CORS-preflight (OPTIONS).
-    Deze middleware wordt vóór de CORS-middleware geregistreerd, zodat CORS de
-    buitenste laag blijft en ook 401-antwoorden de juiste CORS-headers krijgen."""
-    pad = request.url.path
-    vrij = (
-        request.method == "OPTIONS"
-        or pad in PUBLIEKE_PADEN
-        or not pad.startswith("/api")
-        or any(pad.startswith(p) for p in PUBLIEKE_PREFIXEN)
-    )
-    if not vrij:
+    Dit is een *pure ASGI*-middleware (geen BaseHTTPMiddleware): zo draait de
+    downstream-app in dezelfde context, waardoor de ``ContextVar`` met de
+    organisatie betrouwbaar doorwerkt tot in de (sync) endpoints — ook die in de
+    threadpool. Zonder geldig token op een beveiligd pad → 401.
+
+    Wordt vóór de CORS-middleware geregistreerd zodat CORS de buitenste laag
+    blijft en ook 401-antwoorden de juiste CORS-headers krijgen."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        from starlette.requests import Request
         from . import auth_service
 
-        auth_header = request.headers.get("Authorization", "")
-        token = (
-            auth_header[7:].strip()
-            if auth_header.lower().startswith("bearer ")
-            else None
+        request = Request(scope)
+        pad = scope.get("path", "")
+        method = scope.get("method", "GET")
+        vrij = (
+            method == "OPTIONS"
+            or pad in PUBLIEKE_PADEN
+            or not pad.startswith("/api")
+            or any(pad.startswith(p) for p in PUBLIEKE_PREFIXEN)
         )
-        if not token or not auth_service.decodeer_token(token):
-            return JSONResponse(
+
+        payload = None
+        auth_header = request.headers.get("authorization", "")
+        if auth_header.lower().startswith("bearer "):
+            payload = auth_service.decodeer_token(auth_header[7:].strip())
+
+        if not vrij and not payload:
+            resp = JSONResponse(
                 status_code=401,
                 content={"detail": "Niet geautoriseerd"},
                 headers={"WWW-Authenticate": "Bearer"},
             )
-    return await call_next(request)
+            await resp(scope, receive, send)
+            return
+
+        org_id = None
+        is_super = False
+        if payload:
+            is_super = payload.get("rol") == "superadmin"
+            org_id = payload.get("organisatie_id")
+
+        tokens = tenant.zet_context(org_id, is_super)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            tenant.reset_context(tokens)
+
+
+app.add_middleware(TenantMiddleware)
 
 
 # Lokale dev-origins plus optioneel de gedeployde frontend via FRONTEND_URL.
@@ -214,6 +370,8 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(gebruikers.router)
+app.include_router(superadmin.router)
 app.include_router(leveranciers.router)
 app.include_router(producten.router)
 app.include_router(overig.router)

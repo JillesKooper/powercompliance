@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { api } from "../api";
 import { useTaal } from "../context/taal";
+import { useAuth } from "../context/auth";
 import { wetgevingCode, wetgevingNaam, categorieNaam } from "../i18n/dataVertaling";
 import { Card, Badge, Button, Loading, ProgressBar } from "../components/ui";
 import DataverzoekModal from "../components/DataverzoekModal";
@@ -184,6 +185,7 @@ function WetgevingRefreshKaart() {
 export default function Instellingen() {
   const location = useLocation();
   const { t, taal } = useTaal();
+  const { isBeheerder } = useAuth();
   const [categorieen, setCategorieen] = useState([]);
   const [dataverzoeken, setDataverzoeken] = useState(null);
   const [gekozenVerzoek, setGekozenVerzoek] = useState(null);
@@ -223,6 +225,19 @@ export default function Instellingen() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {isBeheerder && (
+        <Card className="p-6">
+          <h2 className="font-semibold text-ink mb-1">{t("gebruikers.titel")}</h2>
+          <p className="text-sm text-muted mb-4">{t("gebruikers.omschrijving")}</p>
+          <Link
+            to="/gebruikers"
+            className="inline-flex items-center gap-2 rounded-md bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 text-sm font-medium transition-colors"
+          >
+            👥 {t("gebruikers.titel")} →
+          </Link>
+        </Card>
+      )}
+
       <TaalKaart />
 
       <Card className="p-6">

@@ -13,7 +13,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 
 from .database import Base, SessionLocal, engine
-from . import models, compliance_service, notificatie_teksten, auth_service
+from . import models, compliance_service, notificatie_teksten, auth_service, tenant
 
 
 def reset_db():
@@ -712,8 +712,23 @@ def _voorbeeld_waarde(veld: "models.ComplianceVeld", product: "models.Product") 
 
 def seed():
     reset_db()
+    # Zorg dat de tenant-events actief zijn, ook als de seed los van app.main
+    # wordt gedraaid (python -m app.seed). Idempotent.
+    tenant.registreer_events(SessionLocal)
     db = SessionLocal()
+    tokens = None
     try:
+        # Standaard-organisatie (tenant). Alle hierna geseede tenant-data wordt
+        # via de tenant-context automatisch aan deze organisatie gekoppeld
+        # (before_insert zet organisatie_id), zodat de bestaande seed-code
+        # ongewijzigd kan blijven. Categorieën blijven bewust globaal.
+        demo = models.Organisatie(
+            naam="Demo Organisatie", slug="demo", actief=True, max_producten=1000
+        )
+        db.add(demo)
+        db.flush()
+        tokens = tenant.zet_context(demo.id)
+
         # categorieën
         cat_map = {}
         for naam, beschrijving in CATEGORIEEN:
@@ -979,8 +994,11 @@ def seed():
 
         db.commit()
 
-        # Standaard admin-gebruiker (reset_db heeft de gebruikers-tabel geleegd).
-        auth_service.zorg_admin_gebruiker(db)
+        # Gebruikers buiten de tenant-context aanmaken: de superadmin hoort bij
+        # GEEN organisatie, dus de auto-scoping mag hier niet gelden.
+        tenant.reset_context(tokens)
+        tokens = None
+        auth_service.zorg_standaard_data(db)
 
         actief = [c for c, w in wet_map.items() if w.actief]
         inactief = [c for c, w in wet_map.items() if not w.actief]
@@ -995,7 +1013,10 @@ def seed():
               f"incompleet: {telling['incompleet']})")
         print(f"  + 'Koper Handel Jilles': {len(koper_prod_objs)} elektronicaproducten "
               f"met elk 3–5 ontbrekende velden over PPWR/Batterij/REACH/GPSR/ErP")
+        print("  + organisatie 'Demo Organisatie' (slug: demo) + superadmin/owner")
     finally:
+        if tokens is not None:
+            tenant.reset_context(tokens)
         db.close()
 
 

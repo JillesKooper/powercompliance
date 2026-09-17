@@ -788,8 +788,76 @@ class GebruikerOut(BaseModel):
     naam: Optional[str] = None
     bedrijf: Optional[str] = None
     rol: str
+    organisatie_id: Optional[int] = None
+    actief: bool = True
+    laatste_login: Optional[datetime] = None
+    aangemaakt_op: Optional[datetime] = None
+    # Afgeleid: True zolang de uitnodiging nog niet is geaccepteerd.
+    uitnodiging_openstaand: bool = False
 
 
 class LoginResultaat(BaseModel):
     token: str
     gebruiker: GebruikerOut
+
+
+# ---------- Organisaties (tenants) ----------
+class OrganisatieOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    naam: str
+    slug: str
+    domein: Optional[str] = None
+    logo_url: Optional[str] = None
+    actief: bool = True
+    max_producten: int = 1000
+    aangemaakt_op: datetime
+
+
+class OrganisatieMetTellingen(OrganisatieOut):
+    aantal_gebruikers: int = 0
+    aantal_producten: int = 0
+
+
+class OrganisatieCreate(BaseModel):
+    naam: str
+    slug: Optional[str] = None  # leeg = automatisch afgeleid van de naam
+    domein: Optional[str] = None
+    max_producten: int = 1000
+
+
+# ---------- Gebruikersbeheer + uitnodigingen ----------
+class UitnodigingRequest(BaseModel):
+    email: str
+    naam: Optional[str] = None
+    rol: str = "user"  # user | admin | owner
+
+
+class UitnodigingResultaat(BaseModel):
+    gebruiker: GebruikerOut
+    uitnodiging_link: str
+    mail_verzonden: bool
+    mail_info: Optional[str] = None
+
+
+class GebruikerUpdate(BaseModel):
+    rol: Optional[str] = None
+    actief: Optional[bool] = None
+
+
+class UitnodigingInfo(BaseModel):
+    email: str
+    naam: Optional[str] = None
+    organisatie_naam: Optional[str] = None
+    geldig: bool
+
+
+class UitnodigingAccepteer(BaseModel):
+    token: str
+    wachtwoord: str
+    naam: Optional[str] = None
+
+
+class ImpersonatieResultaat(BaseModel):
+    token: str
+    organisatie: OrganisatieOut

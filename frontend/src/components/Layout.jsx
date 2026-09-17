@@ -21,13 +21,30 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
   const { ongelezen } = useNotificaties();
   const { t } = useLanguage();
-  const { gebruiker, logout } = useAuth();
+  const { gebruiker, logout, isBeheerder, isSuperadmin, impersonatie, stopImpersonatie } =
+    useAuth();
+
+  // Rol-afhankelijke navigatie: gebruikersbeheer voor beheerders, superadmin-
+  // dashboard alleen voor de superadmin (tenzij die een organisatie impersoneert).
+  const navItems = [...NAV];
+  if (isBeheerder) {
+    navItems.push({ to: "/gebruikers", labelKey: "nav.gebruikers", icon: "👥" });
+  }
+  if (isSuperadmin && !impersonatie) {
+    navItems.push({ to: "/superadmin", labelKey: "nav.superadmin", icon: "🛡️" });
+  }
 
   function handleLogout() {
     logout();
     navigate("/login", { replace: true });
   }
-  const huidig = NAV.find((n) =>
+
+  async function handleStopImpersonatie() {
+    await stopImpersonatie();
+    navigate("/superadmin", { replace: true });
+  }
+
+  const huidig = navItems.find((n) =>
     n.end ? location.pathname === n.to : location.pathname.startsWith(n.to)
   );
 
@@ -58,6 +75,22 @@ export default function Layout({ children }) {
         </div>
       </header>
 
+      {/* Impersonatie-banner: superadmin werkt tijdelijk in een organisatie. */}
+      {impersonatie && (
+        <div className="shrink-0 bg-amber-500/15 border-b border-amber-500/30 px-5 py-2 flex items-center gap-3 text-sm">
+          <span className="text-warning-text">
+            🛡️ {t("impersonatie.banner", { org: impersonatie.naam })}
+          </span>
+          <button
+            type="button"
+            onClick={handleStopImpersonatie}
+            className="ml-auto rounded-md border border-amber-500/40 px-3 py-1 text-xs font-medium text-warning-text hover:bg-amber-500/20 transition-colors"
+          >
+            {t("impersonatie.stop")}
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <aside className="w-[210px] shrink-0 bg-sidebar border-r border-line flex flex-col">
@@ -70,7 +103,7 @@ export default function Layout({ children }) {
             </div>
           </div>
           <nav className="flex-1 px-2 space-y-0.5">
-            {NAV.map((item) => (
+            {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
