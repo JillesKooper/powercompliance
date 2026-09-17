@@ -445,6 +445,25 @@ class AuditLog(Base):
     product_id = Column(Integer, nullable=True, index=True)
 
 
+class Gebruiker(Base):
+    """Applicatiegebruiker voor authenticatie (login).
+
+    Wachtwoorden worden NOOIT in platte tekst bewaard: alleen de bcrypt-hash
+    staat in ``wachtwoord_hash``. De rol bepaalt (later) de rechten binnen de
+    app; standaard "user", de geseede beheerder krijgt "admin".
+    """
+
+    __tablename__ = "gebruikers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, nullable=False, unique=True, index=True)
+    wachtwoord_hash = Column(String, nullable=False)
+    naam = Column(String, nullable=True)
+    bedrijf = Column(String, nullable=True)
+    rol = Column(String, nullable=False, default="user")  # admin | user
+    aangemaakt_op = Column(DateTime, default=datetime.utcnow)
+
+
 class AppInstelling(Base):
     """Eenvoudige sleutel/waarde-opslag voor app-instellingen.
 

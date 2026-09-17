@@ -61,6 +61,20 @@ export default {
       geenResultaten: "Geen resultaten.",
       optioneel: "optioneel",
     },
+    auth: {
+      titel: "Inloggen op je account",
+      email: "E-mailadres",
+      emailPlaceholder: "jij@bedrijf.nl",
+      wachtwoord: "Wachtwoord",
+      wachtwoordPlaceholder: "••••••••",
+      login: "Inloggen",
+      bezig: "Bezig met inloggen…",
+      wachtwoordVergeten: "Wachtwoord vergeten?",
+      fout: "Onjuist e-mailadres of wachtwoord",
+      uitloggen: "Uitloggen",
+      wachtwoordVergetenMelding:
+        "Neem contact op met je beheerder om je wachtwoord opnieuw in te stellen.",
+    },
   },
   en: {
     app: {
@@ -121,6 +135,20 @@ export default {
       resultaten: "{van}–{tot} of {totaal} results",
       geenResultaten: "No results.",
       optioneel: "optional",
+    },
+    auth: {
+      titel: "Sign in to your account",
+      email: "Email address",
+      emailPlaceholder: "you@company.com",
+      wachtwoord: "Password",
+      wachtwoordPlaceholder: "••••••••",
+      login: "Login",
+      bezig: "Signing in…",
+      wachtwoordVergeten: "Forgot password?",
+      fout: "Incorrect email or password",
+      uitloggen: "Log out",
+      wachtwoordVergetenMelding:
+        "Contact your administrator to reset your password.",
     },
   },
 };

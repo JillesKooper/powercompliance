@@ -3,11 +3,50 @@
 // "https://powercompliance-production.up.railway.app/api").
 const BASE = import.meta.env.VITE_API_URL || "/api";
 
+// ---------- JWT-token: opslag in localStorage ----------
+const TOKEN_SLEUTEL = "powercompliance.token";
+
+export function getToken() {
+  try {
+    return localStorage.getItem(TOKEN_SLEUTEL);
+  } catch (_) {
+    return null;
+  }
+}
+
+export function setToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_SLEUTEL, token);
+    else localStorage.removeItem(TOKEN_SLEUTEL);
+  } catch (_) {}
+}
+
+export function clearToken() {
+  setToken(null);
+}
+
+// Voeg de Authorization-header toe als er een token is.
+function authHeaders(extra = {}) {
+  const token = getToken();
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+}
+
+// Centrale 401-afhandeling: token weggooien en (indien we ingelogd wáren) naar
+// het inlogscherm sturen. Op de loginpagina zelf niet doorsturen.
+function behandel401(hadToken) {
+  clearToken();
+  if (hadToken && !window.location.hash.startsWith("#/login")) {
+    window.location.hash = "#/login";
+  }
+}
+
 async function request(path, options = {}) {
+  const hadToken = !!getToken();
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
     ...options,
+    headers: authHeaders({ "Content-Type": "application/json", ...options.headers }),
   });
+  if (res.status === 401) behandel401(hadToken);
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -23,7 +62,12 @@ async function upload(path, file) {
   const fd = new FormData();
   fd.append("file", file);
   // geen Content-Type zetten: de browser bepaalt de multipart-boundary zelf
-  const res = await fetch(`${BASE}${path}`, { method: "POST", body: fd });
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    body: fd,
+    headers: authHeaders(),
+  });
+  if (res.status === 401) behandel401(!!getToken());
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -35,7 +79,12 @@ async function upload(path, file) {
 }
 
 async function uploadForm(path, formData) {
-  const res = await fetch(`${BASE}${path}`, { method: "POST", body: formData });
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    body: formData,
+    headers: authHeaders(),
+  });
+  if (res.status === 401) behandel401(!!getToken());
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -48,7 +97,11 @@ async function uploadForm(path, formData) {
 
 // Haal een bestand op (blob) en bied het als download aan in de browser.
 async function download(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, options);
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers: authHeaders(options.headers || {}),
+  });
+  if (res.status === 401) behandel401(!!getToken());
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -73,6 +126,14 @@ async function download(path, options = {}) {
 }
 
 export const api = {
+  // ---------- Authenticatie ----------
+  login: (email, wachtwoord) =>
+    request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, wachtwoord }),
+    }),
+  me: () => request("/auth/me", { method: "POST" }),
+
   dashboard: () => request("/dashboard"),
   leveranciers: (params = {}) => {
     const qs = new URLSearchParams(

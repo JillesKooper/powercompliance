@@ -13,7 +13,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 
 from .database import Base, SessionLocal, engine
-from . import models, compliance_service, notificatie_teksten
+from . import models, compliance_service, notificatie_teksten, auth_service
 
 
 def reset_db():
@@ -978,6 +978,10 @@ def seed():
         )
 
         db.commit()
+
+        # Standaard admin-gebruiker (reset_db heeft de gebruikers-tabel geleegd).
+        auth_service.zorg_admin_gebruiker(db)
+
         actief = [c for c, w in wet_map.items() if w.actief]
         inactief = [c for c, w in wet_map.items() if not w.actief]
         print("Seed voltooid:")

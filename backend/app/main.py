@@ -1,13 +1,14 @@
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Laad .env (o.a. ANTHROPIC_API_KEY) voordat routers/modules worden geïmporteerd.
 load_dotenv()
 
-from .database import Base, engine
+from .database import Base, engine, SessionLocal
 from .routers import (
     leveranciers,
     producten,
@@ -21,6 +22,7 @@ from .routers import (
     rapportages,
     documenten,
     audit,
+    auth,
 )
 from . import scheduler
 
@@ -124,16 +126,72 @@ def _migreer_leverancier_kolommen():
                 pass
 
 
+def _zorg_admin_gebruiker():
+    """Maak bij het opstarten de standaard admin-gebruiker aan (idempotent).
+
+    Zo bestaat er in elke omgeving (ook een verse productie-DB) direct een
+    account om mee in te loggen, zonder dat de volledige seed hoeft te draaien."""
+    from . import auth_service
+
+    db = SessionLocal()
+    try:
+        auth_service.zorg_admin_gebruiker(db)
+    except Exception:
+        pass
+    finally:
+        db.close()
+
+
 _migreer_notificatie_kolommen()
 _migreer_wetgeving_kolommen()
 _migreer_dataverzoek_kolommen()
 _migreer_leverancier_kolommen()
+_zorg_admin_gebruiker()
 
 app = FastAPI(
     title="PowerCompliance API",
     description="Compliance management platform voor groothandels.",
     version="0.1.0",
 )
+
+# Paden die zonder JWT-token bereikbaar blijven: inloggen, de seed-endpoint en
+# de health-check. OPTIONS-verzoeken (CORS-preflight) en de API-docs blijven ook
+# vrij toegankelijk.
+PUBLIEKE_PADEN = {"/api/auth/login", "/api/seed", "/api/health"}
+PUBLIEKE_PREFIXEN = ("/docs", "/redoc", "/openapi.json")
+
+
+@app.middleware("http")
+async def vereis_authenticatie(request: Request, call_next):
+    """Beveilig alle /api-endpoints: zonder geldig JWT-token → 401.
+
+    Uitzonderingen: de publieke paden hierboven en CORS-preflight (OPTIONS).
+    Deze middleware wordt vóór de CORS-middleware geregistreerd, zodat CORS de
+    buitenste laag blijft en ook 401-antwoorden de juiste CORS-headers krijgen."""
+    pad = request.url.path
+    vrij = (
+        request.method == "OPTIONS"
+        or pad in PUBLIEKE_PADEN
+        or not pad.startswith("/api")
+        or any(pad.startswith(p) for p in PUBLIEKE_PREFIXEN)
+    )
+    if not vrij:
+        from . import auth_service
+
+        auth_header = request.headers.get("Authorization", "")
+        token = (
+            auth_header[7:].strip()
+            if auth_header.lower().startswith("bearer ")
+            else None
+        )
+        if not token or not auth_service.decodeer_token(token):
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Niet geautoriseerd"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    return await call_next(request)
+
 
 # Lokale dev-origins plus optioneel de gedeployde frontend via FRONTEND_URL.
 # FRONTEND_URL mag een komma-gescheiden lijst zijn (meerdere domeinen).
@@ -155,6 +213,7 @@ app.add_middleware(
     expose_headers=["Content-Disposition", "X-Export-Aantal"],
 )
 
+app.include_router(auth.router)
 app.include_router(leveranciers.router)
 app.include_router(producten.router)
 app.include_router(overig.router)

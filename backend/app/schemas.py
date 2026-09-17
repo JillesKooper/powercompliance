@@ -773,3 +773,23 @@ class SequenceMailResultaat(BaseModel):
     ai_gebruikt: bool = False
     ai_fout: Optional[str] = None
     placeholders: List[str] = []  # beschikbare placeholders voor eigen tekst
+
+
+# ---------- Authenticatie ----------
+class LoginRequest(BaseModel):
+    email: str
+    wachtwoord: str
+
+
+class GebruikerOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    email: str
+    naam: Optional[str] = None
+    bedrijf: Optional[str] = None
+    rol: str
+
+
+class LoginResultaat(BaseModel):
+    token: str
+    gebruiker: GebruikerOut
