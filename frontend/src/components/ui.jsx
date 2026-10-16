@@ -5,12 +5,18 @@ export function Card({ children, className = "", onClick, ...rest }) {
   return (
     <div
       onClick={onClick}
-      className={`bg-surface rounded-lg border border-line shadow-card ${className}`}
+      className={`bg-surface rounded-xl border border-line shadow-card ${className}`}
       {...rest}
     >
       {children}
     </div>
   );
+}
+
+// Kleine blauwe uppercase sectiekop (PowerSuite-stijl), bijv. boven een groep
+// velden of een kaart-sectie.
+export function SectionLabel({ children, className = "" }) {
+  return <div className={`section-label ${className}`}>{children}</div>;
 }
 
 export function StatCard({ label, value, sub, accent = "brand", onClick }) {
@@ -162,15 +168,59 @@ export function Paginatie({ pagina, onPagina }) {
   );
 }
 
+// Hero-banner bovenaan een pagina: lichtblauw verloop met decoratieve
+// zwevende vormen, grote bold titel + grijze subtitel links en een vrije
+// actiezone (knoppen, avatar) rechts.
+export function PageHero({ title, subtitle, right }) {
+  return (
+    <div className="page-hero relative overflow-hidden rounded-2xl border border-line/60 px-6 py-6 md:px-8 md:py-7 mb-6">
+      <HeroShapes />
+      <div className="relative flex items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-[28px] md:text-[32px] leading-tight font-extrabold tracking-tight text-ink">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="mt-1.5 text-sm text-muted max-w-2xl">{subtitle}</p>
+          )}
+        </div>
+        {right && (
+          <div className="relative shrink-0 flex items-center gap-2">{right}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Decoratieve geometrische vormen (afgeronde rechthoeken/vierkanten) die los
+// over de hero-banner zweven. Puur visueel; aria-hidden.
+function HeroShapes() {
+  const shapes = [
+    "absolute top-4 right-[18%] h-10 w-10 rounded-lg rotate-12 bg-[rgb(var(--hero-shape-blue))]/10",
+    "absolute -top-3 right-[6%] h-16 w-16 rounded-xl -rotate-6 bg-[rgb(var(--hero-shape-blue))]/[0.07]",
+    "absolute bottom-3 right-[30%] h-7 w-7 rounded-md rotate-45 bg-[rgb(var(--hero-shape-gray))]/10",
+    "absolute top-1/2 right-[12%] h-5 w-14 rounded-md -rotate-12 bg-[rgb(var(--hero-shape-blue))]/[0.08]",
+    "absolute bottom-2 right-[2%] h-9 w-9 rounded-lg rotate-6 bg-[rgb(var(--hero-shape-gray))]/[0.08]",
+    "absolute -bottom-4 left-[42%] h-12 w-12 rounded-xl rotate-12 bg-[rgb(var(--hero-shape-blue))]/[0.06]",
+  ];
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+      {shapes.map((c, i) => (
+        <span key={i} className={c} />
+      ))}
+    </div>
+  );
+}
+
 export function Button({ children, variant = "primary", ...props }) {
   const variants = {
-    primary: "bg-brand-600 hover:bg-brand-700 text-white",
+    primary: "bg-brand-500 hover:bg-brand-600 text-white",
     ghost: "bg-surface hover:bg-hover text-ink border border-line",
     danger: "bg-red-600 hover:bg-red-700 text-white",
   };
   return (
     <button
-      className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${variants[variant]}`}
+      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${variants[variant]}`}
       {...props}
     >
       {children}

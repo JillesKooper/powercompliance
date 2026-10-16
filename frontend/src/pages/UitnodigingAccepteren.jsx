@@ -63,35 +63,35 @@ export default function UitnodigingAccepteren() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: "#f5f5f0" }}
+      style={{ backgroundColor: "#f0f2f5" }}
     >
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <BrandLogo />
-          <div className="mt-4 text-2xl text-[#1a1a1a] tracking-tight">
+          <div className="mt-4 text-2xl text-[#1a2333] tracking-tight">
             Power<span className="font-bold">Compliance</span>
           </div>
-          <p className="mt-1.5 text-sm text-[#666]">{t("uitnodiging.titel")}</p>
+          <p className="mt-1.5 text-sm text-[#6b7280]">{t("uitnodiging.titel")}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#e5e5e0] shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-7">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-[0_1px_4px_rgba(0,0,0,0.08)] p-7">
           {ladenInfo ? (
-            <p className="text-sm text-[#666] text-center">…</p>
+            <p className="text-sm text-[#6b7280] text-center">…</p>
           ) : !info?.geldig ? (
             <div className="text-center space-y-4">
               <p className="text-sm text-red-700">{t("uitnodiging.ongeldig")}</p>
-              <Link to="/login" className="text-sm text-[#2563eb] hover:underline">
+              <Link to="/login" className="text-sm text-[#1a6ef0] hover:underline">
                 {t("uitnodiging.naarLogin")}
               </Link>
             </div>
           ) : (
             <form onSubmit={verstuur} className="space-y-5">
-              <p className="text-sm text-[#444]">
+              <p className="text-sm text-[#4b5563]">
                 {info.organisatie_naam
                   ? t("uitnodiging.welkom", { org: info.organisatie_naam })
                   : t("uitnodiging.welkomAlgemeen")}
                 {info.email ? (
-                  <span className="block mt-1 font-medium text-[#1a1a1a]">
+                  <span className="block mt-1 font-medium text-[#1a2333]">
                     {info.email}
                   </span>
                 ) : null}
@@ -130,7 +130,7 @@ export default function UitnodigingAccepteren() {
               <button
                 type="submit"
                 disabled={bezig}
-                className="w-full rounded-md bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-semibold py-2.5 transition-colors disabled:opacity-60"
+                className="w-full rounded-md bg-[#1a6ef0] hover:bg-[#1560d6] text-white text-sm font-semibold py-2.5 transition-colors disabled:opacity-60"
               >
                 {bezig ? t("uitnodiging.bezig") : t("uitnodiging.activeren")}
               </button>
@@ -145,14 +145,14 @@ export default function UitnodigingAccepteren() {
 function Veld({ label, value, onChange, type, autoComplete, required }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-[#333] mb-1.5">{label}</span>
+      <span className="block text-sm font-medium text-[#1a2333] mb-1.5">{label}</span>
       <input
         type={type}
         autoComplete={autoComplete}
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-[#ddd] bg-white px-3 py-2.5 text-sm text-[#1a1a1a] placeholder:text-[#aaa] focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20"
+        className="w-full rounded-md border border-[#e2e8f0] bg-[#f9fafb] px-3 py-2.5 text-sm text-[#1a2333] placeholder:text-[#9ca3af] focus:outline-none focus:border-[#1a6ef0] focus:ring-2 focus:ring-[#1a6ef0]/20"
       />
     </label>
   );
@@ -160,7 +160,7 @@ function Veld({ label, value, onChange, type, autoComplete, required }) {
 
 function BrandLogo() {
   return (
-    <span className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#1d4ed8] grid place-items-center shadow-md">
+    <span className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1a6ef0] to-[#1560d6] grid place-items-center shadow-md">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
           d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"

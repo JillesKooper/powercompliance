@@ -20,13 +20,15 @@ export default {
         // (zie index.css) zodat ze in één keer omklappen tussen licht en
         // donker. De rgb(var(--x) / <alpha-value>)-vorm houdt opacity-
         // utilities zoals text-muted/70 werkend.
-        ink: "rgb(var(--kleur-ink) / <alpha-value>)", // primaire tekst
-        muted: "rgb(var(--kleur-muted) / <alpha-value>)", // secundaire tekst
+        ink: "rgb(var(--kleur-ink) / <alpha-value>)", // primaire tekst (#1a2333)
+        body: "rgb(var(--kleur-body) / <alpha-value>)", // bodytekst (#4b5563)
+        muted: "rgb(var(--kleur-muted) / <alpha-value>)", // secundaire tekst (#6b7280)
         faint: "rgb(var(--kleur-faint) / <alpha-value>)", // tertiaire tekst
-        line: "rgb(var(--kleur-line) / <alpha-value>)", // borders
-        canvas: "rgb(var(--kleur-canvas) / <alpha-value>)", // hoofd-achtergrond
-        surface: "rgb(var(--kleur-surface) / <alpha-value>)", // kaarten/panelen
+        line: "rgb(var(--kleur-line) / <alpha-value>)", // borders (#e2e8f0)
+        canvas: "rgb(var(--kleur-canvas) / <alpha-value>)", // hoofd-achtergrond (#f0f2f5)
+        surface: "rgb(var(--kleur-surface) / <alpha-value>)", // kaarten/panelen (wit)
         sidebar: "rgb(var(--kleur-sidebar) / <alpha-value>)", // zijbalk
+        inputbg: "rgb(var(--kleur-input) / <alpha-value>)", // invoervelden (#f9fafb)
         hover: "rgb(var(--kleur-hover) / <alpha-value>)", // hover states
         // Merk-tekst voor links/accenten (flipt naar brand-300 in donkere modus)
         brandtext: "rgb(var(--kleur-brand-text) / <alpha-value>)",
@@ -66,7 +68,7 @@ export default {
         ],
       },
       boxShadow: {
-        card: "0 1px 2px 0 rgba(0, 0, 0, 0.04), 0 1px 3px 0 rgba(0, 0, 0, 0.06)",
+        card: "0 1px 4px rgba(0, 0, 0, 0.08)",
       },
       keyframes: {
         fadeIn: {

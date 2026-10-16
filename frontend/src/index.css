@@ -6,18 +6,25 @@
 
 /* Huisstijl-tokens als RGB-kanalen (spatie-gescheiden), zodat Tailwind ze
    met opacity kan combineren via rgb(var(--x) / <alpha-value>). Lichte modus
-   volgt de PowerSuite-stijl: lichtgrijze canvas, witte kaarten, en een
-   donkere icoon-zijbalk (die in beide modi donker blijft). */
+   volgt de PowerScrape.ai/PowerSuite-stijl: lichtblauwgrijze canvas, witte
+   kaarten, lichte zijbalk en lichtblauwe hero-banners. */
 :root {
-  --kleur-canvas: 245 244 242; /* hoofd-achtergrond (#f5f4f2) */
+  --kleur-canvas: 240 242 245; /* hoofd-achtergrond (#f0f2f5) */
   --kleur-surface: 255 255 255; /* kaarten/panelen (wit) */
-  --kleur-sidebar: 26 26 26; /* donkere icoon-zijbalk (#1a1a1a) */
-  --kleur-ink: 26 26 26; /* primaire tekst (#1a1a1a) */
-  --kleur-muted: 107 107 107; /* secundaire tekst (#6b6b6b) */
-  --kleur-faint: 156 156 156; /* tertiaire tekst (#9c9c9c) */
-  --kleur-line: 230 229 226; /* borders (#e6e5e2) */
-  --kleur-hover: 239 238 235; /* hover states (#efeeeb) */
-  --kleur-zebra: 249 249 247; /* even tabelrijen (zebra) */
+  --kleur-sidebar: 255 255 255; /* lichte zijbalk (wit) */
+  --kleur-input: 249 250 251; /* invoervelden (#f9fafb) */
+  --kleur-ink: 26 35 51; /* primaire tekst (#1a2333) */
+  --kleur-body: 75 85 99; /* bodytekst (#4b5563) */
+  --kleur-muted: 107 114 128; /* secundaire tekst (#6b7280) */
+  --kleur-faint: 156 163 175; /* tertiaire tekst (#9ca3af) */
+  --kleur-line: 226 232 240; /* borders (#e2e8f0) */
+  --kleur-hover: 243 244 246; /* hover states (#f3f4f6) */
+
+  /* Hero-banner: lichtblauw verloop met decoratieve vormen. */
+  --hero-from: 232 240 254; /* #e8f0fe */
+  --hero-to: 240 244 255; /* #f0f4ff */
+  --hero-shape-blue: 26 110 240; /* brand #1a6ef0 */
+  --hero-shape-gray: 148 163 184; /* slate-400 */
 
   /* Merk-tekst (links, accenten). Los van de brand-fill zodat tekst in beide
      modi ≥ 4.5:1 haalt: brand-700 op wit, brand-300 op donker. */
@@ -40,18 +47,25 @@
   --status-danger-text: 185 28 28; /* red-700 */
 }
 
-/* Donkere modus (neutrale #121212-familie): donkere achtergrond, lichte tekst,
-   iets lichtere kaarten voor diepte. De zijbalk blijft donker (als in licht). */
+/* Donkere modus (donkere slate-blauw-familie): donkere achtergrond, lichte
+   tekst, iets lichtere kaarten voor diepte. De zijbalk klapt mee naar donker. */
 .dark {
-  --kleur-canvas: 18 18 18; /* #121212 */
-  --kleur-surface: 30 30 30; /* #1e1e1e */
-  --kleur-sidebar: 20 20 20; /* #141414 */
-  --kleur-ink: 237 237 237; /* #ededed */
-  --kleur-muted: 160 160 160; /* #a0a0a0 */
-  --kleur-faint: 115 115 115; /* #737373 */
-  --kleur-line: 42 42 42; /* #2a2a2a */
-  --kleur-hover: 38 38 38; /* #262626 */
-  --kleur-zebra: 36 36 36; /* iets lichter dan surface voor zebra */
+  --kleur-canvas: 15 18 25; /* #0f1219 */
+  --kleur-surface: 26 30 40; /* #1a1e28 */
+  --kleur-sidebar: 21 25 34; /* #151922 */
+  --kleur-input: 30 35 46; /* #1e232e */
+  --kleur-ink: 237 239 243; /* #edeff3 */
+  --kleur-body: 170 178 192; /* #aab2c0 */
+  --kleur-muted: 148 156 170; /* #949caa */
+  --kleur-faint: 110 118 132; /* #6e7684 */
+  --kleur-line: 42 48 60; /* #2a303c */
+  --kleur-hover: 34 40 52; /* #222834 */
+
+  /* Hero-banner in donkere modus: diep blauw verloop. */
+  --hero-from: 26 35 58; /* #1a233a */
+  --hero-to: 20 26 44; /* #141a2c */
+  --hero-shape-blue: 59 130 246; /* blue-500 */
+  --hero-shape-gray: 100 116 139; /* slate-500 */
 
   /* In donkere modus wordt merk-tekst lichter (brand-300) zodat links op de
      donkere achtergrond leesbaar blijven. */
@@ -98,26 +112,44 @@ body,
 }
 
 @layer components {
+  /* Invoervelden: lichte achtergrond (#f9fafb), rand #e2e8f0, border-radius 6px. */
   .input {
-    @apply w-full rounded-lg border border-line px-3 py-2 text-sm text-ink bg-surface
+    @apply w-full rounded-md border border-line px-3 py-2 text-sm text-ink bg-inputbg
       placeholder:text-muted/70
       focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
   }
 
-  /* Tabel-headers in PowerSuite-stijl: klein, uppercase, met letter-spacing en
-     een rustige subtiele tekstkleur. Geldt voor elke <thead> th in de app zodat
-     datatabellen overal dezelfde koppen krijgen. */
+  /* Sectielabels in PowerSuite-stijl: klein, uppercase, blauw, met wat extra
+     letter-spacing. */
+  .section-label {
+    @apply text-[11px] uppercase font-semibold tracking-[0.08em] text-brandtext;
+  }
+
+  /* Tabel-headers: klein, uppercase, grijs, met letter-spacing. Geldt voor elke
+     <thead> th zodat datatabellen overal dezelfde koppen krijgen. */
   thead th {
     @apply text-[11px] uppercase tracking-wider font-semibold text-muted;
   }
 
-  /* Zebra striping voor datatabellen: even rijen krijgen een subtiel afwijkend
-     vlak dat in beide modi genoeg contrast met de tekst houdt. Toe te passen op
-     de <table> zelf. */
-  .table-zebra tbody tr:nth-child(even) {
-    background-color: rgb(var(--kleur-zebra));
+  /* Datatabellen (klasse historisch "table-zebra"): geen zebra-striping meer,
+     maar subtiele rij-borders met een rustige hover-state. */
+  .table-zebra tbody tr {
+    border-bottom: 1px solid rgb(var(--kleur-line));
+  }
+  .table-zebra tbody tr:last-child {
+    border-bottom: 0;
   }
   .table-zebra tbody tr:hover {
     background-color: rgb(var(--kleur-hover));
+  }
+
+  /* Hero-banner bovenaan elke pagina: lichtblauw verloop. De decoratieve
+     vormen worden als losse elementen in het Layout-component gerenderd. */
+  .page-hero {
+    background: linear-gradient(
+      120deg,
+      rgb(var(--hero-from)),
+      rgb(var(--hero-to))
+    );
   }
 }

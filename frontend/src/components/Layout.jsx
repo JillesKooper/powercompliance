@@ -4,6 +4,7 @@ import { useNotificaties } from "../context/notificaties";
 import { useLanguage } from "../context/language";
 import { useTheme } from "../context/theme";
 import { useAuth } from "../context/auth";
+import { PageHero } from "./ui";
 
 const NAV = [
   // Dashboard is bereikbaar via zowel "/" als "/dashboard" (login landt op
@@ -61,11 +62,14 @@ export default function Layout({ children }) {
 
   const huidig = navItems.find(isItemActief);
   const paginaNaam = huidig ? t(huidig.labelKey) : t("app.naam");
+  const paginaSubtitel = huidig
+    ? t(huidig.labelKey.replace("nav.", "subtitel."))
+    : "";
 
   return (
     <div className="min-h-screen flex flex-col bg-canvas">
-      {/* Topbar: witte balk met de app-identiteit links en paginanaam + acties
-          rechts. */}
+      {/* Topbar: witte balk met de app-identiteit links en paginanaam +
+          globale acties rechts. */}
       <header className="h-14 shrink-0 bg-surface border-b border-line flex items-center px-4 md:px-5">
         <Link
           to="/"
@@ -92,7 +96,6 @@ export default function Layout({ children }) {
           >
             <GearIcon />
           </Link>
-          <AppMenu key={location.pathname} t={t} />
         </div>
       </header>
 
@@ -113,73 +116,69 @@ export default function Layout({ children }) {
       )}
 
       <div className="flex flex-1 min-h-0">
-        {/* Zijbalk: smalle donkere icoon-rail (PowerSuite-stijl). Blijft donker
-            in zowel licht als donker thema. */}
-        <aside className="w-[68px] shrink-0 bg-sidebar flex flex-col items-center py-3">
-          {/* Squadra-merkicoon bovenaan */}
-          <Link
-            to="/"
-            aria-label="Squadra"
-            title="Squadra"
-            className="mb-4 hover:opacity-85 transition-opacity"
-          >
-            <SquadraMark />
-          </Link>
-
-          <nav className="flex-1 w-full flex flex-col items-center gap-1 px-2">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                title={t(item.labelKey)}
-                aria-label={t(item.labelKey)}
-                className={`relative grid place-items-center h-11 w-11 rounded-xl transition-colors ${
-                  isItemActief(item)
-                    ? "bg-brand-500 text-white shadow-sm"
-                    : "text-neutral-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <NavIcon name={item.icon} />
-                {item.icon === "dashboard" && ongelezen > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold ring-2 ring-[color:rgb(var(--kleur-sidebar))]">
-                    {ongelezen}
-                  </span>
-                )}
-              </NavLink>
-            ))}
+        {/* Zijbalk: lichte (witte) rail met icoon + tekstlabel per item; het
+            actieve item krijgt een blauw accent. Klapt mee naar donker. */}
+        <aside className="w-[220px] shrink-0 bg-sidebar border-r border-line flex flex-col">
+          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+            {navItems.map((item) => {
+              const actief = isItemActief(item);
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  title={t(item.labelKey)}
+                  className={`relative flex items-center gap-3 rounded-lg pl-3 pr-2 py-2 text-sm transition-colors ${
+                    actief
+                      ? "bg-brand-500/10 text-brandtext font-semibold"
+                      : "text-muted hover:bg-hover hover:text-ink"
+                  }`}
+                >
+                  {actief && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r bg-brand-500" />
+                  )}
+                  <NavIcon name={item.icon} />
+                  <span className="flex-1 truncate">{t(item.labelKey)}</span>
+                  {item.icon === "dashboard" && ongelezen > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold">
+                      {ongelezen}
+                    </span>
+                  )}
+                </NavLink>
+              );
+            })}
           </nav>
 
-          {/* Onderaan: uitloggen, gebruikersavatar en Squadra-footer */}
-          <div className="w-full flex flex-col items-center gap-2 px-2 pt-2">
+          {/* Uitloggen + footer onderaan de zijbalk */}
+          <div className="px-3 py-3 border-t border-line">
             <button
               type="button"
               onClick={handleLogout}
-              title={t("auth.uitloggen")}
-              aria-label={t("auth.uitloggen")}
-              className="grid place-items-center h-11 w-11 rounded-xl text-neutral-400 hover:bg-white/10 hover:text-white transition-colors"
+              className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted hover:bg-hover hover:text-ink transition-colors"
             >
               <LogoutIcon />
+              <span className="flex-1 text-left">{t("auth.uitloggen")}</span>
             </button>
-            <div
-              title={`${gebruiker?.naam || t("app.gebruiker")}${
-                gebruiker?.bedrijf ? ` · ${gebruiker.bedrijf}` : ""
-              }`}
-              className="grid place-items-center h-9 w-9 rounded-full bg-brand-500 text-white text-xs font-semibold select-none ring-2 ring-white/10"
-            >
-              {initialen(gebruiker?.naam)}
-            </div>
-            <div className="mt-1 text-center leading-tight" title="PowerCompliance · powered by Squadra">
-              <div className="text-[9px] font-semibold text-neutral-300">Power</div>
-              <div className="text-[8px] text-neutral-500">by Squadra</div>
+            <div className="px-3 pt-3 text-[11px] text-muted">
+              <span className="text-ink font-medium">PowerCompliance</span>
+              <span className="mx-1 text-faint">|</span>
+              powered by <span className="font-medium">Squadra</span>
             </div>
           </div>
         </aside>
 
-        {/* Main */}
+        {/* Main: elke pagina opent met een hero-banner (titel + subtitel +
+            avatar/app-menu), gevolgd door de pagina-inhoud. */}
         <main className="flex-1 min-w-0 overflow-auto p-6 md:p-8">
-          <h1 className="text-2xl font-bold tracking-tight text-ink mb-6">
-            {paginaNaam}
-          </h1>
+          <PageHero
+            title={paginaNaam}
+            subtitle={paginaSubtitel}
+            right={
+              <>
+                <AppMenu key={location.pathname} t={t} />
+                <Avatar naam={gebruiker?.naam} bedrijf={gebruiker?.bedrijf} t={t} />
+              </>
+            }
+          />
           {children}
         </main>
       </div>
@@ -194,6 +193,18 @@ function initialen(naam) {
   if (delen.length === 0) return "?";
   if (delen.length === 1) return delen[0].slice(0, 2).toUpperCase();
   return (delen[0][0] + delen[delen.length - 1][0]).toUpperCase();
+}
+
+// Gebruikersavatar: blauwe cirkel met initialen, rechtsboven in de hero-banner.
+function Avatar({ naam, bedrijf, t }) {
+  return (
+    <div
+      title={`${naam || t("app.gebruiker")}${bedrijf ? ` · ${bedrijf}` : ""}`}
+      className="grid place-items-center h-10 w-10 rounded-full bg-brand-500 text-white text-sm font-semibold select-none shadow-sm"
+    >
+      {initialen(naam)}
+    </div>
+  );
 }
 
 // PowerSuite-stijl logomerk: afgerond vierkant in de merkkleur met een
@@ -214,16 +225,6 @@ function BrandLogo() {
   );
 }
 
-// Squadra-merkicoon voor bovenaan de donkere zijbalk: wit afgerond vierkant
-// met een blauwe "S"-glyph zodat het merk op de donkere rail herkenbaar is.
-function SquadraMark() {
-  return (
-    <span className="h-9 w-9 rounded-xl bg-white grid place-items-center shadow-sm">
-      <span className="text-brand-500 font-extrabold text-lg leading-none">S</span>
-    </span>
-  );
-}
-
 // Compacte NL/EN-schakelaar, altijd zichtbaar in de topbar zodat de taal
 // zonder omweg via Instellingen te wisselen is. Taalcodes (NL/EN) blijven
 // bewust onvertaald.
@@ -234,7 +235,7 @@ function LanguageToggle() {
     <div
       role="group"
       aria-label={t("nav.taalWissel")}
-      className="inline-flex rounded-lg border border-line overflow-hidden text-xs font-semibold"
+      className="inline-flex rounded-md border border-line overflow-hidden text-xs font-semibold"
     >
       {opties.map((code) => (
         <button
@@ -272,8 +273,8 @@ function ThemeToggle() {
   );
 }
 
-// Grid/app-menu rechts in de topbar: toont de PowerSuite-apps (PowerCompliance
-// is de actieve app). Sluit bij klik buiten het menu.
+// Grid/app-menu rechtsboven in de hero: toont de PowerSuite-apps
+// (PowerCompliance is de actieve app). Sluit bij klik buiten het menu.
 function AppMenu({ t }) {
   const [open, setOpen] = useState(false);
   return (
@@ -284,8 +285,8 @@ function AppMenu({ t }) {
         aria-label="PowerSuite"
         aria-expanded={open}
         title="PowerSuite"
-        className={`h-9 w-9 grid place-items-center rounded-md transition-colors ${
-          open ? "bg-hover text-ink" : "hover:bg-hover hover:text-ink"
+        className={`h-10 w-10 grid place-items-center rounded-lg border border-line bg-surface/70 text-muted transition-colors ${
+          open ? "bg-surface text-ink" : "hover:bg-surface hover:text-ink"
         }`}
       >
         <GridIcon />
@@ -294,9 +295,7 @@ function AppMenu({ t }) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 mt-2 w-56 rounded-lg border border-line bg-surface shadow-card z-50 overflow-hidden">
-            <div className="px-3 py-2 text-[11px] uppercase tracking-wider font-semibold text-muted border-b border-line">
-              PowerSuite
-            </div>
+            <div className="px-3 py-2 section-label border-b border-line">PowerSuite</div>
             <div className="p-1.5">
               <div className="flex items-center gap-2.5 rounded-md px-2.5 py-2 bg-brand-500/10">
                 <span className="h-6 w-6 rounded-md bg-gradient-to-br from-brand-500 to-brand-700 grid place-items-center">
@@ -318,7 +317,7 @@ function AppMenu({ t }) {
   );
 }
 
-// --- Navigatie-iconen (lucide-stijl, 20px, stroke = currentColor) -------------
+// --- Navigatie-iconen (lucide-stijl, 18px, stroke = currentColor) -------------
 
 const ICON_PADEN = {
   dashboard: (
@@ -397,8 +396,8 @@ const ICON_PADEN = {
 function NavIcon({ name }) {
   return (
     <svg
-      width="20"
-      height="20"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -406,6 +405,7 @@ function NavIcon({ name }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      className="shrink-0"
     >
       {ICON_PADEN[name] || ICON_PADEN.dashboard}
     </svg>
@@ -471,14 +471,15 @@ function MoonIcon() {
 function LogoutIcon() {
   return (
     <svg
-      width="20"
-      height="20"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
+      className="shrink-0"
     >
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <polyline points="16 17 21 12 16 7" />

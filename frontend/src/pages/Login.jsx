@@ -34,22 +34,22 @@ export default function Login() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: "#f5f5f0" }}
+      style={{ backgroundColor: "#f0f2f5" }}
     >
       <div className="w-full max-w-sm">
         {/* Logo + naam */}
         <div className="flex flex-col items-center mb-8">
           <BrandLogo />
-          <div className="mt-4 text-2xl text-[#1a1a1a] tracking-tight">
+          <div className="mt-4 text-2xl text-[#1a2333] tracking-tight">
             Power<span className="font-bold">Compliance</span>
           </div>
-          <p className="mt-1.5 text-sm text-[#666]">{t("auth.titel")}</p>
+          <p className="mt-1.5 text-sm text-[#6b7280]">{t("auth.titel")}</p>
         </div>
 
         {/* Witte kaart met subtiele schaduw */}
         <form
           onSubmit={verstuur}
-          className="bg-white rounded-xl border border-[#e5e5e0] shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-7 space-y-5"
+          className="bg-white rounded-xl border border-[#e2e8f0] shadow-[0_1px_4px_rgba(0,0,0,0.08)] p-7 space-y-5"
         >
           {fout && (
             <div className="rounded-md bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
@@ -59,11 +59,11 @@ export default function Login() {
 
           {/* E-mail */}
           <label className="block">
-            <span className="block text-sm font-medium text-[#333] mb-1.5">
+            <span className="block text-sm font-medium text-[#1a2333] mb-1.5">
               {t("auth.email")}
             </span>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#999] pointer-events-none">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#9ca3af] pointer-events-none">
                 <UserIcon />
               </span>
               <input
@@ -73,18 +73,18 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t("auth.emailPlaceholder")}
-                className="w-full rounded-md border border-[#ddd] bg-white pl-10 pr-3 py-2.5 text-sm text-[#1a1a1a] placeholder:text-[#aaa] focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20"
+                className="w-full rounded-md border border-[#e2e8f0] bg-[#f9fafb] pl-10 pr-3 py-2.5 text-sm text-[#1a2333] placeholder:text-[#9ca3af] focus:outline-none focus:border-[#1a6ef0] focus:ring-2 focus:ring-[#1a6ef0]/20"
               />
             </div>
           </label>
 
           {/* Wachtwoord */}
           <label className="block">
-            <span className="block text-sm font-medium text-[#333] mb-1.5">
+            <span className="block text-sm font-medium text-[#1a2333] mb-1.5">
               {t("auth.wachtwoord")}
             </span>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#999] pointer-events-none">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#9ca3af] pointer-events-none">
                 <LockIcon />
               </span>
               <input
@@ -94,7 +94,7 @@ export default function Login() {
                 value={wachtwoord}
                 onChange={(e) => setWachtwoord(e.target.value)}
                 placeholder={t("auth.wachtwoordPlaceholder")}
-                className="w-full rounded-md border border-[#ddd] bg-white pl-10 pr-3 py-2.5 text-sm text-[#1a1a1a] placeholder:text-[#aaa] focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20"
+                className="w-full rounded-md border border-[#e2e8f0] bg-[#f9fafb] pl-10 pr-3 py-2.5 text-sm text-[#1a2333] placeholder:text-[#9ca3af] focus:outline-none focus:border-[#1a6ef0] focus:ring-2 focus:ring-[#1a6ef0]/20"
               />
             </div>
           </label>
@@ -103,7 +103,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={bezig}
-            className="w-full rounded-md bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-semibold py-2.5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full rounded-md bg-[#1a6ef0] hover:bg-[#1560d6] text-white text-sm font-semibold py-2.5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {bezig ? t("auth.bezig") : t("auth.login")}
           </button>
@@ -113,7 +113,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => alert(t("auth.wachtwoordVergetenMelding"))}
-              className="text-sm text-[#2563eb] hover:underline"
+              className="text-sm text-[#1a6ef0] hover:underline"
             >
               {t("auth.wachtwoordVergeten")}
             </button>
@@ -127,7 +127,7 @@ export default function Login() {
 // PowerSuite-stijl logomerk (zelfde bliksem-glyph als in de topbar), hier groter.
 function BrandLogo() {
   return (
-    <span className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#1d4ed8] grid place-items-center shadow-md">
+    <span className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1a6ef0] to-[#1250b5] grid place-items-center shadow-md">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
           d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"
