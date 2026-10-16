@@ -7,14 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        // PowerSuite.ai primaire kleur — alleen voor actieve states en knoppen
+        // PowerSuite.ai primaire kleur (#1a6ef0) — voor actieve states en knoppen
         brand: {
-          50: "#e8f0fe",
-          100: "#d2e3fc",
-          300: "#8ab4f8",
-          500: "#1a73e8",
-          600: "#1a73e8",
-          700: "#1557b0",
+          50: "#eef4fe",
+          100: "#d8e6fd",
+          300: "#85b0f8",
+          500: "#1a6ef0",
+          600: "#1560d6",
+          700: "#1250b5",
         },
         // Neutrale huisstijl-tinten. Deze verwijzen naar CSS-variabelen
         // (zie index.css) zodat ze in één keer omklappen tussen licht en
@@ -79,8 +79,8 @@ export default {
           "100%": { backgroundColor: "rgba(16, 185, 129, 0)" },
         },
         pulseRing: {
-          "0%, 100%": { boxShadow: "0 0 0 0 rgba(26, 115, 232, 0.35)" },
-          "50%": { boxShadow: "0 0 0 6px rgba(26, 115, 232, 0)" },
+          "0%, 100%": { boxShadow: "0 0 0 0 rgba(26, 110, 240, 0.35)" },
+          "50%": { boxShadow: "0 0 0 6px rgba(26, 110, 240, 0)" },
         },
       },
       animation: {

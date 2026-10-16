@@ -6,28 +6,29 @@
 
 /* Huisstijl-tokens als RGB-kanalen (spatie-gescheiden), zodat Tailwind ze
    met opacity kan combineren via rgb(var(--x) / <alpha-value>). Lichte modus
-   volgt de PowerSuite-stijl: witte content, lichtgrijze zijbalk. */
+   volgt de PowerSuite-stijl: lichtgrijze canvas, witte kaarten, en een
+   donkere icoon-zijbalk (die in beide modi donker blijft). */
 :root {
-  --kleur-canvas: 255 255 255; /* hoofd-achtergrond (wit) */
-  --kleur-surface: 255 255 255; /* kaarten/panelen */
-  --kleur-sidebar: 247 248 250; /* lichtgrijze zijbalk */
-  --kleur-ink: 26 26 26; /* primaire tekst */
-  --kleur-muted: 102 102 102; /* secundaire tekst */
-  --kleur-faint: 148 163 184; /* tertiaire tekst */
-  --kleur-line: 224 224 224; /* borders */
-  --kleur-hover: 240 240 240; /* hover states */
-  --kleur-zebra: 249 250 251; /* even tabelrijen (zebra) */
+  --kleur-canvas: 245 244 242; /* hoofd-achtergrond (#f5f4f2) */
+  --kleur-surface: 255 255 255; /* kaarten/panelen (wit) */
+  --kleur-sidebar: 26 26 26; /* donkere icoon-zijbalk (#1a1a1a) */
+  --kleur-ink: 26 26 26; /* primaire tekst (#1a1a1a) */
+  --kleur-muted: 107 107 107; /* secundaire tekst (#6b6b6b) */
+  --kleur-faint: 156 156 156; /* tertiaire tekst (#9c9c9c) */
+  --kleur-line: 230 229 226; /* borders (#e6e5e2) */
+  --kleur-hover: 239 238 235; /* hover states (#efeeeb) */
+  --kleur-zebra: 249 249 247; /* even tabelrijen (zebra) */
 
   /* Merk-tekst (links, accenten). Los van de brand-fill zodat tekst in beide
      modi ≥ 4.5:1 haalt: brand-700 op wit, brand-300 op donker. */
-  --kleur-brand-text: 21 87 176; /* brand-700 #1557b0 */
+  --kleur-brand-text: 18 80 181; /* brand-700 #1250b5 */
 
   /* Statuskleuren voor notificaties, badges, alerts en statuslabels. Elk trio
      is een zacht vlak (soft) + rand (line) + leesbare tekst (text). De
      tekstwaarden halen minimaal 4.5:1 op hun eigen soft-vlak (WCAG AA). */
-  --status-info-soft: 232 240 254; /* brand-50 */
-  --status-info-line: 210 227 252; /* brand-100 */
-  --status-info-text: 21 87 176; /* brand-700 */
+  --status-info-soft: 238 244 254; /* brand-50 */
+  --status-info-line: 216 230 253; /* brand-100 */
+  --status-info-text: 18 80 181; /* brand-700 */
   --status-success-soft: 236 253 245; /* emerald-50 */
   --status-success-line: 167 243 208; /* emerald-200 */
   --status-success-text: 4 108 78; /* donker emerald */
@@ -39,27 +40,27 @@
   --status-danger-text: 185 28 28; /* red-700 */
 }
 
-/* Donkere modus (#1a1a2e-familie): donkere achtergrond, lichte tekst,
-   iets lichtere kaarten voor diepte. */
+/* Donkere modus (neutrale #121212-familie): donkere achtergrond, lichte tekst,
+   iets lichtere kaarten voor diepte. De zijbalk blijft donker (als in licht). */
 .dark {
-  --kleur-canvas: 26 26 46; /* #1a1a2e */
-  --kleur-surface: 34 34 54; /* #222236 */
-  --kleur-sidebar: 20 20 34; /* #141422 */
-  --kleur-ink: 233 233 242; /* #e9e9f2 */
-  --kleur-muted: 160 160 184; /* #a0a0b8 */
-  --kleur-faint: 118 118 140; /* #76768c */
-  --kleur-line: 46 46 68; /* #2e2e44 */
-  --kleur-hover: 42 42 64; /* #2a2a40 */
-  --kleur-zebra: 40 40 62; /* iets lichter dan surface voor zebra */
+  --kleur-canvas: 18 18 18; /* #121212 */
+  --kleur-surface: 30 30 30; /* #1e1e1e */
+  --kleur-sidebar: 20 20 20; /* #141414 */
+  --kleur-ink: 237 237 237; /* #ededed */
+  --kleur-muted: 160 160 160; /* #a0a0a0 */
+  --kleur-faint: 115 115 115; /* #737373 */
+  --kleur-line: 42 42 42; /* #2a2a2a */
+  --kleur-hover: 38 38 38; /* #262626 */
+  --kleur-zebra: 36 36 36; /* iets lichter dan surface voor zebra */
 
   /* In donkere modus wordt merk-tekst lichter (brand-300) zodat links op de
      donkere achtergrond leesbaar blijven. */
-  --kleur-brand-text: 138 180 248; /* brand-300 #8ab4f8 */
+  --kleur-brand-text: 133 176 248; /* brand-300 #85b0f8 */
 
   /* Donkere statusvarianten: diep getint vlak met een lichte tekstkleur
      (300-niveau). Elke tekst haalt ruim 4.5:1 op zijn eigen soft-vlak. */
-  --status-info-soft: 28 40 66; /* diep blauw */
-  --status-info-line: 46 66 104;
+  --status-info-soft: 23 42 74; /* diep blauw */
+  --status-info-line: 38 64 112;
   --status-info-text: 147 197 253; /* blue-300 */
   --status-success-soft: 17 44 36; /* diep groen */
   --status-success-line: 27 71 57;
@@ -98,9 +99,16 @@ body,
 
 @layer components {
   .input {
-    @apply w-full rounded-md border border-line px-3 py-2 text-sm text-ink bg-surface
+    @apply w-full rounded-lg border border-line px-3 py-2 text-sm text-ink bg-surface
       placeholder:text-muted/70
       focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+  }
+
+  /* Tabel-headers in PowerSuite-stijl: klein, uppercase, met letter-spacing en
+     een rustige subtiele tekstkleur. Geldt voor elke <thead> th in de app zodat
+     datatabellen overal dezelfde koppen krijgen. */
+  thead th {
+    @apply text-[11px] uppercase tracking-wider font-semibold text-muted;
   }
 
   /* Zebra striping voor datatabellen: even rijen krijgen een subtiel afwijkend

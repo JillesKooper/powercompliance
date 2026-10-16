@@ -170,7 +170,7 @@ export function Button({ children, variant = "primary", ...props }) {
   };
   return (
     <button
-      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${variants[variant]}`}
+      className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${variants[variant]}`}
       {...props}
     >
       {children}
